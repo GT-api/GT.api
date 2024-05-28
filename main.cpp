@@ -2,6 +2,8 @@
 #include <fstream>
 #include <format> // enhanced string arguements & better logging
 
+#include <thread>
+
 #include <vector>
 #include <span> // ref array object (for vector)
 
@@ -17,10 +19,11 @@
 
 #include <enet/compress.c> // TODO
 
-using pr = std::vector<int>; /* type, packet type, NetID, peer state */
+using pr = std::vector<int>;
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& buffer, short& pos, T& value) {
+    if (pos >= 0x7fff) return;
     std::copy(buffer.begin() + pos, buffer.begin() + pos + sizeof(T), reinterpret_cast<std::byte*>(&value));
     pos += sizeof(T);
 }
@@ -32,9 +35,9 @@ int main() {
         enet_address_set_host(&address, "0.0.0.0");
         address.port = 17091;
         
-    ENetHost* server = enet_host_create(&address, 1, 2, 0, 0);
+    ENetHost* server = enet_host_create(&address, 100, 1, 0, 0);
         server->checksum = enet_crc32;
-		enet_host_compress_with_range_coder(server);
+	    enet_host_compress_with_range_coder(server);
 
     std::ifstream file("items.dat", std::ios::binary | std::ios::ate);
         std::streamsize size = file.tellg();
@@ -53,13 +56,36 @@ int main() {
         short pos{60}, count{0}, version{0};
         shift_pos(buffer, pos, version);
         shift_pos(buffer, pos, count);
-        try { for (short i = 0; i < count; i++) {
-            std::cout << pos << std::endl;
-        }} catch(std::exception& exc) { }
+        for (short i = 0; i < count; i++) {
+
+        }
     
     file.close();
 
     ENetEvent event{};
-    std::cin.ignore();
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        while (enet_host_service(server, &event, 1000) > 0)
+            std::jthread([&](std::stop_token handle)
+	        {
+                std::clog << std::format("event.type = {0}", (int)event.type) << std::endl;
+                switch (event.type) 
+                {
+				    case ENET_EVENT_TYPE_CONNECT: 
+                    {
+                        std::vector<int> buffer{1, 0, 0};
+                        const auto packet = enet_packet_create(nullptr, buffer[1] + 5, ENET_PACKET_FLAG_RELIABLE);
+                        std::copy(reinterpret_cast<std::byte*>(&buffer[0]), reinterpret_cast<std::byte*>(&buffer[0]) + 4, packet->data);
+                        std::copy(reinterpret_cast<std::byte*>(&buffer[2]), reinterpret_cast<std::byte*>(&buffer[2]) + 1, packet->data + 2 + buffer[1]);
+                        enet_peer_send(event.peer, 0, packet);
+                        break;
+                    }
+                    case ENET_EVENT_TYPE_DISCONNECT: 
+                    {
+                        break;
+                    }
+                }
+	        });
+    }
     return 0;
 }

@@ -19,9 +19,12 @@
 
 #include <enet/compress.c> // TODO
 
+#include "peer.hpp"
+
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, short& pos, T& value) {
-    std::copy(data.begin() + pos, data.begin() + pos + sizeof(T), reinterpret_cast<std::byte*>(&value));
+    for (short i = 0; i < sizeof(T); ++i) 
+        reinterpret_cast<std::byte*>(&value)[i] = data[pos + i];
     pos += sizeof(T);
 }
 
@@ -49,34 +52,32 @@ int main() {
             auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(data.data()), data.size());
                 int hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
                     [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
-
-        short pos{60}, count{0}, version{0};
-        shift_pos(data, pos, version);
-        shift_pos(data, pos, count);
-        for (short i = 0; i < count; i++) {
-
-        }
-    
     file.close();
 
     ENetEvent event{};
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         while (enet_host_service(server, &event, 1000) > 0)
-            std::jthread([&](std::stop_token handle)
+            std::jthread([&](std::stop_token stop)
 	        {
                 std::clog << std::format("event.type = {0}", (int)event.type) << std::endl;
                 switch (event.type) 
                 {
 				    case ENET_EVENT_TYPE_CONNECT: 
                     {
-                        const auto packet = enet_packet_create(nullptr, 5, ENET_PACKET_FLAG_RELIABLE);
-                            std::array<int, 1> buffer{1};
-                            std::copy(reinterpret_cast<enet_uint8*>(&buffer[0]), reinterpret_cast<enet_uint8*>(&buffer[0]) + 4, packet->data);
+                        ENetPacket* const packet = enet_packet_create(nullptr, 5, ENET_PACKET_FLAG_RELIABLE);
+                            *reinterpret_cast<int*>(packet->data) = 0x1;
                             enet_peer_send(event.peer, 0, packet);
+
+                        event.peer->data = std::make_unique<peer>().release();
                         break;
                     }
                     case ENET_EVENT_TYPE_DISCONNECT: 
+                    {
+                        getpeer.reset();
+                        break; // stop.stop_requested(); (?)
+                    }
+                    case ENET_EVENT_TYPE_RECEIVE: 
                     {
                         break;
                     }

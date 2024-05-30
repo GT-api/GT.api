@@ -11,7 +11,6 @@
 
 #include <enet/win32.c>
 #include <enet/list.c>
-#include <enet/packet.c>
 #include <enet/protocol.c>
 #include <enet/peer.c>
 #include <enet/callbacks.c>
@@ -20,6 +19,7 @@
 #include <enet/compress.c> // TODO
 
 #include "peer.hpp"
+#include "packet.hpp"
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, short& pos, T& value) {
@@ -52,6 +52,7 @@ int main() {
             auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(data.data()), data.size());
                 int hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
                     [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
+                LOG(std::format("items.dat hash: {0}", hash));
     file.close();
 
     ENetEvent event{};
@@ -60,7 +61,7 @@ int main() {
         while (enet_host_service(server, &event, 1000) > 0)
             std::jthread([&](std::stop_token stop)
 	        {
-                std::clog << std::format("event.type = {0}", (int)event.type) << std::endl;
+                LOG(std::format("event.type = {0}", (int)event.type));
                 switch (event.type) 
                 {
 				    case ENET_EVENT_TYPE_CONNECT: 
@@ -69,16 +70,36 @@ int main() {
                             *reinterpret_cast<int*>(packet->data) = 0x1;
                             enet_peer_send(event.peer, 0, packet);
 
-                        event.peer->data = std::make_unique<peer>().release();
+                        auto data = std::make_unique<peer>();
+                        data->test = 10;  
+                        event.peer->data = data.release();
                         break;
                     }
                     case ENET_EVENT_TYPE_DISCONNECT: 
                     {
-                        getpeer.reset();
-                        break; // stop.stop_requested(); (?)
+                        delete getpeer;
+                        event.peer->data = nullptr;
+                        break;
                     }
                     case ENET_EVENT_TYPE_RECEIVE: 
                     {
+                        LOG(getpeer->test);
+                        LOG(std::format("event.packet->data = {0}", (int)*(event.packet->data)));
+                        if (event.packet->dataLength < 3u) break;
+                        switch (*(event.packet->data)) {
+                            case 2: 
+                            {
+                                gt_packet(event.peer, 
+                                    "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
+                                    hash, 
+                                    "ubistatic-a.akamaihd.net", 
+                                    "0098/2805202400/cache/", 
+                                    "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
+                                    "proto=207|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=5231383|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1"
+                                );
+                            }
+                                break;
+                            }
                         break;
                     }
                 }

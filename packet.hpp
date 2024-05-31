@@ -5,6 +5,7 @@
 #include <vector> 
 #include <cstring>
 #include <algorithm>
+#include <type_traits>
 
 template<typename... T>
 void gt_packet(ENetPeer* peer, T... params) {
@@ -23,24 +24,24 @@ void gt_packet(ENetPeer* peer, T... params) {
             if constexpr (std::is_same_v<std::decay_t<decltype(param)>, const char*>) {
                 size_t new_size = len + 2 + std::strlen(param) + sizeof(int);
                 auto this_data = std::make_unique_for_overwrite<std::byte[]>(new_size);
-                std::copy_n(data.get(), len, this_data.get());
+                std::ranges::copy(data.get(), data.get() + len, this_data.get());
                 this_data[len] = static_cast<std::byte>(index);
                 this_data[len + 1] = std::byte{0x2};
-                int str_len = static_cast<int>(std::strlen(param));
-                std::ranges::copy(std::as_bytes(std::span(&str_len, 1)), this_data.get() + len + 2);
-                std::ranges::copy(std::as_bytes(std::span(param, str_len)), this_data.get() + len + 6);
+                std::ranges::copy(std::bit_cast<std::array<std::byte, sizeof(int)>>(static_cast<int>(std::strlen(param))), this_data.get() + len + 2);
+                std::ranges::copy(std::as_bytes(std::span(param, static_cast<int>(std::strlen(param)))), this_data.get() + len + 6);
 
                 len = new_size;
                 data = std::move(this_data);
             }
-            else if constexpr (std::is_same_v<std::decay_t<decltype(param)>, int>) {
+            else if constexpr (std::is_signed_v<std::decay_t<decltype(param)>> or std::is_unsigned_v<std::decay_t<decltype(param)>>) {
                 size_t new_size = len + 2 + sizeof(int);
-                std::unique_ptr<std::byte[]> this_data = std::make_unique<std::byte[]>(new_size);
-                memcpy(this_data.get(), data.get(), len);
+                auto this_data = std::make_unique_for_overwrite<std::byte[]>(new_size);
+                std::ranges::copy(data.get(), data.get() + len, this_data.get());
                 this_data[len] = static_cast<std::byte>(index);
-                this_data[len + 1] = std::byte{0x9};
-                memcpy(this_data.get() + len + 2, &param, sizeof(int));
-    
+                this_data[len + 1] = std::byte{(std::is_signed_v<std::decay_t<decltype(param)>>) ? 0x9 : 0x5};
+                auto i_data = std::as_bytes(std::span(&param, 1));
+                std::ranges::copy(const_cast<std::byte*>(i_data.data()), const_cast<std::byte*>(i_data.data()) + i_data.size(), this_data.get() + len + 2);
+
                 len = new_size;
                 data = std::move(this_data);
             }

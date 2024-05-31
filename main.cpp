@@ -50,7 +50,7 @@ int main() {
             file.seekg(0, std::ios::beg);
             file.read(reinterpret_cast<char*>(data.data() + 60), size);
             auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(data.data()), data.size());
-                int hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
+                signed hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
                     [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
                 LOG(std::format("items.dat hash: {0}", hash));
     file.close();
@@ -69,10 +69,7 @@ int main() {
                         ENetPacket* const packet = enet_packet_create(nullptr, 5, ENET_PACKET_FLAG_RELIABLE);
                             *reinterpret_cast<int*>(packet->data) = 0x1;
                             enet_peer_send(event.peer, 0, packet);
-
-                        auto data = std::make_unique<peer>();
-                        data->test = 10;  
-                        event.peer->data = data.release();
+                        event.peer->data = new peer{};
                         break;
                     }
                     case ENET_EVENT_TYPE_DISCONNECT: 
@@ -83,7 +80,6 @@ int main() {
                     }
                     case ENET_EVENT_TYPE_RECEIVE: 
                     {
-                        LOG(getpeer->test);
                         LOG(std::format("event.packet->data = {0}", (int)*(event.packet->data)));
                         if (event.packet->dataLength < 3u) break;
                         switch (*(event.packet->data)) {

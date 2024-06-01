@@ -9,7 +9,8 @@
 
 class peer {
 public:
-    int test = 0;
+    bool LoginLoop{false};
+    signed netid{-1}; 
 };
 
 #define getpeer static_cast<peer*>(event.peer->data)

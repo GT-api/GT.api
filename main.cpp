@@ -1,22 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <format> // enhanced string arguements & better logging
+#include <thread> /* std::jthread() & std::chrono / std::this_thread */
+#include <vector>
+#include <numeric> // accumulate for items.dat hash (acc for short)
+
 using namespace std::literals;
 
-#include <thread>
-#include <vector>
-#include <span> // ref array object (for vector)
-#include <numeric> // accumulate for items.dat hash (acc for short)
-#include <bitset>
-
-#include <enet/win32.c>
-#include <enet/list.c>
-#include <enet/protocol.c>
-#include <enet/peer.c>
-#include <enet/callbacks.c>
-#include <enet/host.c>
-
-#include <enet/compress.c> // TODO
+#include "include/enet.h"
 
 #include "peer.hpp"
 #include "packet.hpp"
@@ -63,9 +54,10 @@ int main() {
 				    case ENET_EVENT_TYPE_CONNECT: 
                     {
                         ENetPacket* packet = enet_packet_create(nullptr, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
-                        /* 0x1 0x0 0x0 0x0 */
-                        packet->data[sizeof(int) - 4] = static_cast<char>(0x1 & 0xFF);
-                        enet_peer_send(event.peer, 0, packet);
+                        packet->data[sizeof(int) - 4] = static_cast<char>(0x1);
+                        for (int i = 1; i < sizeof(int); ++i) 
+                            packet->data[sizeof(int) - 4 + i] = static_cast<char>(0x0);
+                        enet_peer_send(event.peer, 0, packet); /* 0x1 0x0 0x0 0x0 */
                         event.peer->data = new peer{};
                         break;
                     }

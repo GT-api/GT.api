@@ -19,7 +19,7 @@ int main() {
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
     ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
-        
+
     ENetHost* server = enet_host_create(&address, 100, 1, 0, 0);
         server->checksum = enet_crc32;
         if (enet_host_compress_with_range_coder(server) < 0 or server->checksum == (ENetChecksumCallback)0xFFFFFFFF) [[unlikely]]
@@ -55,7 +55,7 @@ int main() {
                     {
                         ENetPacket* packet = enet_packet_create(nullptr, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
                         packet->data[0] = enet_uint8{0x1};
-                        packet->data[1] = packet->data[2] = packet->data[3] = enet_uint8{0x0};
+                        std::fill(packet->data + 1, packet->data + sizeof(int), std::byte{0x0});
                         enet_peer_send(event.peer, 0, packet); /* 0x1 0x0 0x0 0x0 */
                         event.peer->data = new peer{};
                         break;

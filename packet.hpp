@@ -32,7 +32,7 @@ void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
                 this_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x0, "the console message" -> 0x1 */
                 this_data[size + 1] = std::byte{0x2};
                 this_data[size + 2] = static_cast<std::byte>(std::strlen(param)); /* e.g. "OnConsoleMessage" -> 0x16 */
-                std::fill(this_data.begin() + size + 3, this_data.begin() + size + 6, std::byte{0x0});
+                this_data[size + 3] = this_data[size + 4] = this_data[size + 5] = std::byte{0x0};
                 for (size_t i = 0; i < std::strlen(param); ++i) 
                     this_data[size + 6 + i] = static_cast<std::byte>(param[i]); /* e.g. set byte to each char. e.g. 'a' -> 0x97. 'z' = 0x122 */
                 size = size + 2 + std::strlen(param) + sizeof(int);

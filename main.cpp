@@ -19,8 +19,8 @@ int main() {
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
     ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
-
-    ENetHost* server = enet_host_create(&address, 100, 1, 0, 0);
+    
+    ENetHost* server = enet_host_create(&address, 100, 0, 0, 0);
         server->checksum = enet_crc32;
         if (enet_host_compress_with_range_coder(server) < 0 or server->checksum == (ENetChecksumCallback)0xFFFFFFFF) [[unlikely]]
             std::cerr << "failed to initialize packet compressor" << std::endl, std::cin.ignore();
@@ -42,7 +42,8 @@ int main() {
     file.close();
 
     ENetEvent event{};
-    while (true) {
+    while (true) 
+    {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         while (enet_host_service(server, &event, 1000) > 0)
             std::jthread([&](std::stop_token stop)
@@ -55,7 +56,7 @@ int main() {
                     {
                         ENetPacket* packet = enet_packet_create(nullptr, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
                         packet->data[0] = enet_uint8{0x1};
-                        std::fill(packet->data + 1, packet->data + sizeof(int), std::byte{0x0});
+                        packet->data[1] = packet->data[2] = packet->data[3] = enet_uint8{0x0};
                         enet_peer_send(event.peer, 0, packet); /* 0x1 0x0 0x0 0x0 */
                         event.peer->data = new peer{};
                         break;
@@ -78,6 +79,7 @@ int main() {
                                 LOG(header);
                                 if (not getpeer->LoginLoop) /* investigating this */
                                 {
+                                    gt_packet(event, 0, "OnConsoleMessage", "test message");
                                     getpeer->LoginLoop = true;
                                     gt_packet(event, 0,
                                         "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
@@ -96,12 +98,12 @@ int main() {
                                     break;
                                 }
                                 break;
-                            }
-                        }
+                            } /* case 2: */
+                        } /* switch (std::span{event.packet->data, event.packet->dataLength}[0])  */
                         break;
-                    }
-                }
-	        });
-    }
+                    } /* case ENET_EVENT_TYPE_RECEIVE: */
+                } /* switch (event.type)  */
+	        }); /* std::jthread([&](std::stop_token stop) */
+    } /* while (true) */
     return 0;
 }

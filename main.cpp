@@ -13,9 +13,8 @@ using namespace std::literals;
 #include "packet.hpp"
 
 int main() {
-    /* TODO: implement red coloring for errors. */
-    if (std::endian::native == std::endian::big) 
-        std::cerr << "this project was made of understanding bytes, furthermore this project does not support endian::big" << std::endl, std::cin.ignore();
+    if (std::endian::native == std::endian::big) [[unlikely]]
+        std::cerr << "this project does not support endian::big" << std::endl, std::cin.ignore();
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
@@ -29,11 +28,11 @@ int main() {
     std::ifstream file("items.dat", std::ios::binary | std::ios::ate);
         std::streamsize im_size = file.tellg();
         std::vector<std::byte> im_data(im_size + 60);
-            std::fill(im_data.begin(), im_data.begin() + 60, std::byte{0});
+            std::fill(im_data.begin(), im_data.begin() + 60, std::byte{0x0});
             std::array<int, 4> buffer{0x4, 0x10, -1, 0x8};
-                for (char i = 0; i < buffer.size(); ++i) 
-                    std::copy(reinterpret_cast<std::byte*>(&buffer[i]), reinterpret_cast<std::byte*>(&buffer[i]) + sizeof(buffer[i]), im_data.begin() + i * sizeof(int));
-            std::copy(reinterpret_cast<std::byte*>(&im_size), reinterpret_cast<std::byte*>(&im_size) + sizeof(im_size), im_data.begin() + 56);
+                for (size_t i = 0; i < buffer.size(); ++i) 
+                    new (&im_data[i * sizeof(int)]) int(buffer[i]);
+            new (&im_data[56]) size_t(im_size);
             file.seekg(0, std::ios::beg);
             file.read(reinterpret_cast<char*>(im_data.data() + 60), im_size);
             auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size());
@@ -51,12 +50,12 @@ int main() {
                 LOG(std::format("event.type = {0}", (int)event.type));
                 switch (event.type) 
                 {
+                    case ENET_EVENT_TYPE_NONE: break;
 				    case ENET_EVENT_TYPE_CONNECT: 
                     {
                         ENetPacket* packet = enet_packet_create(nullptr, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
-                        packet->data[sizeof(int) - 4] = static_cast<char>(0x1);
-                        for (int i = 1; i < sizeof(int); ++i) 
-                            packet->data[sizeof(int) - 4 + i] = static_cast<char>(0x0);
+                        packet->data[0] = enet_uint8{0x1};
+                        packet->data[1] = packet->data[2] = packet->data[3] = enet_uint8{0x0};
                         enet_peer_send(event.peer, 0, packet); /* 0x1 0x0 0x0 0x0 */
                         event.peer->data = new peer{};
                         break;

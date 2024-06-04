@@ -7,10 +7,14 @@
 
 using namespace std::literals;
 
+#define ENET_IMPLEMENTATION
 #include "include/enet.h"
 
 #include "peer.hpp"
 #include "packet.hpp"
+#include "compress.h"
+
+#include "include/compress.c"
 
 int main() {
     if (std::endian::native == std::endian::big) [[unlikely]]

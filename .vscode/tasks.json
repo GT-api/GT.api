@@ -8,22 +8,12 @@
             "args": [
                 "-std=c++23",
                 "-O0",
-                "-I",
-                ".\\include\\enet",
                 "-g",
                 "main.cpp",
-                ".\\include\\enet\\callbacks.c",
-                ".\\include\\enet\\compress.c",
-                ".\\include\\enet\\host.c",
-                ".\\include\\enet\\list.c",
-                ".\\include\\enet\\packet.c",
-                ".\\include\\enet\\peer.c",
-                ".\\include\\enet\\protocol.c",
-                ".\\include\\enet\\win32.c",
                 "-o main.exe",
                 "-lws2_32",
                 "-lwinmm",
-                //"-Wall" /* DEBUG PURPOSES ^/
+                "-flto"
             ],
             "group": {
                 "kind": "build",

@@ -12,7 +12,6 @@ using namespace std::literals;
 
 #include "peer.hpp"
 #include "packet.hpp"
-#include "compress.h"
 
 #include "include/compress.c"
 

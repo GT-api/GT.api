@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build my project",
+            "label": "Build GT.api",
             "type": "shell",
             "command": "g++",
             "args": [
@@ -20,10 +20,10 @@
                 ".\\include\\enet\\peer.c",
                 ".\\include\\enet\\protocol.c",
                 ".\\include\\enet\\win32.c",
-                "-o",
-                "main.exe",
+                "-o main.exe",
                 "-lws2_32",
-                "-lwinmm"
+                "-lwinmm",
+                //"-Wall" /* DEBUG PURPOSES ^/
             ],
             "group": {
                 "kind": "build",

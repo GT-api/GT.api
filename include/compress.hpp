@@ -4,7 +4,7 @@
 */
 #define ENET_BUILDING_LIB 1
 #include <string.h>
-#include "enet.h"
+#include "enet.hpp"
 
 typedef struct _ENetSymbol
 {

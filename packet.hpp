@@ -1,7 +1,7 @@
 /* parent: peer.hpp */
 #include <cstring> /* std::strlen() */
 
-#include "include/enet.h"
+#include "include/enet.hpp"
 
 /*
 @param peer to whom this packet is sent to.
@@ -12,15 +12,13 @@
 template<typename... T>
 void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
 	std::unique_ptr<std::byte[]> data = std::make_unique<std::byte[]>(61);
-        std::fill(data.get(), data.get() + 61, std::byte{0x0});
+        std::ranges::fill(std::span{data.get(), 61}, std::byte{0x00});
         std::array<int, 5> buffer{0x4, 0x1, getpeer->netid, 0x8, wait_for};
-        std::array<short, 5> offsets{0, 4, 8, 16, 24};
-        for (size_t i = 0; i < buffer.size(); ++i) {
-            for (size_t ii = 0; ii < sizeof(int); ++ii)
-                (data.get() + offsets[i])[ii] = reinterpret_cast<const std::byte*>(&buffer[i])[ii];
-        }
+        for (size_t i = 0; i < buffer.size() * sizeof(int); ++i) 
+            data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
+                = reinterpret_cast<const std::byte*>(&buffer[i / sizeof(int)])[i % sizeof(int)];
     size_t size = 61;
-    std::byte index{0x0};
+    std::byte index{0x00};
     std::apply([&](auto const&... param) {
         (..., (void)([&]()
         {
@@ -29,12 +27,14 @@ void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
                 auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + std::strlen(param) + sizeof(int));
                 for (size_t i = 0; i < size; ++i)
                     this_data[i] = data[i];
-                this_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x0, "the console message" -> 0x1 */
+                this_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x00, "the console message" -> 0x1 */
                 this_data[size + 1] = std::byte{0x2};
-                this_data[size + 2] = static_cast<std::byte>(std::strlen(param)); /* e.g. "OnConsoleMessage" -> 0x16 */
-                this_data[size + 3] = this_data[size + 4] = this_data[size + 5] = std::byte{0x0};
+                this_data[size + 2] = static_cast<std::byte>(static_cast<std::uint16_t>(std::strlen(param)) & 0xFF); 
+                this_data[size + 3] = static_cast<std::byte>((static_cast<std::uint16_t>(std::strlen(param)) >> 8) & 0xFF);
+                this_data[size + 4] = this_data[size + 5] = std::byte{0x00};
+                /* outcome should be the hexadecimal of param's array char(s). e.g. "hello" = 'h' -> 0x68 'e' -> 0x65 'l' -> 0x6C 'l' -> 0x6C 'o' -> 0x6F */
                 for (size_t i = 0; i < std::strlen(param); ++i) 
-                    this_data[size + 6 + i] = static_cast<std::byte>(param[i]); /* e.g. set byte to each char. e.g. 'a' -> 0x97. 'z' = 0x122 */
+                    this_data[size + 6 + i] = static_cast<std::byte>(param[i]); /* e.g. 'a' -> 0x61. 'z' = 0x7A */ // be educated: https://en.cppreference.com/w/cpp/language/ascii
                 size = size + 2 + std::strlen(param) + sizeof(int);
                 data = std::move(this_data);
             }
@@ -43,16 +43,20 @@ void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
                 auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + sizeof(int));
                 for (size_t i = 0; i < size; ++i)
                     this_data[i] = data[i];
-                this_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x0, 43562/-43562 -> 0x1 */
+                this_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x00, 43562/-43562 -> 0x1 */
                 this_data[size + 1] = std::byte{(std::is_signed_v<std::decay_t<decltype(param)>>) ? 0x9 : 0x5}; 
+                /* outcome should be the hexadecimal of param value. e.g. 2147483647 -> 0x7FFFFFFF.  */
                 for (size_t i = 0; i < sizeof(param); ++i)
                     this_data[size + 2 + i] = reinterpret_cast<std::byte const*>(&param)[i];
                 size = size + 2 + sizeof(int);
-                data = std::move(this_data);
+                data = std::move(this_data); /* e.g. data + 00 01 09 7F FF FF FF */ // -> appended, meaning this_data = data. (cause it already overwritten)
+                //                             so if we have 2 packets with same info it would be: data + 00 09 7F FF FF FF 01 09 7F FF FF FF 
+                //                             (NOTE: data's 61 bytes are state, NetID, delay, ect, and will always be the first inital bytes in a array)
+                // e.g. data's 61 bytes: 04 00 00 00 01 00 00 00 FF FF FF FF 00 00 00 00 08 00 (x42 0s)
             }
             index = static_cast<std::byte>(std::to_integer<int>(index) + 1);
 		    if (size >= 61) 
-                data[60] = static_cast<std::byte>(index);
+                data[60] = index;
         }()
     ));
     }, std::make_tuple(params...));

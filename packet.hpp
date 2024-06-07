@@ -1,4 +1,4 @@
-/* parent: peer.hpp */
+/* parent: items.hpp, peer.hpp */
 #include <cstring> /* std::strlen() */
 
 #include "include/enet.hpp"
@@ -54,15 +54,27 @@ void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
                 //                             (NOTE: data's 61 bytes are state, NetID, delay, ect, and will always be the first inital bytes in a array)
                 // e.g. data's 61 bytes: 04 00 00 00 01 00 00 00 FF FF FF FF 00 00 00 00 08 00 (x42 0s)
             }
+            else if constexpr (std::is_same_v<std::decay_t<decltype(param)>, std::vector<float>>) {
+                auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + sizeof(float));
+                for (size_t i = 0; i < size; ++i)
+                    this_data[i] = data[i];
+                this_data[size] = index;
+                this_data[size + 1] = std::byte{0x1 + 0x2 * (param.size() - 1)};
+                for (size_t i = 0; i < param.size(); ++i) {
+                    for (size_t ii = 0; ii < sizeof(param[i]); ++ii)
+                        this_data[size + 2 + sizeof(float) * i + ii] = reinterpret_cast<std::byte const*>(&param[i])[ii];
+                }
+                size = size + 2 + sizeof(float) * param.size();
+                data = std::move(this_data);
+            }
             index = static_cast<std::byte>(std::to_integer<int>(index) + 1);
 		    if (size >= 61) 
                 data[60] = index;
         }()
     ));
     }, std::make_tuple(params...));
-        ENetPacket* packet = enet_packet_create(data.get(), size, ENET_PACKET_FLAG_RELIABLE);
-	        if (enet_peer_send(event.peer, 0, packet) == 0) 
-                LOG(std::format("Released Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size));
-            else LOG(std::format("Invalid Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size) );
+	if (enet_peer_send(event.peer, 0, enet_packet_create(data.get(), size, ENET_PACKET_FLAG_RELIABLE)) == 0) 
+        LOG(std::format("Released Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size));
+    else LOG(std::format("Invalid Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size) );
     
 };

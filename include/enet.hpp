@@ -1910,7 +1910,7 @@ extern "C" {
             windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
         }
 
-        verifyCommand.header.command                            = ENET_PROTOCOL_COMMAND_VERIFY_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+        verifyCommand.header.command                            = (enet_uint32)ENET_PROTOCOL_COMMAND_VERIFY_CONNECT | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
         verifyCommand.header.channelID                          = 0xFF;
         verifyCommand.verifyConnect.outgoingPeerID              = ENET_HOST_TO_NET_16(peer->incomingPeerID);
         verifyCommand.verifyConnect.incomingSessionID           = incomingSessionID;
@@ -3430,7 +3430,7 @@ extern "C" {
         peer->packetThrottleAcceleration = acceleration;
         peer->packetThrottleDeceleration = deceleration;
 
-        command.header.command   = ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+        command.header.command   = (enet_uint32)ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
         command.header.channelID = 0xFF;
 
         command.throttleConfigure.packetThrottleInterval     = ENET_HOST_TO_NET_32(interval);
@@ -3596,7 +3596,7 @@ extern "C" {
                 commandNumber       = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT;
                 startSequenceNumber = ENET_HOST_TO_NET_16(channel->outgoingUnreliableSequenceNumber + 1);
             } else {
-                commandNumber       = ENET_PROTOCOL_COMMAND_SEND_FRAGMENT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+                commandNumber       = (enet_uint32)ENET_PROTOCOL_COMMAND_SEND_FRAGMENT | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
                 startSequenceNumber = ENET_HOST_TO_NET_16(channel->outgoingReliableSequenceNumber + 1);
             }
 
@@ -3649,11 +3649,11 @@ extern "C" {
         command.header.channelID = channelID;
 
         if ((packet->flags & (ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNSEQUENCED)) == ENET_PACKET_FLAG_UNSEQUENCED) {
-            command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;
+            command.header.command = (enet_uint32)ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;
             command.sendUnsequenced.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
         }
         else if (packet->flags & ENET_PACKET_FLAG_RELIABLE || channel->outgoingUnreliableSequenceNumber >= 0xFFFF) {
-            command.header.command = ENET_PROTOCOL_COMMAND_SEND_RELIABLE | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+            command.header.command = (enet_uint32)ENET_PROTOCOL_COMMAND_SEND_RELIABLE | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
             command.sendReliable.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
         }
         else {
@@ -3875,7 +3875,7 @@ extern "C" {
             return;
         }
 
-        command.header.command   = ENET_PROTOCOL_COMMAND_PING | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+        command.header.command   = (enet_uint32)ENET_PROTOCOL_COMMAND_PING | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
         command.header.channelID = 0xFF;
 
         enet_peer_queue_outgoing_command(peer, &command, NULL, 0, 0);
@@ -3934,7 +3934,7 @@ extern "C" {
         if (peer->state != ENET_PEER_STATE_ZOMBIE && peer->state != ENET_PEER_STATE_DISCONNECTING) {
             enet_peer_reset_queues(peer);
 
-            command.header.command   = ENET_PROTOCOL_COMMAND_DISCONNECT | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;
+            command.header.command   = (enet_uint32)ENET_PROTOCOL_COMMAND_DISCONNECT | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;
             command.header.channelID = 0xFF;
             command.disconnect.data  = ENET_HOST_TO_NET_32(data);
 
@@ -4620,7 +4620,7 @@ extern "C" {
             memset(channel->reliableWindows, 0, sizeof(channel->reliableWindows));
         }
 
-        command.header.command                     = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+        command.header.command                     = (enet_uint32)ENET_PROTOCOL_COMMAND_CONNECT | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
         command.header.channelID                   = 0xFF;
         command.connect.outgoingPeerID             = ENET_HOST_TO_NET_16(currentPeer->incomingPeerID);
         command.connect.incomingSessionID          = currentPeer->incomingSessionID;
@@ -4895,7 +4895,7 @@ extern "C" {
                     continue;
                 }
 
-                command.header.command   = ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+                command.header.command   = (enet_uint32)ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT | (enet_uint32)ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
                 command.header.channelID = 0xFF;
                 command.bandwidthLimit.outgoingBandwidth = ENET_HOST_TO_NET_32(host->outgoingBandwidth);
 

@@ -4,16 +4,16 @@
 #include "include/enet.hpp"
 
 /*
-@param peer to whom this packet is sent to.
+@param p short for peer, the peer who will receive this packet, this can also be used with peers() to send to multiple peers.
 @param wait_for prep the packet ahead of time and send it within the time provided. (milliseconds) e.g. 1000 = 1 second, 60000 = 1 minute
 @param params list of param that structures your packet. each entry will be than identified as a const char* or signed/unsigned or float/double, 
                 respectfully void* entires will not be accepted. e.g. classes, ptr, void
 */
 template<typename... T>
-void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
+void gt_packet(ENetPeer& p, signed wait_for, T... params) {
 	std::unique_ptr<std::byte[]> data = std::make_unique<std::byte[]>(61);
         std::ranges::fill(std::span{data.get(), 61}, std::byte{0x00});
-        std::array<int, 5> buffer{0x4, 0x1, getpeer->netid, 0x8, wait_for};
+        std::array<int, 5> buffer{0x4, 0x1, getp->netid, 0x8, wait_for};
         for (size_t i = 0; i < buffer.size() * sizeof(int); ++i) 
             data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
                 = reinterpret_cast<const std::byte*>(&buffer[i / sizeof(int)])[i % sizeof(int)];
@@ -73,7 +73,7 @@ void gt_packet(ENetEvent event, signed/*unsigned...*/ wait_for, T... params) {
         }()
     ));
     }, std::make_tuple(params...));
-	if (enet_peer_send(event.peer, 0, enet_packet_create(data.get(), size, ENET_PACKET_FLAG_RELIABLE)) == 0) 
+	if (enet_peer_send(&p, 0, enet_packet_create(data.get(), size, ENET_PACKET_FLAG_RELIABLE)) == 0) 
         LOG(std::format("Released Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size));
     else LOG(std::format("Invalid Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size) );
     

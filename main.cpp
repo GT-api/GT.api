@@ -51,8 +51,8 @@ int main() {
         enet_host_compress_with_range_coder(server);
     {
         std::ifstream file("items.dat", std::ios::binary | std::ios::ate);
-              std::streamsize im_size = file.tellg();
-                   if (im_size == -1) std::cerr << "failed to read items.dat in binary mode" << std::endl, std::cin.ignore();
+            if (not file) std::cout << "failed to open items.dat" << std::endl, std::cin.ignore();
+        std::streamsize im_size = file.tellg();
         im_data.resize(im_size + 60);
         std::fill(im_data.begin(), im_data.begin() + 60, std::byte{0x0});
         std::array<int, 4> buffer{0x4, 0x10, -1, 0x8};
@@ -113,9 +113,9 @@ int main() {
                                     getpeer->protocol = std::stoi(readpipe(std::string{header})[5 + offset]);
                                     getpeer->game_version = std::stod(readpipe(std::string{header})[7 + offset]);
                                     getpeer->country = readpipe(std::string{header})[37 + offset];
-                                    gt_packet(event, 0, "OnOverrideGDPRFromServer", 38, 1, 0, 1);
-                                    gt_packet(event, 0, "OnSetRoleSkinsAndTitles", "000000", "000000");
-                                    gt_packet(event, 0,
+                                    gt_packet(*event.peer, 0, "OnOverrideGDPRFromServer", 38, 1, 0, 1);
+                                    gt_packet(*event.peer, 0, "OnSetRoleSkinsAndTitles", "000000", "000000");
+                                    gt_packet(*event.peer, 0,
                                         "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
                                         hash, 
                                         "ubistatic-a.akamaihd.net", 
@@ -135,14 +135,14 @@ int main() {
                                         getpeer->visual_name = std::string{getpeer->requestedName} + "_" + std::to_string(rand(1000, 9999)) :
                                         getpeer->visual_name = std::string{getpeer->tankIDName};
 
-                                    gt_packet(event, 0, "OnFtueButtonDataSet", 0, 0, 0, "|||||");
-                                    gt_packet(event, 0, "OnEmoticonDataChanged", 0, "(wl)|─ü|0&(yes)|─é|0&(no)|─â|0&(love)|─ä|0&(oops)|─à|0&(shy)|─å|0&(wink)|─ç|0&(tongue)|─ê|0&(agree)|─ë|0&(sleep)|─è|0&(punch)|─ï|0&(music)|─î|0&(build)|─ì|0&(megaphone)|─Ä|0&(sigh)|─Å|0&(mad)|─É|0&(wow)|─æ|0&(dance)|─Æ|0&(see-no-evil)|─ô|0&(bheart)|─ö|0&(heart)|─ò|0&(grow)|─û|0&(gems)|─ù|0&(kiss)|─ÿ|0&(gtoken)|─Ö|0&(lol)|─Ü|0&(smile)|─Ç|0&(cool)|─£|0&(cry)|─¥|0&(vend)|─₧|0&(bunny)|─¢|0&(cactus)|─ƒ|0&(pine)|─ñ|0&(peace)|─ú|0&(terror)|─í|0&(troll)|─á|0&(evil)|─ó|0&(fireworks)|─ª|0&(football)|─Ñ|0&(alien)|─º|0&(party)|─¿|0&(pizza)|─⌐|0&(clap)|─¬|0&(song)|─½|0&(ghost)|─¼|0&(nuke)|─¡|0&(halo)|─«|0&(turkey)|─»|0&(gift)|─░|0&(cake)|─▒|0&(heartarrow)|─▓|0&(lucky)|─│|0&(shamrock)|─┤|0&(grin)|─╡|0&(ill)|─╢|0&(eyes)|─╖|0&(weary)|─╕|0&(moyai)|─╝|0&(plead)|─╜|0&");
-                                    gt_packet(event, 0, "UpdateMainMenuTheme", 0, -68966913, -68966913);
-                                    gt_packet(event, 0, "OnSetBux", getpeer->gems, 1, 0);
-                                    gt_packet(event, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, std::string{getpeer->tankIDName}.c_str(), std::string{getpeer->tankIDName}.c_str());
-                                    gt_packet(event, 0, "OnTodaysDate", 6, 5, 7351, 3);
-                                    gt_packet(event, 0, "OnRequestWorldSelectMenu", "add_filter|\nadd_heading|Top Worlds<ROW2>|");
-                                    gt_packet(event, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
+                                    gt_packet(*event.peer, 0, "OnFtueButtonDataSet", 0, 0, 0, "|||||");
+                                    gt_packet(*event.peer, 0, "OnEmoticonDataChanged", 0, "(wl)|─ü|0&(yes)|─é|0&(no)|─â|0&(love)|─ä|0&(oops)|─à|0&(shy)|─å|0&(wink)|─ç|0&(tongue)|─ê|0&(agree)|─ë|0&(sleep)|─è|0&(punch)|─ï|0&(music)|─î|0&(build)|─ì|0&(megaphone)|─Ä|0&(sigh)|─Å|0&(mad)|─É|0&(wow)|─æ|0&(dance)|─Æ|0&(see-no-evil)|─ô|0&(bheart)|─ö|0&(heart)|─ò|0&(grow)|─û|0&(gems)|─ù|0&(kiss)|─ÿ|0&(gtoken)|─Ö|0&(lol)|─Ü|0&(smile)|─Ç|0&(cool)|─£|0&(cry)|─¥|0&(vend)|─₧|0&(bunny)|─¢|0&(cactus)|─ƒ|0&(pine)|─ñ|0&(peace)|─ú|0&(terror)|─í|0&(troll)|─á|0&(evil)|─ó|0&(fireworks)|─ª|0&(football)|─Ñ|0&(alien)|─º|0&(party)|─¿|0&(pizza)|─⌐|0&(clap)|─¬|0&(song)|─½|0&(ghost)|─¼|0&(nuke)|─¡|0&(halo)|─«|0&(turkey)|─»|0&(gift)|─░|0&(cake)|─▒|0&(heartarrow)|─▓|0&(lucky)|─│|0&(shamrock)|─┤|0&(grin)|─╡|0&(ill)|─╢|0&(eyes)|─╖|0&(weary)|─╕|0&(moyai)|─╝|0&(plead)|─╜|0&");
+                                    gt_packet(*event.peer, 0, "UpdateMainMenuTheme", 0, -68966913, -68966913);
+                                    gt_packet(*event.peer, 0, "OnSetBux", getpeer->gems, 1, 0);
+                                    gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, std::string{getpeer->tankIDName}.c_str(), std::string{getpeer->tankIDName}.c_str());
+                                    gt_packet(*event.peer, 0, "OnTodaysDate", 6, 5, 7351, 3);
+                                    gt_packet(*event.peer, 0, "OnRequestWorldSelectMenu", "add_filter|\nadd_heading|Top Worlds<ROW2>|");
+                                    gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
                                     break;
                                 }
                                 break;
@@ -152,9 +152,15 @@ int main() {
                                 if (header.starts_with("action|join_request"sv)) {
                                     std::ranges::replace(header, '\n', '|');
                                     std::string world_name = readpipe(std::string{header})[3];
-                                    gt_packet(event, 0, "OnSpawn", std::format(
+                                    peers([&](ENetPeer& p) {
+                                        gt_packet(*event.peer, 0, "OnSpawn", std::format(
+                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\neid|\nip|\ncolrect|0|0|20|30\nposXY|1440|736\nname|{2}\ntitleIcon|\ncountry|{3}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local",
+                                        getp->netid, getp->user_id, getp->visual_name, std::string{getp->country}.c_str()));
+
+                                        gt_packet(*event.peer, 0, "OnSpawn", std::format(
                                         "spawn|avatar\nnetID|{0}\nuserID|{1}\neid|\nip|\ncolrect|0|0|20|30\nposXY|1440|736\nname|{2}\ntitleIcon|\ncountry|{3}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local",
                                         getpeer->netid, getpeer->user_id, getpeer->visual_name, std::string{getpeer->country}.c_str()));
+                                    });
                                 }
                                 break;
                             }

@@ -3,6 +3,7 @@
 #define DEBUG
 
 #include <mutex>
+#include <functional>
 
 #if defined(DEBUG)
 #define LOG(message) std::clog << (message) << std::endl
@@ -28,13 +29,14 @@ public:
 };
 
 #define getpeer static_cast<peer*>(event.peer->data)
+#define getp static_cast<peer*>(p.data)
 
 ENetHost* server;
 
-std::vector<ENetPeer> peers(_ENetPeerState flag = ENET_PEER_STATE_CONNECTED) {
+std::vector<ENetPeer> peers(std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){}) {
     std::vector<ENetPeer> peers{};
     for (ENetPeer& peer : std::ranges::subrange(server->peers, server->peers + server->peerCount)) 
-        if (peer.state == flag)
-            peers.emplace_back(peer);
+        if (peer.state == ENET_PEER_STATE_CONNECTED)
+            fun(peer);
     return peers;
 }

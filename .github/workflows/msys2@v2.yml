@@ -9,5 +9,5 @@ jobs:
       with:
         update: true
         install: mingw-w64-x86_64-gcc 
-    - run: g++ -std=c++23 -O0 -g main.cpp -o main.exe -lws2_32 -lwinmm -flto
+    - run: g++ -std=c++23 -O0 -g main.cpp .\\include\\sqlite3.o -o main.exe -lws2_32 -lwinmm -lpthread
       shell: msys2 {0}

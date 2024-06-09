@@ -6,14 +6,15 @@
             "type": "shell",
             "command": "g++",
             "args": [
-                "-std=c++23",
+                "-std=c++2b",
                 "-O0",
                 "-g",
                 "main.cpp",
+                ".\\include\\sqlite3.o",
                 "-o main.exe",
                 "-lws2_32",
                 "-lwinmm",
-                "-flto"
+                "-lpthread"
             ],
             "group": {
                 "kind": "build",

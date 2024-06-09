@@ -3,7 +3,6 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}\\include/enet/",
                 "${workspaceFolder}\\**"
             ],
             "defines": [
@@ -13,9 +12,13 @@
             ],
             "compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "compilerArgs": [
-                "-std=c++23",
+                "-std=c++2b",
                 "-O0",
-                "-g"
+                "-g",
+                ".\\include\\sqlite3.o",
+                "-lws2_32",
+                "-lwinmm",
+                "-lpthread"
             ],
             "cStandard": "c23",
             "cppStandard": "c++23",

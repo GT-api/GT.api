@@ -16,8 +16,8 @@ public:
     std::once_flag logging_in{}; /* without this, GT will keep pushing peer into the server. */
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{0}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
-    unsigned gems{0}; /* gem count. due to being unsigned it will not bug out to nagative values, however 'if (gems > INT_MAX)' should be utilized */
-    std::string visual_name{}; /* the name of peer when entering worlds, or displayed in broadcasts, chat box, ect. */
+
+    std::string visual_name{};
 
     /* cached data from entering game; these values may not be changed */
     std::string requestedName{};
@@ -35,27 +35,8 @@ std::vector<ENetPeer> peers(std::function<void(ENetPeer&)> fun = [](ENetPeer& pe
     std::vector<ENetPeer> peers{};
     for (ENetPeer& peer : std::ranges::subrange(server->peers, server->peers + server->peerCount)) 
         if (peer.state == ENET_PEER_STATE_CONNECTED)
-            fun(peer);
+            fun(peer), peers.emplace_back(peer);
     return peers;
-}
-
-/*
-@param cmd the 'command' that will be performed. e.g. CREATE, SELECT, INSERT -> create (table), read, modify
-@param before actions before the data gets written
-@param after actions after the data was written
-*/
-void update_db(sqlite3* sql, const std::string& cmd, 
-std::function<void(sqlite3_stmt*)> before = [](sqlite3_stmt* stmt){},
-std::function<void(sqlite3_stmt*)> after = [](sqlite3_stmt* stmt){}) 
-{
-    sqlite3_stmt* stmt;
-        if (sqlite3_prepare_v2(sql, cmd.c_str(), -1, &stmt, nullptr) not_eq SQLITE_OK)
-            std::cerr << std::format("sqlite3_prepare_v2() warning: {}\n", sqlite3_errmsg(sql));
-        else before(stmt);
-        if (sqlite3_step(stmt) not_eq SQLITE_DONE)
-            std::cerr << std::format("sqlite3_step() warning: {}\n", sqlite3_errmsg(sql));
-        else after(stmt);
-        sqlite3_finalize(stmt);
 }
 
 void read_peer(ENetPeer& p) 
@@ -65,12 +46,12 @@ void read_peer(ENetPeer& p)
         std::cerr << "sqlite3_open() warning: " << sqlite3_errmsg(sql) << std::endl;
 {
    std::string cmd = std::format(
-        "CREATE TABLE IF NOT EXISTS {0} (name TEXT NOT NULL, password TEXT NOT NULL);", 
-        getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName);
+        "CREATE TABLE IF NOT EXISTS {0} (name {1}, password {1});", 
+        getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName, "TEXT NOT NULL");
     update_db(sql, cmd);
 }
     std::string cmd = std::format(
-        "SELECT name, password FROM {0};", getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName);
+        "SELECT name, password, vname FROM {0};", getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName);
     update_db(sql, cmd, [](sqlite3_stmt* stmt){}, [&p](sqlite3_stmt* stmt) {
         auto temp_peer = std::make_unique<peer>();
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -88,8 +69,8 @@ void write_peer(ENetPeer& p)
         sqlite3_open("peers.db", &sql);
 {
    std::string cmd = std::format(
-        "CREATE TABLE IF NOT EXISTS {0} (name TEXT NOT NULL, password TEXT NOT NULL);", 
-        getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName);
+        "CREATE TABLE IF NOT EXISTS {0} (name {1}, password {1});", 
+        getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName, "TEXT NOT NULL");
      update_db(sql, cmd);
 }
     std::string cmd = std::format(

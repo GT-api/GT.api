@@ -13,7 +13,7 @@
 #include "include/enet.hpp"
 
 #include "items.hpp"
-#include "include/sqlite3.h" /* for storing peer, world data */
+#include "include/sqlite3.hpp" /* for storing peer, world data */
 #include "peer.hpp"
 #include "packet.hpp"
 #include "world.hpp"
@@ -81,18 +81,14 @@ int main() {
                 switch (event.type) 
                 {
                     case ENET_EVENT_TYPE_NONE: break;
-				    case ENET_EVENT_TYPE_CONNECT: 
-                    {
-                        if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[]){0x1, 0x0, 0x0, 0x0}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
+				    case ENET_EVENT_TYPE_CONNECT:
+                        if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1, 0x0, 0x0, 0x0}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
                         event.peer->data = new peer{};
                         break;
-                    }
-                    case ENET_EVENT_TYPE_DISCONNECT: 
-                    {
+                    case ENET_EVENT_TYPE_DISCONNECT:
                         delete getpeer;
                         event.peer->data = nullptr;
                         break;
-                    }
                     case ENET_EVENT_TYPE_RECEIVE: 
                     {
                         LOG(std::format("event.packet->data = {0}", std::span{event.packet->data, event.packet->dataLength}[0]));
@@ -103,20 +99,19 @@ int main() {
                         {
                             case 2: 
                             {
-                                std::call_once(getpeer->logging_in, [&](){
-                                    short offset{};
+                                std::call_once(getpeer->logging_in, [&]() 
+                                {
+                                    getpeer->user_id = peers().size();
                                     std::ranges::replace(header, '\n', '|');
                                     if (readpipe(std::string{header})[0] == "requestedName")
                                         getpeer->requestedName = readpipe(std::string{header})[1] + "_" + std::to_string(rand(1000, 9999)); 
                                     else {
-                                        std::cout << readpipe(std::string{header})[1] << std::endl;
                                         getpeer->tankIDName = readpipe(std::string{header})[1];
                                         getpeer->tankIDPass = readpipe(std::string{header})[3];
                                     }
+                                    short offset{};
                                     if (readpipe(std::string{header})[0] == "tankIDName") offset = 4;
                                     getpeer->country = readpipe(std::string{header})[37 + offset];
-                                    gt_packet(*event.peer, 0, "OnOverrideGDPRFromServer", 38, 1, 0, 1);
-                                    gt_packet(*event.peer, 0, "OnSetRoleSkinsAndTitles", "000000", "000000");
                                     gt_packet(*event.peer, 0,
                                         "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
                                         hash, 
@@ -133,17 +128,10 @@ int main() {
                                 }
                                 else if (header.starts_with("action|enter_game"sv))
                                 {
-                                    getpeer->tankIDName = "change";
-                                    write_peer(*event.peer);
-                                    read_peer(*event.peer);
-                                    std::cout << getpeer->tankIDName << std::endl;
-
-                                    getpeer->visual_name = getpeer->tankIDName.empty() ? 
-                                        std::string{getpeer->requestedName} :
-                                        std::string{getpeer->tankIDName};
+                                    read_peer(*event.peer); /* load peer's previous session data. */
+                                    getpeer->visual_name = getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName;
 
                                     gt_packet(*event.peer, 0, "OnFtueButtonDataSet", 0, 0, 0, "|||||");
-                                    gt_packet(*event.peer, 0, "OnSetBux", getpeer->gems, 1, 0);
                                     gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, std::string{getpeer->tankIDName}.c_str(), std::string{getpeer->tankIDName}.c_str());
                                     gt_packet(*event.peer, 0, "OnRequestWorldSelectMenu", "add_filter|\nadd_heading|Top Worlds<ROW2>|");
                                     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
@@ -156,7 +144,64 @@ int main() {
                                 if (header.starts_with("action|join_request"sv)) {
                                     std::ranges::replace(header, '\n', '|');
                                     auto w = std::make_unique<world>();
-                                    w->name = std::string_view{readpipe(std::string{header})[3]};
+                                    w->name = readpipe(std::string{header})[3];
+                                    int d_ = rand(2, (6000 / (6000 / 100) - 4));
+	                                for (int i = 0; i < 6000; i++) {
+	                                	block b{ 0, 0, uint16_t(-1) };
+	                                	if (i >= 3800 && i < 5400 && !(rand() % 50)) b.fg = 10;
+	                                	else if (i >= 3700 && i < 5400) 
+	                                		if (i > 5000) 
+	                                			if (rand() % 8 < 3) b.fg = 4; 
+	                                			else b.fg = 2; 
+	                                		else b.fg = 2;
+	                                	else if (i >= 5400) b.fg = 8;
+	                                	if (i == 3600 + d_) b.fg = 6;
+	                                	if (i == 3700 + d_) b.fg = 8;
+	                                	if (i >= 3700) b.bg = 14;
+	                                	w->blocks.push_back(b);
+	                                }
+
+                                    unsigned ySize = w->blocks.size() / 100, xSize = w->blocks.size() / ySize, square = w->blocks.size();
+                                    int alloc = (8 * square) + (w->floating.size() * 16);
+	                                std::vector<BYTE> data(78 + w->name.length() + square + 24 + alloc, 0);
+	                                data[0] = static_cast<BYTE>(0x4);
+                                    data[4] = static_cast<BYTE>(0x4);
+                                    data[16] = static_cast<BYTE>(0x8);
+
+                                    size_t name_size = w->name.length();
+                                    data[66] = static_cast<BYTE>(name_size);
+                                    std::memcpy(data.data() + 68, w->name.c_str(), name_size);
+                                    data[68 + name_size] = static_cast<BYTE>(xSize);
+                                    data[72 + name_size] = static_cast<BYTE>(ySize);
+                                    *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(square);
+	                                std::span<BYTE> blc = std::span(data).subspan(80 + name_size);
+	                                for (int i = 0; i < square; ++i) {
+    	                                auto block_span = blc.subspan(i * 8, 8);
+    	                                *reinterpret_cast<unsigned short*>(block_span.data()) = w->blocks[i].fg;
+    	                                *reinterpret_cast<unsigned short*>(block_span.data() + 2) = w->blocks[i].bg;
+    	                                *reinterpret_cast<unsigned*>(block_span.data() + 4) = w->blocks[i].flags;
+	                                }
+	                                int count = static_cast<int>(w->floating.size()), last_uid = count;
+	                                *reinterpret_cast<int*>(blc.subspan(square * 8, 4).data()) = count;
+	                                *reinterpret_cast<int*>(blc.subspan(square * 8 + 4, 4).data()) = last_uid;
+                                    for (const auto& floating : w->floating) {
+                                        *reinterpret_cast<uint16_t*>(blc.data()) = static_cast<uint16_t>(floating.id);
+                                        *reinterpret_cast<float*>(blc.data() + 2) = floating.x;
+                                        *reinterpret_cast<float*>(blc.data() + 6) = floating.y;
+                                        *reinterpret_cast<uint16_t*>(blc.data() + 10) = static_cast<uint16_t>(floating.count);
+                                        *reinterpret_cast<uint32_t*>(blc.data() + 12) = floating.uid;
+                                        blc = blc.subspan(16);
+                                    }
+	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
+                                    gt_packet(*event.peer, 0, "OnSetBux", 0, 1, 0);
+                                    ++w->visitors;
+                                    getpeer->netid = w->visitors;
+                                    gt_packet(*event.peer, 0, "OnSpawn", std::format(
+                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\neid|\nip|\ncolrect|0|0|20|30\nposXY|1440|736\nname|{2}\ntitleIcon|\ncountry|{3}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|",
+                                        getpeer->netid, getpeer->user_id, getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, std::string{getpeer->country}.c_str()));
+                                    gt_packet(*event.peer, 0, "OnSpawn", std::format(
+                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\neid|\nip|\ncolrect|0|0|20|30\nposXY|1440|736\nname|{2}\ntitleIcon|\ncountry|{3}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local",
+                                        getpeer->netid, getpeer->user_id, getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, std::string{getpeer->country}.c_str()));
                                 }
                                 break;
                             }

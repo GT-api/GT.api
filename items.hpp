@@ -14,7 +14,7 @@ enum clothing
 
 class item {
     public:
-    int id{0}; /* item identity */
+    unsigned short id{0}; /* item identity */
     std::string raw_name{}; /* the exact name of the item including uppercases */
     std::string name{}; /* prefered for easy access; same as raw_name but all lowercased */
     clothing cloth_type{clothing::none};
@@ -39,7 +39,7 @@ bool cache_items() {
     items.reserve(count);
     for (int i = 0; i < count; i++) {
         item im{};
-        shift_pos(im_data, pos, im.id);
+        shift_pos(im_data, pos, im.id); pos += sizeof(unsigned short);
         pos += sizeof(int);
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));

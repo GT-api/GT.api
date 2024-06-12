@@ -7,14 +7,11 @@
 </div>
 <hr />
 
-### Requirements
+### ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/checklist.svg) Requirements
 
 - [VSC](https://code.visualstudio.com/)
 - [MSYS2](https://www.msys2.org/) (Follow the intructions)
 
-### Building
-- Press 'Windows' key and type 'cmd' and input: `setx PATH "%PATH%;C:\msys64\ucrt64\bin"`
-- open VSC in `GT.api-main` folder, then go to terminal tab and click:
-  
-![image](https://github.com/LeeEndl/GT.api/assets/127639272/cdef0e77-37e0-4d1a-a388-315b1d671d55)
-
+### ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/build.svg) Building 
+- Press <img src="https://www.servis-repas.cz/user/categories/orig/windows-11-icon.png" width="20" height="20"> and type 'cmd' and input: `setx PATH "%PATH%;C:\msys64\ucrt64\bin"`
+- Open VSC in `GT.api-main` folder, then press `Ctrl + Shift + B` to start compiling.

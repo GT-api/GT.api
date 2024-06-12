@@ -91,8 +91,7 @@ int main() {
                         break;
                     case ENET_EVENT_TYPE_DISCONNECT:
                         write_peer(*event.peer); /* TODO promise */
-                        //delete getpeer;
-                        //event.peer->data = nullptr;
+                        delete getpeer;
                         break;
                     case ENET_EVENT_TYPE_RECEIVE: 
                     {
@@ -125,9 +124,7 @@ int main() {
                                             return;
                                         }
                                         short offset{};
-                                        if (getpeer->tankIDName.empty())
-                                            getpeer->requestedName = read_once[1] + "_" + std::to_string(rand(1000, 9999));
-                                        else {
+                                        if (not getpeer->tankIDName.empty()) {
                                             getpeer->tankIDName = read_once[1];
                                             getpeer->tankIDPass = read_once[3];
                                             offset = 4;
@@ -171,50 +168,70 @@ int main() {
                             case 3: 
                             {
                                 if (header.starts_with("action|quit"sv)) enet_peer_disconnect(event.peer, 0);
-                                if (header.starts_with("action|join_request"sv)) {
+                                if (header.starts_with("action|quit_to_exit"sv)) {
+                                    peers([&](ENetPeer& p) {
+                                        if (getp->recent_worlds.end() == getpeer->recent_worlds.end())
+                                            gt_packet(p, 0, "OnRemove", std::format("netID|{}\n", getpeer->netid).c_str());
+                                    });
+                                }
+                                else if (header.starts_with("action|join_request"sv)) {
                                     std::ranges::replace(header, '\n', '|');
                                     auto w = std::make_unique<world>();
                                     w->name = readpipe(std::string{header})[3];
                                     std::ranges::transform(w->name, w->name.begin(), [](char c) { return std::toupper(c); });
                                     auto main_door = rand(2, ((100 * 60) / ((100 * 60) / 100) - 4));
-                                    std::vector<block> blocks(100 * 60);
-                                    short i = 0;
-                                    std::ranges::for_each(blocks, [&](auto b) mutable {
-                                        b = {.fg = items[0].id, .bg = items[0].id};
-                                        if (i >= 3700) 
-                                        {
+                                    std::vector<block> blocks(100 * 60, block{0, 0});
+                                    for (auto& b : blocks) {
+                                        auto i = &b - &blocks[0];
+                                        if (i >= 3700) {
                                             b.bg = 14; // cave background
-                                            b.fg = (i >= 5400) ? 8 : 2; // bedrock : dirt
-                                            /* rock and lava with randomization */
-                                            b.fg = (i >= 3800 and i < 5400 and not rand(0, 49)) ? 
-                                                10 : (i > 5000 and rand(0, 7) < 3) ? 4 : b.fg;
-
-                                            if (i == 3600 + main_door) b.fg = 6; // the main door
-                                            if (i == 3700 + main_door) b.fg = 8; // bedrock below the door
+                                            b.fg = (i >= 3800 and i < 5000 /* lava level */ and not rand(0, 38)) ? 10 : 
+                                                (i > 5000 and i < 5400 /* bedrock level */ and rand(0, 7) < 3) ? 4 : 
+                                                (i >= 5400) ? 8 : 2;
                                         }
-                                        w->blocks.push_back(std::move(b));
-                                        ++i;
-                                    });
+                                        if (i == 3600 + main_door) b.fg = 6; // main door
+                                        if (i == 3700 + main_door) b.fg = 8; // Bedrock below the door
+                                    }
+                                    w->blocks = std::move(blocks); // Move the vector to the destination
                                     unsigned ySize = w->blocks.size() / 100, xSize = w->blocks.size() / ySize, square = w->blocks.size();
-                                    int alloc = (8 * square) + (w->floating.size() * 16);
-	                                std::vector<BYTE> data(78 + w->name.length() + square + 24 + alloc, 0x0);
-	                                data[0] = BYTE{0x4};
-                                    data[4] = BYTE{0x4};
-                                    data[16] = BYTE{0x8};
-
-                                    size_t name_size = w->name.length();
-                                    data[66] = static_cast<BYTE>(name_size);
-                                    std::memcpy(data.data() + 68, w->name.c_str(), name_size);
-                                    
-                                    data[68 + name_size] = static_cast<BYTE>(xSize);
-                                    data[72 + name_size] = static_cast<BYTE>(ySize);
-                                    *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(square);
-                                    std::array<short, 2> spawn_cord{0, 0};
-	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), 78 + w->name.length() + square + 24 + alloc, ENET_PACKET_FLAG_RELIABLE));
+                                    int alloc = (8 * square) + (w->floating.size() * 16), s1 = 4, s3 = 8;
+                                    size_t namelen = w->name.length();
+	                                int total = 78 + namelen + square + 24 + alloc;
+                                    std::vector<std::byte> data(total, std::byte{0});
+                                    std::ranges::copy(std::as_bytes(std::span{&s1, 1}), data.begin() + 0);
+                                    std::ranges::copy(std::as_bytes(std::span{&s1, 1}), data.begin() + 4);
+                                    std::ranges::copy(std::as_bytes(std::span{&s3, 1}), data.begin() + 16);
+                                    std::ranges::copy(std::as_bytes(std::span{&namelen, 1}), data.begin() + 66);
+                                    std::ranges::copy(std::as_bytes(std::span{w->name.c_str(), 1}), data.begin() + 68);
+                                    std::ranges::copy(std::as_bytes(std::span{&xSize, 1}), data.begin() + 68 + namelen);
+                                    std::ranges::copy(std::as_bytes(std::span{&ySize, 1}), data.begin() + 72 + namelen);
+                                    std::ranges::copy(std::as_bytes(std::span{&square, 1}), data.begin() + 76 + namelen);
+                                    std::byte* blc = data.data() + 80 + namelen;
+                                    std::array<short, 2> spawn_cord{};
+                                    for (int i = 0; i < (int)square; ++i) {
+                                        memcpy(blc, &w->blocks[i].fg, 2);
+                                        memcpy(blc + 2, &w->blocks[i].bg, 2);
+                                        memcpy(blc + 4, &w->blocks[i].flags, 4);
+                                        if (w->blocks[i].fg == 6) {
+                                            spawn_cord[0] = (i % xSize) * 32, spawn_cord[1] = (i / xSize) * 32;
+                                            std::byte byte = std::byte{0x1};
+                                            memcpy(blc + 8, &byte, sizeof(std::byte));
+                                            short size = short{std::string{"EXIT"}.size()};
+                                            memcpy(blc + 9, &size, sizeof(short));
+                                            memcpy(blc + 11, "EXIT", size);
+                                            blc += 4 + size;
+                                            total += 4 + size;
+                                        }
+                                        blc += 8;
+                                    }
+                                    /* floating items */ // -> TODO implement visuals
+                                    blc += sizeof(int); /* count */
+                                    blc += sizeof(int); /* id */
+	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
                                     getpeer->netid = ++w->visitors;
                                     gt_packet(*event.peer, 0, "OnSpawn", std::format(
                                         "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ntitleIcon|\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local",
-                                        getpeer->netid, spawn_cord[0], spawn_cord[1], getpeer->user_id, getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, getpeer->country).c_str());
+                                        getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, getpeer->country).c_str());
                                     for (std::size_t i = 1; i < getpeer->recent_worlds.size(); ++i)
                                         getpeer->recent_worlds[i - 1] = getpeer->recent_worlds[i];
                                     getpeer->recent_worlds.back() = w->name;

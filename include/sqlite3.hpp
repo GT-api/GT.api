@@ -13439,8 +13439,8 @@ std::function<void(sqlite3_stmt*)> after = [](sqlite3_stmt* stmt){})
         if (sqlite3_prepare_v2(sql, cmd.c_str(), -1, &stmt, nullptr) not_eq SQLITE_OK)
             std::cerr << std::format("sqlite3_prepare_v2() warning: {}\n", sqlite3_errmsg(sql));
         else before(stmt);
+        after(stmt);
         if (sqlite3_step(stmt) not_eq SQLITE_DONE)
             std::cerr << std::format("sqlite3_step() warning: {}\n", sqlite3_errmsg(sql));
-        else after(stmt);
-        sqlite3_finalize(stmt);
+      sqlite3_finalize(stmt);
 }

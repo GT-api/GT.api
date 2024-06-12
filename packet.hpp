@@ -13,7 +13,7 @@ template<typename... T>
 void gt_packet(ENetPeer& p, signed wait_for, T... params) {
 	std::unique_ptr<std::byte[]> data = std::make_unique<std::byte[]>(61);
         std::ranges::fill(std::span{data.get(), 61}, std::byte{0x00});
-        std::array<int, 5> buffer{0x4, 0x1, getp->netid, 0x8, wait_for};
+        std::array<int, 5> buffer{0x4, 0x1, -1, 0x8, wait_for}; // TODO imply peer's netid
         for (size_t i = 0; i < buffer.size() * sizeof(int); ++i) 
             data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
                 = reinterpret_cast<const std::byte*>(&buffer[i / sizeof(int)])[i % sizeof(int)];
@@ -23,7 +23,6 @@ void gt_packet(ENetPeer& p, signed wait_for, T... params) {
         (..., (void)([&]()
         {
             if constexpr (std::is_same_v<std::decay_t<decltype(param)>, const char*>) {
-                LOG(std::format("String: {0}; Size: {1}", param, std::strlen(param)));
                 auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + std::strlen(param) + sizeof(int));
                 for (size_t i = 0; i < size; ++i)
                     this_data[i] = data[i];
@@ -39,7 +38,6 @@ void gt_packet(ENetPeer& p, signed wait_for, T... params) {
                 data = std::move(this_data);
             }
             else if constexpr (std::is_signed_v<std::decay_t<decltype(param)>> or std::is_unsigned_v<std::decay_t<decltype(param)>>) {
-                LOG(std::format("Integer: {0}; Type: {1}", param, (std::is_signed_v<std::decay_t<decltype(param)>>) ? "signed" : "unsigned"));
                 auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + sizeof(int));
                 for (size_t i = 0; i < size; ++i)
                     this_data[i] = data[i];

@@ -1,7 +1,7 @@
 /* parent: items.hpp, peer.hpp */
-#include <cstring> /* std::strlen() */
-
 #include "include/enet.hpp"
+
+#include <cstring> /* std::strlen() */
 
 /*
 @param p short for peer, the peer who will receive this packet, this can also be used with peers() to send to multiple peers.

@@ -1,6 +1,8 @@
 /* child: packet.hpp */
 /* parent: items.hpp */
 #define DEBUG
+#define ENET_IMPLEMENTATION
+#include "include/enet.hpp"
 
 #include <mutex>
 

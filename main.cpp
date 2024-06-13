@@ -9,15 +9,11 @@
 #include <algorithm>
 #include <random> /* for random generator */
 
-#define ENET_IMPLEMENTATION
-#include "include/enet.hpp"
-
 #include "items.hpp"
+#include "world.hpp"
 #include "include/sqlite3.hpp" /* for storing peer, world data */
 #include "peer.hpp"
 #include "packet.hpp"
-#include "world.hpp"
-#include "include/compress.hpp" /* for growtopia packet (byte) compressor; a must for a 'GTPS' */
 
 using namespace std::literals;
 
@@ -39,6 +35,9 @@ int rand(const int min, const int max) {
     std::uniform_int_distribution<> distribution(min, max);
     return distribution(mt);
 }
+
+/** @brief An adaptive order-2 PPM range coder */ // -> compress.o
+int enet_host_compress_with_range_coder (ENetHost* host);
 
 int main() {
     if (enet_initialize() not_eq 0) 

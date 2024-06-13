@@ -13,9 +13,10 @@
             "compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "compilerArgs": [
                 "-std=c++2b",
-                "-O0",
+                "-Og",
                 "-g",
                 ".\\include\\sqlite3.o",
+                ".\\include\\compress.o",
                 "-lws2_32",
                 "-lwinmm",
                 "-lpthread"

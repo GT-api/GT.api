@@ -7,10 +7,11 @@
             "command": "g++",
             "args": [
                 "-std=c++2b",
-                "-O0",
+                "-Og",
                 "-g",
                 "main.cpp",
                 ".\\include\\sqlite3.o",
+                ".\\include\\compress.o",
                 "-o main.exe",
                 "-lws2_32",
                 "-lwinmm",

@@ -10,6 +10,9 @@ jobs:
       with:
         msystem: MINGW64
         update: true
-        install: mingw-w64-x86_64-gcc
-    - run: g++ -std=c++2b -Og -g main.cpp .\\include\\sqlite3.o .\\include\\compress.o -o main.exe -lws2_32 -lwinmm -lpthread -ftime-report
+        install: >-
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-curl
+          mingw-w64-x86_64-jsoncpp
+    - run: g++ -std=c++2b -Og -g main.cpp .\\include\\sqlite3.o .\\include\\compress.o .\\include\\github.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -ljsoncpp -ftime-report
       shell: msys2 {0}

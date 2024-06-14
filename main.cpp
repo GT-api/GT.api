@@ -9,11 +9,13 @@
 #include <algorithm>
 #include <random> /* for random generator */
 
-#include "items.hpp"
-#include "world.hpp"
-#include "include/sqlite3.hpp" /* for storing peer, world data */
-#include "peer.hpp"
-#include "packet.hpp"
+#include "include/database/items.hpp"
+#include "include/database/world.hpp"
+#include "include/database/sqlite3.hpp"
+#define ENET_IMPLEMENTATION
+#include "include/network/enet.hpp"
+#include "include/database/peer.hpp"
+#include "include/network/packet.hpp"
 
 using namespace std::literals;
 
@@ -39,7 +41,13 @@ int rand(const int min, const int max) {
 /** @brief An adaptive order-2 PPM range coder */ // -> compress.o
 int enet_host_compress_with_range_coder (ENetHost* host);
 
+namespace github {
+    /* @brief checks if commit is the latest on the main branch. */
+    void sync(const char* commit); 
+}
+
 int main() {
+    github::sync("8aa995058b6cf0b7db1e8aee2f80d67293e34614");
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
@@ -54,15 +62,13 @@ int main() {
             if (file.tellg() < 0) std::cout << "items.dat contains no data" << std::endl, std::cin.ignore();
         std::streamsize im_size = file.tellg();
         im_data.resize(im_size + 60);
-        std::fill(im_data.begin(), im_data.begin() + 60, std::byte{0x0});
         std::array<int, 4> buffer{0x4, 0x10, -1, 0x8};
-        memcpy(im_data.data(), &buffer[0], 4);
-	    memcpy(im_data.data() + 4, &buffer[1], 4);
-	    memcpy(im_data.data() + 8, &buffer[2], 4);
-	    memcpy(im_data.data() + 16, &buffer[3], 4);
+        memcpy(im_data.data(), &buffer[0], sizeof(buffer[0]));
+	    memcpy(im_data.data() + 4, &buffer[1], sizeof(buffer[1]));
+	    memcpy(im_data.data() + 8, &buffer[2], sizeof(buffer[2]));
+	    memcpy(im_data.data() + 16, &buffer[3], sizeof(buffer[3]));
 	    memcpy(im_data.data() + 56, &im_size, 4);
         file.seekg(0, std::ios::beg);
-        if (static_cast<size_t>(im_size) > im_data.size() - 60) std::cout << "items.dat overflow" << std::endl, std::cin.ignore();
         file.read(reinterpret_cast<char*>(im_data.data() + 60), im_size);
         file.close();
         auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size());
@@ -168,8 +174,9 @@ int main() {
                             {
                                 if (header.starts_with("action|quit"sv)) enet_peer_disconnect(event.peer, 0);
                                 if (header.starts_with("action|quit_to_exit"sv)) {
+                                    /* TODO fix when they leave world they get disconnected. */
                                     peers([&](ENetPeer& p) {
-                                        if (getp->recent_worlds.end() == getpeer->recent_worlds.end())
+                                        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
                                             gt_packet(p, 0, "OnRemove", std::format("netID|{}\n", getpeer->netid).c_str());
                                     });
                                 }
@@ -223,9 +230,6 @@ int main() {
                                         }
                                         blc += 8;
                                     }
-                                    /* floating items */ // -> TODO implement visuals
-                                    blc += sizeof(int); /* count */
-                                    blc += sizeof(int); /* id */
 	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
                                     getpeer->netid = ++w->visitors;
                                     gt_packet(*event.peer, 0, "OnSpawn", std::format(

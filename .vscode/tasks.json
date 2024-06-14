@@ -12,10 +12,14 @@
                 "main.cpp",
                 ".\\include\\sqlite3.o",
                 ".\\include\\compress.o",
+                ".\\include\\github.o",
                 "-o main.exe",
                 "-lws2_32",
                 "-lwinmm",
-                "-lpthread"
+                "-lpthread",
+                "-lcurl",
+                "-lssl",
+                "-ljsoncpp"
             ],
             "group": {
                 "kind": "build",

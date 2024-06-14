@@ -17,9 +17,13 @@
                 "-g",
                 ".\\include\\sqlite3.o",
                 ".\\include\\compress.o",
+                ".\\include\\github.o",
                 "-lws2_32",
                 "-lwinmm",
-                "-lpthread"
+                "-lpthread",
+                "-lcurl",
+                "-lssl",
+                "-ljsoncpp"
             ],
             "cStandard": "c23",
             "cppStandard": "c++23",

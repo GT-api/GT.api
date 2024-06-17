@@ -56,7 +56,7 @@ void write_peer(ENetPeer& p)
     });
 }
 
-bool read_peer(ENetPeer& p) 
+void read_peer(ENetPeer& p) 
 {
     auto sql = open_db("peers.db");
     std::string peer_table = "\"" + getp->tankIDName + "\"";

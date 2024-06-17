@@ -47,7 +47,7 @@ namespace github {
 }
 
 int main() {
-    github::sync("cf0846de6f4920b295c161d65e9f0a70a01378ec");
+    github::sync("0856cf29861744325ee838b216fd2fa02b7874b5");
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
@@ -103,11 +103,11 @@ int main() {
                         LOG(std::format("event.packet->data = {0}", std::span{event.packet->data, event.packet->dataLength}[0]));
                         std::span packet{reinterpret_cast<char*>(event.packet->data), event.packet->dataLength};
                             std::string header{packet.begin() + 4, packet.end() - 1};
-                            LOG(header);
                         switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                         {
                             case 2: 
                             {
+                                LOG(header);
                                 std::call_once(getpeer->logging_in, [&]() 
                                 {
                                     std::ranges::replace(header, '\n', '|'); /* e.g. requestedName|test\n = requestedName|test| */
@@ -152,10 +152,8 @@ int main() {
                                     {
                                         getpeer->user_id = peers().size();
                                         getpeer->visual_name = getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName;
-
-                                        gt_packet(*event.peer, 0, "OnFtueButtonDataSet", 0, 0, 0, "||0|||-1", "", "1|1");
                                         gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->visual_name).c_str());
-                                        gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, std::string{getpeer->tankIDName}.c_str(), std::string{getpeer->tankIDName}.c_str());
+                                        gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, getpeer->tankIDName.c_str(), getpeer->tankIDName.c_str());
                                         OnRequestWorldSelectMenu(event);
                                     });
                                 }
@@ -164,6 +162,7 @@ int main() {
                             }
                             case 3: 
                             {
+                                LOG(header);
                                 if (header.contains("action|quit_to_exit"sv)) {
                                     peers([&](ENetPeer& p) {
                                         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
@@ -198,12 +197,12 @@ int main() {
                                     data[0] = std::byte{0x4};
                                     data[4] = std::byte{0x4};
                                     data[16] = std::byte{0x8};
-                                    size_t name_size = w->name.length();
+                                    unsigned char name_size = w->name.length();
                                     data[66] = std::byte{name_size};
                                     for (size_t i = 0; i < name_size; ++i)
                                         data[68 + i] = static_cast<std::byte>(w->name[i]);
-                                    data[68 + name_size] = std::byte{x};
-                                    data[72 + name_size] = std::byte{y};
+                                    data[68 + name_size] = static_cast<std::byte>(x);
+                                    data[72 + name_size] = static_cast<std::byte>(y);
                                     *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(w->blocks.size());
                                     std::byte* pos = data.data() + 80 + name_size;
                                     std::array<short, 2> spawn_cord{};
@@ -227,16 +226,17 @@ int main() {
                                         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
                                     getpeer->recent_worlds.back() = w->name;
                                     gt_packet(*event.peer, 0, "OnSpawn", std::format(
-                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\ntype|local",
+                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
                                         getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, getpeer->country).c_str());
-                                    gt_packet(*event.peer, 0, "OnSetClothing", 
-                                        std::vector<float>{0, 0, 0},
-                                        std::vector<float>{0, 0, 0},
-                                        std::vector<float>{0, 0, 0}, 0/*get real GT normal skin color*/,
-                                        std::vector<float>{0, 0, 0});
+                                    gt_packet(*event.peer, 0, "OnSetPos", std::vector<float>{static_cast<float>(spawn_cord[0]), static_cast<float>(spawn_cord[1])});
                                     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
-                                        w->name, w->visitors - 1, peers().size()));
+                                        w->name, w->visitors - 1, peers().size()).c_str());
                                 }
+                                break;
+                            }
+                            case 4: 
+                            {
+
                                 break;
                             }
                         }

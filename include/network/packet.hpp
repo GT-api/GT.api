@@ -56,7 +56,7 @@ void gt_packet(ENetPeer& p, signed wait_for, T... params) {
                 for (size_t i = 0; i < size; ++i)
                     this_data[i] = data[i];
                 this_data[size] = index;
-                this_data[size + 1] = std::byte{0x1 + 0x2 * (param.size() - 1)};
+                this_data[size + 1] = static_cast<std::byte>(0x1 + 0x2 * (param.size() - 1));
                 for (size_t i = 0; i < param.size(); ++i) {
                     for (size_t ii = 0; ii < sizeof(param[i]); ++ii)
                         this_data[size + 2 + sizeof(float) * i + ii] = reinterpret_cast<std::byte const*>(&param[i])[ii];

@@ -10,12 +10,12 @@
 #include <random> /* for random generator */
 
 #include "include/database/items.hpp"
-#include "include/database/world.hpp"
 #include "include/database/sqlite3.hpp"
 #define ENET_IMPLEMENTATION
 #include "include/network/enet.hpp"
 #include "include/database/peer.hpp"
 #include "include/network/packet.hpp"
+#include "include/database/world.hpp" /* using a packet creation. ugh- I will improve later... */
 
 using namespace std::literals;
 
@@ -47,7 +47,7 @@ namespace github {
 }
 
 int main() {
-    github::sync("8aa995058b6cf0b7db1e8aee2f80d67293e34614");
+    github::sync("cf0846de6f4920b295c161d65e9f0a70a01378ec");
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
@@ -83,7 +83,7 @@ int main() {
     ENetEvent event{};
     while (true) 
     {
-        while (enet_host_service(server, &event, 1000) > 0)
+        while (enet_host_service(server, &event, 0) > 0)
             std::jthread([&](std::stop_token stop)
 	        {
                 LOG(std::format("event.type = {0}", (int)event.type));
@@ -108,11 +108,6 @@ int main() {
                         {
                             case 2: 
                             {
-                                if (header.starts_with("action|refresh_item_data"sv))
-                                {
-                                    gt_packet(*event.peer, 0, "OnConsoleMessage", "One moment, updating item data...");
-                                    enet_peer_send(event.peer, 1, enet_packet_create(im_data.data(), im_data.size(), ENET_PACKET_FLAG_RELIABLE));
-                                }
                                 std::call_once(getpeer->logging_in, [&]() 
                                 {
                                     std::ranges::replace(header, '\n', '|'); /* e.g. requestedName|test\n = requestedName|test| */
@@ -121,7 +116,8 @@ int main() {
                                         read_once[0] == "requestedName" ? 
                                             getpeer->requestedName = read_once[1] + "_" + std::to_string(rand(100, 999)) :
                                             getpeer->tankIDName = read_once[1];
-                                        read_peer(*event.peer);
+                                        if (not getpeer->tankIDName.empty())
+                                            read_peer(*event.peer);
                                         if (not getpeer->tankIDName.empty() and getpeer->tankIDPass not_eq read_once[3])
                                         {
                                             gt_packet(*event.peer, 0, "OnConsoleMessage", "`4Unable to log on:`` That `wGrowID`` doesn't seem valid, or the password is wrong.  If you don't have one, press `wCancel``, un-check `w'I have a GrowID'``, then click `wConnect``.");
@@ -135,51 +131,48 @@ int main() {
                                             offset = 4;
                                         }
                                         getpeer->country = read_once[37 + offset];
+                                        write_peer(*event.peer);
                                     }
                                     gt_packet(*event.peer, 0,
                                         "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
                                         hash, 
                                         "ubistatic-a.akamaihd.net", 
-                                        "0098/4814360719/cache/", 
+                                        "0098/2521452/cache/", 
                                         "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
-                                        "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=133534737|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1"
+                                        "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=12|wing_week_day=0|ubi_week_day=0|server_tick=59197218|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
                                     );
                                 });
-                                if (header.starts_with("action|enter_game"sv))
+                                if (header.starts_with("action|refresh_item_data"sv)) {
+                                    enet_peer_send(event.peer, 0, enet_packet_create(im_data.data(), im_data.size(), ENET_PACKET_FLAG_NO_ALLOCATE));
+                                    break;
+                                }
+                                else if (header.starts_with("action|enter_game"sv))
                                 {
-                                    getpeer->user_id = peers().size();
-                                    getpeer->visual_name = getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName;
-
-                                    gt_packet(*event.peer, 0, "OnFtueButtonDataSet", 0, 0, 0, "|||||");
-                                    gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->visual_name).c_str());
-                                    gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, std::string{getpeer->tankIDName}.c_str(), std::string{getpeer->tankIDName}.c_str());
-                                    auto section = [](auto& range, const char* color) 
+                                    std::call_once(getpeer->entered_game, [&]() 
                                     {
-                                        std::string result;
-                                        for (const auto& name : range)
-                                            if (not name.empty()) /* some may be stored empty but still an object. e.g. std::array */
-                                                result += std::format("add_floater|{}|0|0.5|{}\n", name, color);
-                                        if (not result.empty())
-                                            result.pop_back(); 
-                                        return result;
-                                    };
-                                    gt_packet(*event.peer, 0, "OnRequestWorldSelectMenu", std::format(
-                                        "add_filter|\nadd_heading|Top Worlds<ROW2>|{0}\nadd_heading|My Worlds<CR>|{1}\nadd_heading|Recently Visited Worlds<CR>|{2}",
-                                        "", section(getpeer->locked_worlds, "2147418367"), section(getpeer->recent_worlds, "3417414143")).c_str());
-                                    gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
+                                        getpeer->user_id = peers().size();
+                                        getpeer->visual_name = getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName;
+
+                                        gt_packet(*event.peer, 0, "OnFtueButtonDataSet", 0, 0, 0, "||0|||-1", "", "1|1");
+                                        gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->visual_name).c_str());
+                                        gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, std::string{getpeer->tankIDName}.c_str(), std::string{getpeer->tankIDName}.c_str());
+                                        OnRequestWorldSelectMenu(event);
+                                    });
                                 }
                                 break;
+
                             }
                             case 3: 
                             {
-                                if (header.starts_with("action|quit"sv)) enet_peer_disconnect(event.peer, 0);
-                                if (header.starts_with("action|quit_to_exit"sv)) {
-                                    /* TODO fix when they leave world they get disconnected. */
+                                if (header.contains("action|quit_to_exit"sv)) {
                                     peers([&](ENetPeer& p) {
                                         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
                                             gt_packet(p, 0, "OnRemove", std::format("netID|{}\n", getpeer->netid).c_str());
                                     });
+                                    OnRequestWorldSelectMenu(event);
                                 }
+                                else if (header.contains("action|quit"sv)) 
+                                    enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
                                 else if (header.starts_with("action|join_request"sv)) {
                                     std::ranges::replace(header, '\n', '|');
                                     auto w = std::make_unique<world>();
@@ -199,45 +192,50 @@ int main() {
                                         if (i == 3700 + main_door) b.fg = 8; // Bedrock below the door
                                     }
                                     w->blocks = std::move(blocks); // Move the vector to the destination
-                                    unsigned ySize = w->blocks.size() / 100, xSize = w->blocks.size() / ySize, square = w->blocks.size();
-                                    int alloc = (8 * square) + (w->floating.size() * 16), s1 = 4, s3 = 8;
-                                    size_t namelen = w->name.length();
-	                                int total = 78 + namelen + square + 24 + alloc;
-                                    std::vector<std::byte> data(total, std::byte{0});
-                                    std::ranges::copy(std::as_bytes(std::span{&s1, 1}), data.begin() + 0);
-                                    std::ranges::copy(std::as_bytes(std::span{&s1, 1}), data.begin() + 4);
-                                    std::ranges::copy(std::as_bytes(std::span{&s3, 1}), data.begin() + 16);
-                                    std::ranges::copy(std::as_bytes(std::span{&namelen, 1}), data.begin() + 66);
-                                    std::ranges::copy(std::as_bytes(std::span{w->name.c_str(), 1}), data.begin() + 68);
-                                    std::ranges::copy(std::as_bytes(std::span{&xSize, 1}), data.begin() + 68 + namelen);
-                                    std::ranges::copy(std::as_bytes(std::span{&ySize, 1}), data.begin() + 72 + namelen);
-                                    std::ranges::copy(std::as_bytes(std::span{&square, 1}), data.begin() + 76 + namelen);
-                                    std::byte* blc = data.data() + 80 + namelen;
+                                    unsigned y = w->blocks.size() / 100, x = w->blocks.size() / y;
+                                    int alloc = (8 * w->blocks.size()) + (w->floating.size() * 16), s1 = 4, s3 = 8;
+                                    std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + alloc, std::byte{0x0});
+                                    data[0] = std::byte{0x4};
+                                    data[4] = std::byte{0x4};
+                                    data[16] = std::byte{0x8};
+                                    size_t name_size = w->name.length();
+                                    data[66] = std::byte{name_size};
+                                    for (size_t i = 0; i < name_size; ++i)
+                                        data[68 + i] = static_cast<std::byte>(w->name[i]);
+                                    data[68 + name_size] = std::byte{x};
+                                    data[72 + name_size] = std::byte{y};
+                                    *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(w->blocks.size());
+                                    std::byte* pos = data.data() + 80 + name_size;
                                     std::array<short, 2> spawn_cord{};
-                                    for (int i = 0; i < (int)square; ++i) {
-                                        memcpy(blc, &w->blocks[i].fg, 2);
-                                        memcpy(blc + 2, &w->blocks[i].bg, 2);
-                                        memcpy(blc + 4, &w->blocks[i].flags, 4);
+                                    for (size_t i = 0; i < w->blocks.size(); ++i) {
+                                        *reinterpret_cast<short*>(pos) = w->blocks[i].fg; pos += sizeof(short);
+                                        *reinterpret_cast<short*>(pos + 2) = w->blocks[i].bg; pos += sizeof(short);
+                                        *reinterpret_cast<unsigned*>(pos + 4) = w->blocks[i].flags; pos += sizeof(unsigned);
+                                        /* TODO: fix main door visuals */
                                         if (w->blocks[i].fg == 6) {
-                                            spawn_cord[0] = (i % xSize) * 32, spawn_cord[1] = (i / xSize) * 32;
-                                            std::byte byte = std::byte{0x1};
-                                            memcpy(blc + 8, &byte, sizeof(std::byte));
-                                            short size = short{std::string{"EXIT"}.size()};
-                                            memcpy(blc + 9, &size, sizeof(short));
-                                            memcpy(blc + 11, "EXIT", size);
-                                            blc += 4 + size;
-                                            total += 4 + size;
+                                            spawn_cord[0] = (i % x) * 32;
+                                            spawn_cord[1] = (i / x) * 32;
+                                            *(pos + 8) = std::byte{0x1}; pos += sizeof(std::byte);
+                                            *reinterpret_cast<short*>(pos + 9) = sizeof("EXIT") - 1; pos += sizeof(short);
+                                            for (size_t i = 0; i < sizeof("EXIT") - 1; ++i)
+                                                *(pos + 11 + i) = static_cast<std::byte>(std::string_view{"EXIT"}[i]), pos += sizeof(char);
                                         }
-                                        blc += 8;
                                     }
 	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
                                     getpeer->netid = ++w->visitors;
-                                    gt_packet(*event.peer, 0, "OnSpawn", std::format(
-                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ntitleIcon|\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local",
-                                        getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, getpeer->country).c_str());
-                                    for (std::size_t i = 1; i < getpeer->recent_worlds.size(); ++i)
-                                        getpeer->recent_worlds[i - 1] = getpeer->recent_worlds[i];
+                                    for (std::size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
+                                        getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
                                     getpeer->recent_worlds.back() = w->name;
+                                    gt_packet(*event.peer, 0, "OnSpawn", std::format(
+                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\ntype|local",
+                                        getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, getpeer->country).c_str());
+                                    gt_packet(*event.peer, 0, "OnSetClothing", 
+                                        std::vector<float>{0, 0, 0},
+                                        std::vector<float>{0, 0, 0},
+                                        std::vector<float>{0, 0, 0}, 0/*get real GT normal skin color*/,
+                                        std::vector<float>{0, 0, 0});
+                                    gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
+                                        w->name, w->visitors - 1, peers().size()));
                                 }
                                 break;
                             }

@@ -13,7 +13,7 @@
 class peer {
 public:
     std::once_flag logging_in{}; /* without this, GT will keep pushing peer into the server. */
-    std::once_flag sync_items{};
+    std::once_flag entered_game{}; /* only enter game once. this fixes many problems and to-be problems by exploiters */
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{0}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
 
@@ -41,40 +41,31 @@ std::vector<ENetPeer> peers(std::function<void(ENetPeer&)> fun = [](ENetPeer& pe
     return peers;
 }
 
-void read_peer(ENetPeer& p) 
-{
-    sqlite3* sql;
-        sqlite3_open("peers.db", &sql);
-    std::string peer_table = "\"" + (getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName) + "\"";
-{
-    update_db(sql, std::format(
-        "CREATE TABLE IF NOT EXISTS {0} (name {1}, password {1}, UNIQUE(name));", 
-        peer_table, "TEXT NOT NULL"));
-}
-    update_db(sql, std::format("SELECT name, password FROM {};", peer_table), [](sqlite3_stmt* stmt){}, [&p](sqlite3_stmt* stmt) {
-        auto temp_peer = std::make_unique<peer>();
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            temp_peer->tankIDName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            temp_peer->tankIDPass = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        }
-        p.data = temp_peer.release();
-    });
-    sqlite3_close(sql);
-}
-
 void write_peer(ENetPeer& p)
 {
-    sqlite3* sql;
-        sqlite3_open("peers.db", &sql);
-    std::string peer_table = "\"" + (getp->tankIDName.empty() ? getp->requestedName : getp->tankIDName) + "\"";
+    auto sql = open_db("peers.db");
+    std::string peer_table = "\"" + getp->tankIDName + "\"";
 {
-    update_db(sql, std::format(
+    update_db(sql.get(), std::format(
         "CREATE TABLE IF NOT EXISTS {0} (name {1}, password {1}, UNIQUE(name));", 
         peer_table, "TEXT NOT NULL"));
 }
-    update_db(sql, std::format("INSERT OR REPLACE INTO {} (name, password) VALUES (?, ?);", peer_table), [&p](sqlite3_stmt* stmt) {
+    update_db(sql.get(), std::format("INSERT OR REPLACE INTO {} (name, password) VALUES (?, ?);", peer_table), [&p](sqlite3_stmt* stmt) {
         sqlite3_bind_text(stmt, 1, getp->tankIDName.data(), -1, SQLITE_STATIC);
         sqlite3_bind_text(stmt, 2, getp->tankIDPass.data(), -1, SQLITE_STATIC);
     });
-    sqlite3_close(sql);
+}
+
+bool read_peer(ENetPeer& p) 
+{
+    auto sql = open_db("peers.db");
+    std::string peer_table = "\"" + getp->tankIDName + "\"";
+    update_db(sql.get(), std::format("SELECT name, password FROM {};", peer_table), [](sqlite3_stmt* stmt){}, [&p](sqlite3_stmt* stmt) {
+       auto temp_peer = std::make_unique<peer>();
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            temp_peer->tankIDName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            temp_peer->tankIDPass = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            p.data = temp_peer.release();
+        }
+    });
 }

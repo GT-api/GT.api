@@ -13444,3 +13444,10 @@ std::function<void(sqlite3_stmt*)> after = [](sqlite3_stmt* stmt){})
             std::cerr << std::format("sqlite3_step() warning: {}\n", sqlite3_errmsg(sql));
       sqlite3_finalize(stmt);
 }
+
+std::unique_ptr<sqlite3, decltype(&sqlite3_close)> open_db(const char* db_name) {
+    sqlite3* sql = nullptr;
+    if (sqlite3_open(db_name, &sql) not_eq SQLITE_OK)
+      std::cout << std::format("Could not open {} file", db_name) << std::endl;
+    return {sql, sqlite3_close};
+}

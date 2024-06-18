@@ -47,7 +47,7 @@ namespace github {
 }
 
 int main() {
-    github::sync("0856cf29861744325ee838b216fd2fa02b7874b5");
+    github::sync("033eab648b84b99def7721fc972bf81c54ee9a24");
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 

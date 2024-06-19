@@ -47,7 +47,7 @@ namespace github {
 }
 
 int main() {
-    github::sync("7ae48ab72e4d8e0dfb4c979a190f20dba215291c");
+    github::sync("b537954aef3725f53612f77717d0b2af06a5b229");
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
@@ -189,7 +189,7 @@ int main() {
                                         write_world(w);
                                     }
                                     unsigned y = w->blocks.size() / 100, x = w->blocks.size() / y;
-                                    std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x0});
+                                    std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x00});
                                     data[0] = std::byte{0x4};
                                     data[4] = std::byte{0x4};
                                     data[16] = std::byte{0x8};
@@ -235,7 +235,7 @@ int main() {
                             {
                                 std::unique_ptr<state> state{};
                                 {
-                                    std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x0});
+                                    std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x00});
                                     if ((packet.size() + 4) >= 60) { /* 52, 56... 56 + 4 = 60(?) */ // TODO: learn gtnoob logic (LOL)
                                         for (size_t i = 0; i < packet.size(); ++i)
                                             packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];

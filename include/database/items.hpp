@@ -20,7 +20,7 @@ class item {
     clothing cloth_type{clothing::none};
 }; std::unordered_map<int, item> items;
 
-std::vector<std::byte> im_data(60, std::byte{0x0});
+std::vector<std::byte> im_data(60, std::byte{0x00});
 signed hash{};
 
 template<typename T>

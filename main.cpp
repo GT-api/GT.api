@@ -47,12 +47,12 @@ namespace github {
 }
 
 int main() {
-    github::sync("033eab648b84b99def7721fc972bf81c54ee9a24");
+    github::sync("7ae48ab72e4d8e0dfb4c979a190f20dba215291c");
     if (enet_initialize() not_eq 0) 
         std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
 
     ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
-    
+
     server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 0, 0, 0);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);
@@ -62,28 +62,23 @@ int main() {
             if (file.tellg() < 0) std::cout << "items.dat contains no data" << std::endl, std::cin.ignore();
         std::streamsize im_size = file.tellg();
         im_data.resize(im_size + 60);
-        std::array<int, 4> buffer{0x4, 0x10, -1, 0x8};
-        memcpy(im_data.data(), &buffer[0], sizeof(buffer[0]));
-	    memcpy(im_data.data() + 4, &buffer[1], sizeof(buffer[1]));
-	    memcpy(im_data.data() + 8, &buffer[2], sizeof(buffer[2]));
-	    memcpy(im_data.data() + 16, &buffer[3], sizeof(buffer[3]));
-	    memcpy(im_data.data() + 56, &im_size, 4);
+        for (int i = 0; i < 5; ++i)
+            *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) =  std::array<int, 5>{0x4, 0x10, -1, 0x0, 0x8}[i];
+        *reinterpret_cast<int*>(im_data.data() + 56) = im_size;
         file.seekg(0, std::ios::beg);
         file.read(reinterpret_cast<char*>(im_data.data() + 60), im_size);
-        file.close();
         auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size());
             hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
                 [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
-            LOG(std::format("items.dat hash: {}", hash));
-    }
+    } /* deletes span, calls file.close(), deletes im_size */
     if (cache_items())
         LOG(std::format("cached {0} items from items.dat", items.size()));
-    else LOG("failed to cache items from items.dat");
+    else std::cerr << "failed to cache items from items.dat" << std::endl, std::cin.ignore();
 
     ENetEvent event{};
     while (true) 
     {
-        while (enet_host_service(server, &event, 0) > 0)
+        while (enet_host_service(server, &event, 10) > 0)
             std::jthread([&](std::stop_token stop)
 	        {
                 LOG(std::format("event.type = {0}", (int)event.type));
@@ -95,7 +90,6 @@ int main() {
                         event.peer->data = new peer{};
                         break;
                     case ENET_EVENT_TYPE_DISCONNECT:
-                        write_peer(*event.peer); /* TODO promise */
                         delete getpeer;
                         break;
                     case ENET_EVENT_TYPE_RECEIVE: 
@@ -116,8 +110,6 @@ int main() {
                                         read_once[0] == "requestedName" ? 
                                             getpeer->requestedName = read_once[1] + "_" + std::to_string(rand(100, 999)) :
                                             getpeer->tankIDName = read_once[1];
-                                        if (not getpeer->tankIDName.empty())
-                                            read_peer(*event.peer);
                                         if (not getpeer->tankIDName.empty() and getpeer->tankIDPass not_eq read_once[3])
                                         {
                                             gt_packet(*event.peer, 0, "OnConsoleMessage", "`4Unable to log on:`` That `wGrowID`` doesn't seem valid, or the password is wrong.  If you don't have one, press `wCancel``, un-check `w'I have a GrowID'``, then click `wConnect``.");
@@ -131,7 +123,6 @@ int main() {
                                             offset = 4;
                                         }
                                         getpeer->country = read_once[37 + offset];
-                                        write_peer(*event.peer);
                                     }
                                     gt_packet(*event.peer, 0,
                                         "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
@@ -151,9 +142,10 @@ int main() {
                                     std::call_once(getpeer->entered_game, [&]() 
                                     {
                                         getpeer->user_id = peers().size();
-                                        getpeer->visual_name = getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName;
-                                        gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->visual_name).c_str());
+                                        gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->requestedName).c_str());
                                         gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, getpeer->tankIDName.c_str(), getpeer->tankIDName.c_str());
+                                        getpeer->slots.emplace_back(slot{18, 1});
+                                        getpeer->slots.emplace_back(slot{32, 1});
                                         OnRequestWorldSelectMenu(event);
                                     });
                                 }
@@ -174,30 +166,34 @@ int main() {
                                     enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
                                 else if (header.starts_with("action|join_request"sv)) {
                                     std::ranges::replace(header, '\n', '|');
-                                    auto w = std::make_unique<world>();
-                                    w->name = readpipe(std::string{header})[3];
-                                    std::ranges::transform(w->name, w->name.begin(), [](char c) { return std::toupper(c); });
-                                    auto main_door = rand(2, ((100 * 60) / ((100 * 60) / 100) - 4));
-                                    std::vector<block> blocks(100 * 60, block{0, 0});
-                                    for (auto& b : blocks) {
-                                        auto i = &b - &blocks[0];
-                                        if (i >= 3700) {
-                                            b.bg = 14; // cave background
-                                            b.fg = (i >= 3800 and i < 5000 /* lava level */ and not rand(0, 38)) ? 10 : 
-                                                (i > 5000 and i < 5400 /* bedrock level */ and rand(0, 7) < 3) ? 4 : 
-                                                (i >= 5400) ? 8 : 2;
+                                    std::string big_name{readpipe(std::string{header})[3]}; /* input: test -> TEST */
+                                    std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
+                                    std::unique_ptr<world> w = read_world(big_name);
+                                    if (w == nullptr) /* create a new world */
+                                    {
+                                        w = std::make_unique<world>(world{.name = big_name}); /* replace nullptr with world constructor */
+                                        auto main_door = rand(2, ((100 * 60) / ((100 * 60) / 100) - 4));
+                                        std::vector<block> blocks(100 * 60, block{0, 0});
+                                        for (auto& b : blocks) {
+                                            auto i = &b - &blocks[0];
+                                            if (i >= 3700) {
+                                                b.bg = 14; // cave background
+                                                b.fg = (i >= 3800 and i < 5000 /* lava level */ and not rand(0, 38)) ? 10 : 
+                                                    (i > 5000 and i < 5400 /* bedrock level */ and rand(0, 7) < 3) ? 4 : 
+                                                    (i >= 5400) ? 8 : 2;
+                                            }
+                                            if (i == 3600 + main_door) b.fg = 6; // main door
+                                            if (i == 3700 + main_door) b.fg = 8; // Bedrock below the door
                                         }
-                                        if (i == 3600 + main_door) b.fg = 6; // main door
-                                        if (i == 3700 + main_door) b.fg = 8; // Bedrock below the door
+                                        w->blocks = std::move(blocks);
+                                        write_world(w);
                                     }
-                                    w->blocks = std::move(blocks); // Move the vector to the destination
                                     unsigned y = w->blocks.size() / 100, x = w->blocks.size() / y;
-                                    int alloc = (8 * w->blocks.size()) + (w->floating.size() * 16), s1 = 4, s3 = 8;
-                                    std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + alloc, std::byte{0x0});
+                                    std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x0});
                                     data[0] = std::byte{0x4};
                                     data[4] = std::byte{0x4};
                                     data[16] = std::byte{0x8};
-                                    unsigned char name_size = w->name.length();
+                                    unsigned char name_size = w->name.length(); /* Growtopia limits world name length hence 255 is plenty of space */
                                     data[66] = std::byte{name_size};
                                     for (size_t i = 0; i < name_size; ++i)
                                         data[68 + i] = static_cast<std::byte>(w->name[i]);
@@ -221,25 +217,49 @@ int main() {
                                         }
                                     }
 	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
-                                    getpeer->netid = ++w->visitors;
                                     for (std::size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
                                         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
                                     getpeer->recent_worlds.back() = w->name;
                                     gt_packet(*event.peer, 0, "OnSpawn", std::format(
-                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
-                                        getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->tankIDName.empty() ? getpeer->requestedName : getpeer->tankIDName, getpeer->country).c_str());
+                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\ntype|local\n",
+                                        getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->requestedName, getpeer->country).c_str());
+                                    getpeer->netid = ++w->visitors;
                                     gt_packet(*event.peer, 0, "OnSetPos", std::vector<float>{static_cast<float>(spawn_cord[0]), static_cast<float>(spawn_cord[1])});
                                     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
                                         w->name, w->visitors - 1, peers().size()).c_str());
+                                    inventory_visuals(*event.peer);
                                 }
                                 break;
                             }
                             case 4: 
                             {
-
+                                std::unique_ptr<state> state{};
+                                {
+                                    std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x0});
+                                    if ((packet.size() + 4) >= 60) { /* 52, 56... 56 + 4 = 60(?) */ // TODO: learn gtnoob logic (LOL)
+                                        for (size_t i = 0; i < packet.size(); ++i)
+                                            packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
+                                        if (std::to_integer<unsigned char>(packet[12]) & 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) 
+                                            packet.clear();
+                                    }
+                                    state = get_state(packet);
+                                } /* deletes packet ahead of time */
+                                LOG(std::format("state->type: {}", state->type));
+                                switch (state->type) 
+                                {
+                                    case 0: /* movement */
+                                    {
+                                        LOG(std::format("{0}:{1}", state->pos[0], state->pos[1]));
+                                        break;
+                                    }
+                                    case 3: break; /* placing blocks(?) */
+                                    case 24: break; /* seems to happen before action|enter_game */
+                                    default: break;
+                                }
                                 break;
                             }
                         }
+                        enet_packet_destroy(event.packet); /* cleanup */
                         break;
                     }
                 }

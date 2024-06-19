@@ -35,7 +35,6 @@ bool cache_items() {
     int pos{60}, count{0};
     shift_pos(im_data, pos, version);
     shift_pos(im_data, pos, count);
-    std::string_view token = "PBG892FXX982ABC*";
     items.reserve(count);
     for (int i = 0; i < count; i++) {
         item im{};
@@ -45,7 +44,7 @@ bool cache_items() {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
             for (int i = 0; i < std::move(len); i++)
-                im.raw_name += static_cast<char>(im_data[pos] ^ std::byte(token[(i + im.id) % token.length()])),
+                im.raw_name += static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])),
                 ++pos;
         }
         im.name = im.raw_name;

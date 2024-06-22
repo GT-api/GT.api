@@ -1,10 +1,8 @@
-#include <vector>
-#include <string>
-
 class block {
     public:
     short fg{0}, bg{0};
     unsigned flags{0x00000000};
+    std::string label;
 };
 
 class world {
@@ -83,4 +81,34 @@ void OnRequestWorldSelectMenu(ENetEvent event) {
         "add_filter|\nadd_heading|Top Worlds<ROW2>|{0}\nadd_heading|My Worlds<CR>|{1}\nadd_heading|Recently Visited Worlds<CR>|{2}",
         "", section(getpeer->locked_worlds, "2147418367"), section(getpeer->recent_worlds, "3417414143")).c_str());
     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
+}
+
+void send_data(int a1, std::vector<std::byte> data, void *a4, ENetPeer& peer)
+{
+    size_t size = data.size();
+    if (a1 == 4 and (static_cast<int>(data[12]) bitand 8))
+    {
+        auto packet = enet_packet_create(0, size + *reinterpret_cast<DWORD*>(data.data() + 13) + 5, ENET_PACKET_FLAG_RELIABLE);
+        int four = 4;
+        memcpy(packet->data, &four, 4);
+        memcpy(packet->data + 4, data.data(), size);
+        memcpy(packet->data + size + 4, a4, *reinterpret_cast<DWORD*>(data.data() + 13));
+        enet_peer_send(&peer, 0, packet);
+    }
+    else
+    {
+        auto packet = enet_packet_create(0, size + 5, ENET_PACKET_FLAG_RELIABLE);
+        memcpy(packet->data, &a1, 4);
+        memcpy(packet->data + 4, data.data(), size);
+        enet_peer_send(&peer, 0, packet);
+    }
+}
+
+void state_visuals(ENetEvent& event, state s) {
+    peers([&](ENetPeer& p) {
+            if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) {
+            s.netid = getpeer->netid;
+            send_data(4, compress_state(s), 0, p);
+        }
+    });
 }

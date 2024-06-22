@@ -12,6 +12,8 @@ enum clothing
     ances
 };
 
+#include <unordered_map>
+
 class item {
     public:
     unsigned short id{0}; /* item identity */

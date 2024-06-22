@@ -70,8 +70,6 @@ void gt_packet(ENetPeer& p, signed wait_for, T... params) {
         }()
     ));
     }, std::make_tuple(params...));
-	if (enet_peer_send(&p, 0, enet_packet_create(data.get(), size, ENET_PACKET_FLAG_RELIABLE)) == 0) 
-        LOG(std::format("Released Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size));
-    else LOG(std::format("Invalid Packet; Name: {0}; Size: {1} bytes", std::get<0>(std::make_tuple(params...)), size) );
+	if (enet_peer_send(&p, 0, enet_packet_create(data.get(), size, ENET_PACKET_FLAG_RELIABLE)) < 0) return;
     
 };

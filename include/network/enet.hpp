@@ -32,6 +32,7 @@
  * SOFTWARE.
  *
  */
+#define ENET_IMPLEMENTATION
 #ifndef ENET_INCLUDE_H
 #define ENET_INCLUDE_H
 

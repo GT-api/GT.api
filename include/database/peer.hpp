@@ -1,20 +1,13 @@
 /* child: packet.hpp */
 /* parent: items.hpp */
-#define DEBUG
-
-#include <mutex>
-
-#if defined(DEBUG)
-#define LOG(message) std::clog << (message) << std::endl
-#else
-#define LOG(message)
-#endif
 
 class slot {
     public:
     short id{0}; /* item id */
     short count{0}; /* the total amount of that item in that slot */
 };
+
+#include <mutex> /* std::once_flag */
 
 class peer {
 public:
@@ -40,6 +33,7 @@ public:
 #define getpeer static_cast<peer*>(event.peer->data)
 #define getp static_cast<peer*>(p.data)
 
+#include <functional>
 ENetHost* server;
 
 std::vector<ENetPeer> peers(std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){}) {
@@ -76,20 +70,34 @@ std::unique_ptr<state> get_state(const std::vector<std::byte>& packet) {
     return s;
 }
 
+/* put it back into it's original form */
+std::vector<std::byte> compress_state(state s)
+{
+    std::vector<std::byte> data(56, std::byte{0x00});
+    memcpy(data.data(), &s.type, sizeof(int));
+    memcpy(data.data() + 4, &s.netid, sizeof(int));
+    memcpy(data.data() + 12, &s.peer_state, sizeof(int));
+    memcpy(data.data() + 20, &s.id, sizeof(int));
+    memcpy(data.data() + 24, &s.pos[0], sizeof(float));
+    memcpy(data.data() + 28, &s.pos[1], sizeof(float));
+    memcpy(data.data() + 32, &s.speed[0], sizeof(float));
+    memcpy(data.data() + 36, &s.speed[1], sizeof(float));
+    memcpy(data.data() + 44, &s.punch[0], sizeof(float));
+    memcpy(data.data() + 48, &s.punch[1], sizeof(float));
+    return data;
+}
+
 void inventory_visuals(ENetPeer& p)
 {
 	int size = getp->slots.size();
-    std::vector<std::byte> data(66 + (size * 4) + 4, std::byte(0x0));
+    std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte(0x0));
     std::array<int, 5> buffer{0x4, 0x9, -1, 0x0/* unknown data */, 0x8}; 
     *reinterpret_cast<std::array<int, 5>*>(data.data()) = buffer;
-    *reinterpret_cast<int*>(data.data() + 66 - 4) = _byteswap_ulong(size);
-    *reinterpret_cast<int*>(data.data() + 66 - 8) = _byteswap_ulong(getp->slot_size);
+    *reinterpret_cast<int*>(data.data() + 66 - sizeof(int)) = _byteswap_ulong(size);
+    *reinterpret_cast<int*>(data.data() + 66 - (2 * sizeof(int))) = _byteswap_ulong(getp->slot_size);
     for (int i = 0; i < size; ++i)
-    {
-        int val = static_cast<int>(getp->slots.at(i).id) | (static_cast<int>(getp->slots.at(i).count) << 16);
-        val &= 0x00FFFFFF;
-        val |= 0x00 << 24;
-        *reinterpret_cast<int*>(data.data() + (i * 4) + 66) = val;
-    }
-	enet_peer_send(&p, 0, enet_packet_create(data.data(), 66 + (size * 4) + 4, ENET_PACKET_FLAG_RELIABLE));
+        *reinterpret_cast<int*>(data.data() + (i * sizeof(int)) + 66) = 
+            ((static_cast<int>(getp->slots.at(i).id) bitor (static_cast<int>(getp->slots.at(i).count) << 16) bitand 0x00FFFFFF) bitor (0x00 << 24));
+            
+	enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

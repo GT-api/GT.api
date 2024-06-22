@@ -1,65 +1,50 @@
-#include <iostream>
-#include <fstream>
-#include <format> /* enhanced string arguements & better logging */
-#include <thread> /* std::jthread() & std::chrono / std::this_thread */
+#include <ranges> /* std::ranges:: */
+#include <algorithm> /* string manipulation */
 #include <vector>
-#include <numeric> /* accumulate for items.dat hash (acc for short) */
-#include <unordered_map>
-#include <ranges>
-#include <algorithm>
-#include <random> /* for random generator */
 
 #include "include/database/items.hpp"
-#include "include/database/sqlite3.hpp"
-#define ENET_IMPLEMENTATION
 #include "include/network/enet.hpp"
+#include <memory> /* std::unique_ptr<>  */
 #include "include/database/peer.hpp"
+#include "include/database/sqlite3.hpp"
 #include "include/network/packet.hpp"
-#include "include/database/world.hpp" /* using a packet creation. ugh- I will improve later... */
+#include "include/database/world.hpp"
 
-using namespace std::literals;
+#include <random> /* std::minstd_rand */
 
-/* 
-@param str the whole content
-@brief reads a string and seperates the pipes '|' and stores those pieces of info into a vector.
-@return std::vector<std::string> of all the seperations of the pipes '|' e.g. Name|myName -> readpipe[1] = myName
-*/
-std::vector<std::string> readpipe(const std::string& str) {
-    std::vector<std::string> separations;
-    for (auto&& part : str | std::views::split('|'))
-        separations.emplace_back(std::string(std::ranges::begin(part), std::ranges::end(part)));
-    return separations;
-}
-
-int rand(const int min, const int max) {
-    static std::random_device device;
-    static std::mt19937 mt(device());
-    std::uniform_int_distribution<> distribution(min, max);
-    return distribution(mt);
-}
-
-/** @brief An adaptive order-2 PPM range coder */ // -> compress.o
-int enet_host_compress_with_range_coder (ENetHost* host);
+/* a completely random randomizer */ // -> TODO: compress inside a .o file
+class seed {
+    public:
+    seed() : lcr(device()) {}
+    /* @brief get a random number effectively. */
+    uint_fast32_t fast(const uint_fast32_t min, const uint_fast32_t max) 
+    { 
+        return std::uniform_int_distribution<uint_fast32_t>(min, max)(lcr); 
+    }
+    private:
+    std::random_device device; /* a device to be wrapped in the (LCR) engine */
+    std::minstd_rand lcr; /* reusable (LCR) engine */
+};
 
 namespace github {
-    /* @brief checks if commit is the latest on the main branch. */
-    void sync(const char* commit); 
+    void sync(const char* commit); // -> github.o
 }
 
+#include <fstream> /* std::ifstream */
+#include <thread> /* std::jthread */
+
 int main() {
-    github::sync("b537954aef3725f53612f77717d0b2af06a5b229");
-    if (enet_initialize() not_eq 0) 
-        std::cerr << "enet_initialize() failed" << std::endl, std::cin.ignore();
+    github::sync("8f0b1cb19bdd8d70eadc432ef25a5932141fc40f");
+    enet_initialize();
 
     ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
 
+    int enet_host_compress_with_range_coder(ENetHost* host); // -> compress.o
     server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 0, 0, 0);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);
     {
         std::ifstream file("items.dat", std::ios::binary | std::ios::ate);
-            if (not file) std::cout << "failed to open items.dat" << std::endl, std::cin.ignore();
-            if (file.tellg() < 0) std::cout << "items.dat contains no data" << std::endl, std::cin.ignore();
         std::streamsize im_size = file.tellg();
         im_data.resize(im_size + 60);
         for (int i = 0; i < 5; ++i)
@@ -71,21 +56,19 @@ int main() {
             hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
                 [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
     } /* deletes span, calls file.close(), deletes im_size */
-    if (cache_items())
-        LOG(std::format("cached {0} items from items.dat", items.size()));
-    else std::cerr << "failed to cache items from items.dat" << std::endl, std::cin.ignore();
+    cache_items();
 
     ENetEvent event{};
     while (true) 
     {
         while (enet_host_service(server, &event, 10) > 0)
+	    {
             std::jthread([&](std::stop_token stop)
 	        {
-                LOG(std::format("event.type = {0}", (int)event.type));
                 switch (event.type) 
                 {
                     case ENET_EVENT_TYPE_NONE: break;
-				    case ENET_EVENT_TYPE_CONNECT:
+                    case ENET_EVENT_TYPE_CONNECT:
                         if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
                         event.peer->data = new peer{};
                         break;
@@ -94,21 +77,23 @@ int main() {
                         break;
                     case ENET_EVENT_TYPE_RECEIVE: 
                     {
-                        LOG(std::format("event.packet->data = {0}", std::span{event.packet->data, event.packet->dataLength}[0]));
+                        /** @return list of the pipes '|' */
+                        std::vector<std::string> readpipe(const std::string& str); // -> utility.o
+
                         std::span packet{reinterpret_cast<char*>(event.packet->data), event.packet->dataLength};
                             std::string header{packet.begin() + 4, packet.end() - 1};
                         switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                         {
                             case 2: 
                             {
-                                LOG(header);
                                 std::call_once(getpeer->logging_in, [&]() 
                                 {
                                     std::ranges::replace(header, '\n', '|'); /* e.g. requestedName|test\n = requestedName|test| */
-                                    std::vector<std::string> read_once = readpipe(std::string{header}); 
+                                    std::vector<std::string> read_once = readpipe(header); 
+                                    seed random{};
                                     if (read_once[0] == "requestedName" or read_once[0] == "tankIDName") {
                                         read_once[0] == "requestedName" ? 
-                                            getpeer->requestedName = read_once[1] + "_" + std::to_string(rand(100, 999)) :
+                                            getpeer->requestedName = read_once[1] + "_" + std::to_string(random.fast(100, 999)) :
                                             getpeer->tankIDName = read_once[1];
                                         if (not getpeer->tankIDName.empty() and getpeer->tankIDPass not_eq read_once[3])
                                         {
@@ -133,11 +118,11 @@ int main() {
                                         "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=12|wing_week_day=0|ubi_week_day=0|server_tick=59197218|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
                                     );
                                 });
-                                if (header.starts_with("action|refresh_item_data"sv)) {
+                                if (header.starts_with("action|refresh_item_data")) {
                                     enet_peer_send(event.peer, 0, enet_packet_create(im_data.data(), im_data.size(), ENET_PACKET_FLAG_NO_ALLOCATE));
                                     break;
                                 }
-                                else if (header.starts_with("action|enter_game"sv))
+                                else if (header.starts_with("action|enter_game"))
                                 {
                                     std::call_once(getpeer->entered_game, [&]() 
                                     {
@@ -146,6 +131,7 @@ int main() {
                                         gt_packet(*event.peer, 0, "SetHasGrowID", getpeer->tankIDName.empty() ? 0 : 1, getpeer->tankIDName.c_str(), getpeer->tankIDName.c_str());
                                         getpeer->slots.emplace_back(slot{18, 1});
                                         getpeer->slots.emplace_back(slot{32, 1});
+                                        getpeer->slots.emplace_back(slot{2, 200});
                                         OnRequestWorldSelectMenu(event);
                                     });
                                 }
@@ -154,32 +140,32 @@ int main() {
                             }
                             case 3: 
                             {
-                                LOG(header);
-                                if (header.contains("action|quit_to_exit"sv)) {
+                                if (header.contains("action|quit_to_exit")) {
                                     peers([&](ENetPeer& p) {
                                         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
                                             gt_packet(p, 0, "OnRemove", std::format("netID|{}\n", getpeer->netid).c_str());
                                     });
                                     OnRequestWorldSelectMenu(event);
                                 }
-                                else if (header.contains("action|quit"sv)) 
+                                else if (header.contains("action|quit")) 
                                     enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
-                                else if (header.starts_with("action|join_request"sv)) {
+                                else if (header.starts_with("action|join_request")) {
                                     std::ranges::replace(header, '\n', '|');
-                                    std::string big_name{readpipe(std::string{header})[3]}; /* input: test -> TEST */
+                                    std::string big_name{readpipe(std::string{header})[3]};
                                     std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
                                     std::unique_ptr<world> w = read_world(big_name);
                                     if (w == nullptr) /* create a new world */
                                     {
                                         w = std::make_unique<world>(world{.name = big_name}); /* replace nullptr with world constructor */
-                                        auto main_door = rand(2, ((100 * 60) / ((100 * 60) / 100) - 4));
+                                        seed random{};
+                                        auto main_door = random.fast(2, ((100 * 60) / ((100 * 60) / 100) - 4));
                                         std::vector<block> blocks(100 * 60, block{0, 0});
                                         for (auto& b : blocks) {
                                             auto i = &b - &blocks[0];
                                             if (i >= 3700) {
                                                 b.bg = 14; // cave background
-                                                b.fg = (i >= 3800 and i < 5000 /* lava level */ and not rand(0, 38)) ? 10 : 
-                                                    (i > 5000 and i < 5400 /* bedrock level */ and rand(0, 7) < 3) ? 4 : 
+                                                b.fg = (i >= 3800 and i < 5000 /* lava level */ and not random.fast(0, 38)) ? 10 : 
+                                                    (i > 5000 and i < 5400 /* bedrock level */ and random.fast(0, 7) < 3) ? 4 : 
                                                     (i >= 5400) ? 8 : 2;
                                             }
                                             if (i == 3600 + main_door) b.fg = 6; // main door
@@ -188,7 +174,7 @@ int main() {
                                         w->blocks = std::move(blocks);
                                         write_world(w);
                                     }
-                                    unsigned y = w->blocks.size() / 100, x = w->blocks.size() / y;
+                                    short y = w->blocks.size() / 100, x = w->blocks.size() / y;
                                     std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x00});
                                     data[0] = std::byte{0x4};
                                     data[4] = std::byte{0x4};
@@ -200,31 +186,31 @@ int main() {
                                     data[68 + name_size] = static_cast<std::byte>(x);
                                     data[72 + name_size] = static_cast<std::byte>(y);
                                     *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(w->blocks.size());
-                                    std::byte* pos = data.data() + 80 + name_size;
-                                    std::array<short, 2> spawn_cord{};
+                                    int pos = 85 + name_size;
                                     for (size_t i = 0; i < w->blocks.size(); ++i) {
-                                        *reinterpret_cast<short*>(pos) = w->blocks[i].fg; pos += sizeof(short);
-                                        *reinterpret_cast<short*>(pos + 2) = w->blocks[i].bg; pos += sizeof(short);
-                                        *reinterpret_cast<unsigned*>(pos + 4) = w->blocks[i].flags; pos += sizeof(unsigned);
-                                        /* TODO: fix main door visuals */
+                                        *reinterpret_cast<short*>(data.data() + pos) = w->blocks[i].fg;
+                                        *reinterpret_cast<short*>(data.data() + (pos + 2)) = w->blocks[i].bg;
+                                        *reinterpret_cast<unsigned*>(data.data() + (pos + 4)) = w->blocks[i].flags;
                                         if (w->blocks[i].fg == 6) {
-                                            spawn_cord[0] = (i % x) * 32;
-                                            spawn_cord[1] = (i / x) * 32;
-                                            *(pos + 8) = std::byte{0x1}; pos += sizeof(std::byte);
-                                            *reinterpret_cast<short*>(pos + 9) = sizeof("EXIT") - 1; pos += sizeof(short);
-                                            for (size_t i = 0; i < sizeof("EXIT") - 1; ++i)
-                                                *(pos + 11 + i) = static_cast<std::byte>(std::string_view{"EXIT"}[i]), pos += sizeof(char);
+                                            getpeer->pos[0] = (i % x) * 32;
+                                            getpeer->pos[1] = (i / x) * 32;
+                                            data[pos + 8] = std::byte{0x1};
+                                            *reinterpret_cast<short*>(data.data() + pos + 9) = 4;
+                                            for (size_t i = 0; i < 4; ++i)
+                                                data[pos + 11 + i] = static_cast<std::byte>(std::string_view{"EXIT"}[i]);
+                                            pos += 8;
                                         }
+                                        pos += 8;
                                     }
-	                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
+                                    enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
                                     for (std::size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
                                         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
                                     getpeer->recent_worlds.back() = w->name;
+                                    getpeer->netid = ++w->visitors;
                                     gt_packet(*event.peer, 0, "OnSpawn", std::format(
                                         "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\ntype|local\n",
-                                        getpeer->netid, getpeer->user_id, spawn_cord[0], spawn_cord[1], getpeer->requestedName, getpeer->country).c_str());
-                                    getpeer->netid = ++w->visitors;
-                                    gt_packet(*event.peer, 0, "OnSetPos", std::vector<float>{static_cast<float>(spawn_cord[0]), static_cast<float>(spawn_cord[1])});
+                                        getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->requestedName, getpeer->country).c_str());
+                                    gt_packet(*event.peer, 0, "OnSetPos", std::vector<float>{getpeer->pos[0], getpeer->pos[1]});
                                     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
                                         w->name, w->visitors - 1, peers().size()).c_str());
                                     inventory_visuals(*event.peer);
@@ -236,23 +222,24 @@ int main() {
                                 std::unique_ptr<state> state{};
                                 {
                                     std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x00});
-                                    if ((packet.size() + 4) >= 60) { /* 52, 56... 56 + 4 = 60(?) */ // TODO: learn gtnoob logic (LOL)
+                                    if ((packet.size() + 4) >= 60) {
                                         for (size_t i = 0; i < packet.size(); ++i)
                                             packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
-                                        if (std::to_integer<unsigned char>(packet[12]) & 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) 
+                                        if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) 
                                             packet.clear();
                                     }
                                     state = get_state(packet);
                                 } /* deletes packet ahead of time */
-                                LOG(std::format("state->type: {}", state->type));
                                 switch (state->type) 
                                 {
-                                    case 0: /* movement */
-                                    {
-                                        LOG(std::format("{0}:{1}", state->pos[0], state->pos[1]));
+                                    case 0: {
+                                        state_visuals(event, *state); /* show peer moving (everyone) */
                                         break;
                                     }
-                                    case 3: break; /* placing blocks(?) */
+                                    case 3: case 18: {
+                                        state_visuals(event, *state); /* show tile being broken or placed (everyone) */
+                                        break;
+                                    }
                                     case 24: break; /* seems to happen before action|enter_game */
                                     default: break;
                                 }
@@ -264,6 +251,7 @@ int main() {
                     }
                 }
 	        });
+        }
     }
     return 0;
 }

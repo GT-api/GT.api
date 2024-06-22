@@ -18,6 +18,7 @@
                 ".\\include\\sqlite3.o",
                 ".\\include\\compress.o",
                 ".\\include\\github.o",
+                ".\\include\\utility.o",
                 "-lws2_32",
                 "-lwinmm",
                 "-lpthread",

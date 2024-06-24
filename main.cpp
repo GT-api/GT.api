@@ -12,34 +12,30 @@
 
 #include <random> /* std::minstd_rand */
 
-/* a completely random randomizer */ // -> TODO: compress inside a .o file
-class seed {
-    public:
-    seed() : lcr(device()) {}
-    /* @brief get a random number effectively. */
+class seed 
+{
+    std::minstd_rand lcg;
+    std::uniform_int_distribution<uint_fast32_t> uniform;
+public:
+    seed() : lcg(std::chrono::system_clock::now().time_since_epoch().count()) {}
     uint_fast32_t fast(const uint_fast32_t min, const uint_fast32_t max) 
-    { 
-        return std::uniform_int_distribution<uint_fast32_t>(min, max)(lcr); 
+    {
+        return (uniform.param(std::uniform_int_distribution<uint_fast32_t>
+            ::param_type(min, max > 2147483647UL ? 2147483647UL : max)), uniform(lcg)); 
     }
-    private:
-    std::random_device device; /* a device to be wrapped in the (LCR) engine */
-    std::minstd_rand lcr; /* reusable (LCR) engine */
 };
-
-namespace github {
-    void sync(const char* commit); // -> github.o
-}
 
 #include <fstream> /* std::ifstream */
 #include <thread> /* std::jthread */
 
 int main() {
-    github::sync("8f0b1cb19bdd8d70eadc432ef25a5932141fc40f");
+    void github_sync(const char* commit); // -> import github.o
+    github_sync("e6dbfa250ac67754421772094b8c5e6f5c8a0733");
     enet_initialize();
 
     ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
 
-    int enet_host_compress_with_range_coder(ENetHost* host); // -> compress.o
+    int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
     server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 0, 0, 0);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);
@@ -78,7 +74,7 @@ int main() {
                     case ENET_EVENT_TYPE_RECEIVE: 
                     {
                         /** @return list of the pipes '|' */
-                        std::vector<std::string> readpipe(const std::string& str); // -> utility.o
+                        std::vector<std::string> readpipe(const std::string& str); // -> import utility.o
 
                         std::span packet{reinterpret_cast<char*>(event.packet->data), event.packet->dataLength};
                             std::string header{packet.begin() + 4, packet.end() - 1};
@@ -115,7 +111,7 @@ int main() {
                                         "ubistatic-a.akamaihd.net", 
                                         "0098/2521452/cache/", 
                                         "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
-                                        "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=12|wing_week_day=0|ubi_week_day=0|server_tick=59197218|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
+                                        "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=8643774|clash_active=1|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
                                     );
                                 });
                                 if (header.starts_with("action|refresh_item_data")) {
@@ -141,10 +137,17 @@ int main() {
                             case 3: 
                             {
                                 if (header.contains("action|quit_to_exit")) {
-                                    peers([&](ENetPeer& p) {
-                                        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
-                                            gt_packet(p, 0, "OnRemove", std::format("netID|{}\n", getpeer->netid).c_str());
+                                    std::unique_ptr<world> w = read_world(getpeer->recent_worlds.back());
+                                    peers([&](ENetPeer& p) 
+                                    {
+                                        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) 
+                                        {
+                                            gt_packet(p, 0, "OnConsoleMessage", std::format("`5<`w{0}`` left, `w{1}`` others here>``", getpeer->requestedName, --worlds[w->name].visitors).c_str());
+                                            gt_packet(p, 0, "OnRemove", std::format("netID|{}\npId|\n", getpeer->netid).c_str());
+                                        }
                                     });
+                                    if (worlds[w->name].visitors <= 0)
+                                        worlds.erase(w->name);
                                     OnRequestWorldSelectMenu(event);
                                 }
                                 else if (header.contains("action|quit")) 
@@ -172,8 +175,9 @@ int main() {
                                             if (i == 3700 + main_door) b.fg = 8; // Bedrock below the door
                                         }
                                         w->blocks = std::move(blocks);
-                                        write_world(w);
+                                        register_world(w);
                                     }
+                                    getpeer->netid = ++w->visitors; // TODO: mutex
                                     short y = w->blocks.size() / 100, x = w->blocks.size() / y;
                                     std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x00});
                                     data[0] = std::byte{0x4};
@@ -203,17 +207,28 @@ int main() {
                                         pos += 8;
                                     }
                                     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
-                                    for (std::size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
+                                    for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
                                         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
                                     getpeer->recent_worlds.back() = w->name;
-                                    getpeer->netid = ++w->visitors;
-                                    gt_packet(*event.peer, 0, "OnSpawn", std::format(
-                                        "spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\ntype|local\n",
+                                    gt_packet(*event.peer, 0, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
                                         getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->requestedName, getpeer->country).c_str());
+                                    peers([&](ENetPeer& p) 
+                                    {
+                                        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->netid not_eq getpeer->netid)
+                                        {
+                                            gt_packet(*event.peer, 0, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
+                                                getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->requestedName, getp->country).c_str());
+                                            gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+                                                getpeer->requestedName, w->visitors).c_str());
+                                            gt_packet(*event.peer, 0, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+                                                getpeer->requestedName, w->visitors).c_str());
+                                        }
+                                    });
                                     gt_packet(*event.peer, 0, "OnSetPos", std::vector<float>{getpeer->pos[0], getpeer->pos[1]});
                                     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
                                         w->name, w->visitors - 1, peers().size()).c_str());
                                     inventory_visuals(*event.peer);
+                                    worlds.emplace(w->name, *w);
                                 }
                                 break;
                             }
@@ -236,7 +251,27 @@ int main() {
                                         state_visuals(event, *state); /* show peer moving (everyone) */
                                         break;
                                     }
-                                    case 3: case 18: {
+                                    case 3: {
+                                        int block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((x * y)) formula */
+                                        if (state->id == 18) {
+                                            block_punched(event, *state, block1D);
+                                            if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg not_eq 0)
+                                            if (worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0] > 0) break;
+                                            else {
+                                                auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
+                                                worlds[getpeer->recent_worlds.back()].blocks[block1D].fg = 0; 
+                                                overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]);
+                                                state_visuals(event, *state);
+                                            }
+                                            if (worlds[getpeer->recent_worlds.back()].blocks[block1D].bg not_eq 0)
+                                            if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 0 and worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1] > 0) break;
+                                            else {
+                                                auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
+                                                worlds[getpeer->recent_worlds.back()].blocks[block1D].bg = 0;
+                                                overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]);
+                                                state_visuals(event, *state);
+                                            }
+                                        }
                                         state_visuals(event, *state); /* show tile being broken or placed (everyone) */
                                         break;
                                     }

@@ -1,36 +1,61 @@
+
 class block {
     public:
     short fg{0}, bg{0};
     unsigned flags{0x00000000};
-    std::string label;
+
+    std::array<int, 2> hits{3, 3}; /* fg, bg */ // -> stack object
 };
 
 class world {
     public:
     short x{100}, y{60};
-    std::string name{};
-    short visitors{0};
-    std::vector<block> blocks;
-};
+    std::string name{}; /* world name */
+    short visitors{0}; // -> stack object
+    std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
+}; 
+/* modify stack objects easily. these objects will remain in the stack not in world.db */
+std::unordered_map<std::string, world> worlds{}; 
 
-void write_world(std::unique_ptr<world>& w) {
+/* @brief push back a world in world.db */
+void register_world(std::unique_ptr<world>& w) {
     sqlite3* db;
     sqlite3_open("world.db", &db);
     std::string table = "CREATE TABLE IF NOT EXISTS \"" + w->name + "\" ("
+                        "id INTEGER PRIMARY KEY, "
                         "fg INTEGER, "
                         "bg INTEGER);";
     sqlite3_exec(db, table.c_str(), nullptr, nullptr, nullptr);
     sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-    std::string insert_sql = "INSERT INTO " + w->name + " (fg, bg) VALUES (?, ?);";
+    std::string insert_sql = "INSERT INTO " + w->name + " (id, fg, bg) VALUES (?, ?, ?);";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, insert_sql.c_str(), -1, &stmt, nullptr);
-    for (const auto& block : w->blocks) {
-        sqlite3_bind_int(stmt, 1, block.fg);
-        sqlite3_bind_int(stmt, 2, block.bg);
+    for (size_t i = 0; i < w->blocks.size(); ++i) {
+        sqlite3_bind_int(stmt, 1, i);
+        sqlite3_bind_int(stmt, 2, w->blocks[i].fg);
+        sqlite3_bind_int(stmt, 3, w->blocks[i].bg);
         sqlite3_step(stmt);
         sqlite3_reset(stmt);
     }
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+}
+
+/*
+ @brief updates world.db for only 1 tile. this may save memory however the commit of opening world.db is already costly, please call this function sparingly
+    NEVER use this function if your only updating worlds stack objects! these objects are not store-worthly
+*/
+void overwrite_tile(std::unique_ptr<world>& w, int blockID, block b) {
+    sqlite3* db;
+    sqlite3_open("world.db", &db);
+    std::string update_sql = "UPDATE " + w->name + " SET fg = ?, bg = ? WHERE id = ?;";
+    sqlite3_stmt* stmt;
+    sqlite3_prepare_v2(db, update_sql.c_str(), -1, &stmt, nullptr);
+    sqlite3_bind_int(stmt, 1, b.fg);
+    sqlite3_bind_int(stmt, 2, b.bg);
+    sqlite3_bind_int(stmt, 3, blockID);
+    sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 }
@@ -83,32 +108,39 @@ void OnRequestWorldSelectMenu(ENetEvent event) {
     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
 }
 
-void send_data(int a1, std::vector<std::byte> data, void *a4, ENetPeer& peer)
+void send_data(ENetPeer& peer, std::vector<std::byte> data)
 {
     size_t size = data.size();
-    if (a1 == 4 and (static_cast<int>(data[12]) bitand 8))
-    {
-        auto packet = enet_packet_create(0, size + *reinterpret_cast<DWORD*>(data.data() + 13) + 5, ENET_PACKET_FLAG_RELIABLE);
-        int four = 4;
-        memcpy(packet->data, &four, 4);
-        memcpy(packet->data + 4, data.data(), size);
-        memcpy(packet->data + size + 4, a4, *reinterpret_cast<DWORD*>(data.data() + 13));
-        enet_peer_send(&peer, 0, packet);
-    }
-    else
-    {
-        auto packet = enet_packet_create(0, size + 5, ENET_PACKET_FLAG_RELIABLE);
-        memcpy(packet->data, &a1, 4);
-        memcpy(packet->data + 4, data.data(), size);
-        enet_peer_send(&peer, 0, packet);
-    }
+    unsigned four = 4;
+    auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
+    memcpy(packet->data, &four, sizeof(unsigned));
+    memcpy(packet->data + 4, data.data(), size);
+    if (static_cast<int>(data[12]) bitand 0x8)
+        enet_packet_resize(packet, packet->dataLength + *std::bit_cast<DWORD*>(data.data() + 13)); /* resizes cause of data[12] -> peer_state */
+    enet_peer_send(&peer, 0, packet);
 }
 
 void state_visuals(ENetEvent& event, state s) {
     peers([&](ENetPeer& p) {
             if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) {
             s.netid = getpeer->netid;
-            send_data(4, compress_state(s), 0, p);
+            send_data(p, compress_state(s));
         }
     });
+}
+
+void block_punched(ENetEvent& event, state s, int block1D) {
+    worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 0 ?
+    worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1]-- :
+    worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0]--;
+    s.type = 8; /* change packet type from 3 to 8. */
+    s.id = 6; /* hit phase visuals */
+    std::vector<std::byte> data = compress_state(s);
+    for (size_t i = 0; i < sizeof(int); ++i)
+        data[8 + i] = static_cast<std::byte>((0 >> (i * 8)) & 0xFF); // TODO
+	peers([&](ENetPeer& p) 
+    {
+        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
+		    send_data(p, data);
+	});
 }

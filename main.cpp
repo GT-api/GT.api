@@ -9,27 +9,13 @@
 #include "include/database/sqlite3.hpp"
 #include "include/network/packet.hpp"
 #include "include/database/world.hpp"
-
-#include <random> /* std::minstd_rand */
-
-class seed 
-{
-    std::minstd_rand lcg;
-    std::uniform_int_distribution<uint_fast32_t> uniform;
-public:
-    seed() : lcg(std::chrono::system_clock::now().time_since_epoch().count()) {}
-    uint_fast32_t fast(const uint_fast32_t min, const uint_fast32_t max) 
-    {
-        return (uniform.param(std::uniform_int_distribution<uint_fast32_t>
-            ::param_type(min, max > 2147483647UL ? 2147483647UL : max)), uniform(lcg)); 
-    }
-};
+#include "include/tools/random_engine.hpp"
 
 #include <fstream> /* std::ifstream */
 
 int main() {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("54f25cf58814d9cc09f3cb5716a86fc9427b83d6");
+    github_sync("1e46698cb97840821d073af853c26525022835da");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -55,13 +41,10 @@ int main() {
     cache_items();
 
     ENetEvent event{};
-    while (true) 
-    {
-        while (enet_host_service(server, &event, 10) > 0)
-	    {
+    while(true)
+        while (enet_host_service(server, &event, 1) > 0)
             switch (event.type) 
             {
-                case ENET_EVENT_TYPE_NONE: break;
                 case ENET_EVENT_TYPE_CONNECT:
                     if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
                     event.peer->data = new peer{};
@@ -132,12 +115,9 @@ int main() {
                                 std::unique_ptr<world> w = read_world(getpeer->recent_worlds.back());
                                 peers([&](ENetPeer& p) 
                                 {
-                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) 
+                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id) 
                                     {
-                                        if (getp->user_id not_eq getpeer->user_id)
-                                            gt_packet(p, 0, "OnConsoleMessage", std::format("`5<`w{0}`` left, `w{1}`` others here>``", getpeer->requestedName, --worlds[w->name].visitors).c_str());
-                                        
-                                        /* TODO: does OnRemove also get sent to event.peer? */
+                                        gt_packet(p, 0, "OnConsoleMessage", std::format("`5<`w{0}`` left, `w{1}`` others here>``", getpeer->requestedName, --worlds[w->name].visitors).c_str());
                                         gt_packet(p, 0, "OnRemove", std::format("netID|{}\npId|\n", getpeer->netid).c_str());
                                     }
                                 });
@@ -156,7 +136,7 @@ int main() {
                                 {
                                     w = std::make_unique<world>(world{.name = big_name}); /* replace nullptr with world constructor */
                                     seed random{};
-                                    auto main_door = random.fast(2, ((100 * 60) / ((100 * 60) / 100) - 4));
+                                    auto main_door = random.fast(2, 100 * 60 / 100 - 4);
                                     std::vector<block> blocks(100 * 60, block{0, 0});
                                     for (auto& b : blocks) 
                                     {
@@ -248,15 +228,26 @@ int main() {
                             {
                                 case 3: 
                                 {
-                                    short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((x * y)) formula */
-                                    if (state->id == 18) /* punching blocks */
+                                    short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((destY * y + destX)) formula */
+                                    if (state->id == 18 and worlds[getpeer->recent_worlds.back()].blocks[block1D].bg not_eq 0/* blank */) /* punching blocks */
                                     {
+                                        // ... TODO add a timer that resets hits every 6-8 seconds (threaded stopwatch)
+                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 8/* bedrock */) {
+                                            gt_packet(*event.peer, 0, "OnTalkBubble", getpeer->netid, "It's too strong to break.");
+                                            break;
+                                        }
+                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 6/* main door */ and 
+                                            worlds[getpeer->recent_worlds.back()].blocks[static_cast<int>(state->pos[1]) + static_cast<int>(state->pos[0])].fg not_eq 6) 
+                                        {
+                                            gt_packet(*event.peer, 0, "OnTalkBubble", getpeer->netid, "(stand over and punch to use)");
+                                            break;
+                                        }
                                         block_punched(event, *state, block1D);
+                                        auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
                                         if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg not_eq 0)
                                         if (worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0] < items[worlds[getpeer->recent_worlds.back()].blocks[block1D].fg].hits) break;
                                         else /* block broke */
                                         {
-                                            auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
                                             worlds[getpeer->recent_worlds.back()].blocks[block1D].fg = 0; 
                                             overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]); /* update world.db for breaking block */
                                             state_visuals(event, *state);
@@ -265,7 +256,6 @@ int main() {
                                         if (worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1] < items[worlds[getpeer->recent_worlds.back()].blocks[block1D].bg].hits) break;
                                         else /* block broke */
                                         {
-                                            auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
                                             worlds[getpeer->recent_worlds.back()].blocks[block1D].bg = 0;
                                             overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]); /* update world.db for breaking block */
                                             state_visuals(event, *state);
@@ -273,8 +263,6 @@ int main() {
                                     }
                                     else /* placing blocks */
                                     {
-                                        auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
-                                        overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]); /* update world.db for placing items */
                                         state_visuals(event, *state);
                                     }
                                     break;
@@ -290,7 +278,5 @@ int main() {
                     break;
                 }
             }
-        }
-    }
     return 0;
 }

@@ -57,16 +57,17 @@ class state {
 
 std::unique_ptr<state> get_state(const std::vector<std::byte>& packet) {
     auto s = std::make_unique<state>();
-    memcpy(&s->type, packet.data(), sizeof(int));
-    memcpy(&s->netid, packet.data() + 4, sizeof(int));
-    memcpy(&s->peer_state, packet.data() + 12, sizeof(int));
-    memcpy(&s->id, packet.data() + 20, sizeof(int));
-    memcpy(&s->pos[0], packet.data() + 24, sizeof(float));
-    memcpy(&s->pos[1], packet.data() + 28, sizeof(float));
-    memcpy(&s->speed[0], packet.data() + 32, sizeof(float));
-    memcpy(&s->speed[1], packet.data() + 36, sizeof(float));
-    memcpy(&s->punch[0], packet.data() + 44, sizeof(int));
-    memcpy(&s->punch[1], packet.data() + 48, sizeof(int));
+   s->type = *reinterpret_cast<const int*>(packet.data());
+    s->netid = *reinterpret_cast<const int*>(packet.data() + 4);
+    s->peer_state = *reinterpret_cast<const int*>(packet.data() + 12);
+    /* unknown data */
+    s->id = *reinterpret_cast<const int*>(packet.data() + 20);
+    s->pos[0] = *reinterpret_cast<const float*>(packet.data() + 24);
+    s->pos[1] = *reinterpret_cast<const float*>(packet.data() + 28);
+    s->speed[0] = *reinterpret_cast<const float*>(packet.data() + 32);
+    s->speed[1] = *reinterpret_cast<const float*>(packet.data() + 36);
+    s->punch[0] = *reinterpret_cast<const int*>(packet.data() + 44);
+    s->punch[1] = *reinterpret_cast<const int*>(packet.data() + 48);
     return s;
 }
 
@@ -74,16 +75,17 @@ std::unique_ptr<state> get_state(const std::vector<std::byte>& packet) {
 std::vector<std::byte> compress_state(const state& s)
 {
     std::vector<std::byte> data(56, std::byte{0x00});
-    memcpy(data.data(), &s.type, sizeof(int));
-    memcpy(data.data() + 4, &s.netid, sizeof(int));
-    memcpy(data.data() + 12, &s.peer_state, sizeof(int));
-    memcpy(data.data() + 20, &s.id, sizeof(int));
-    memcpy(data.data() + 24, &s.pos[0], sizeof(float));
-    memcpy(data.data() + 28, &s.pos[1], sizeof(float));
-    memcpy(data.data() + 32, &s.speed[0], sizeof(float));
-    memcpy(data.data() + 36, &s.speed[1], sizeof(float));
-    memcpy(data.data() + 44, &s.punch[0], sizeof(float));
-    memcpy(data.data() + 48, &s.punch[1], sizeof(float));
+    *reinterpret_cast<int*>(data.data()) = s.type;
+    *reinterpret_cast<int*>(data.data() + 4) = s.netid;
+    *reinterpret_cast<int*>(data.data() + 12) = s.peer_state;
+    /* unknown data */
+    *reinterpret_cast<int*>(data.data() + 20) = s.id;
+    *reinterpret_cast<float*>(data.data() + 24) = s.pos[0];
+    *reinterpret_cast<float*>(data.data() + 28) = s.pos[1];
+    *reinterpret_cast<float*>(data.data() + 32) = s.speed[0];
+    *reinterpret_cast<float*>(data.data() + 36) = s.speed[1];
+    *reinterpret_cast<int*>(data.data() + 44) = s.punch[0];
+    *reinterpret_cast<int*>(data.data() + 48) = s.punch[1];
     return data;
 }
 

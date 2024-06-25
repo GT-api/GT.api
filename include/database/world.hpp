@@ -2,15 +2,13 @@
 class block {
     public:
     short fg{0}, bg{0};
-    unsigned flags{0x00000000};
-
-    std::array<int, 2> hits{3, 3}; /* fg, bg */ // -> stack object
+    std::array<int, 2> hits{0, 0}; /* fg, bg */ // -> stack object
 };
 
 class world {
     public:
     short x{100}, y{60};
-    std::string name{}; /* world name */
+    std::string name{};
     short visitors{0}; // -> stack object
     std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
 }; 
@@ -131,16 +129,9 @@ void state_visuals(ENetEvent& event, state s) {
 
 void block_punched(ENetEvent& event, state s, int block1D) {
     worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 0 ?
-    worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1]-- :
-    worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0]--;
+    worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1]++ :
+    worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0]++;
     s.type = 8; /* change packet type from 3 to 8. */
     s.id = 6; /* hit phase visuals */
-    std::vector<std::byte> data = compress_state(s);
-    for (size_t i = 0; i < sizeof(int); ++i)
-        data[8 + i] = static_cast<std::byte>((0 >> (i * 8)) & 0xFF); // TODO
-	peers([&](ENetPeer& p) 
-    {
-        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
-		    send_data(p, data);
-	});
+	state_visuals(event, s);
 }

@@ -16,9 +16,10 @@ enum clothing
 
 class item {
     public:
-    unsigned short id{0}; /* item identity */
+    unsigned short id{}; /* item identity */
     std::string raw_name{}; /* the exact name of the item including uppercases */
     std::string name{}; /* prefered for easy access; same as raw_name but all lowercased */
+    short hits{};
     clothing cloth_type{clothing::none};
 }; std::unordered_map<int, item> items;
 
@@ -61,7 +62,11 @@ bool cache_items() {
         pos += sizeof(std::byte);
         pos += sizeof(int);
         pos += sizeof(int);
-        pos += sizeof(short);
+        pos += sizeof(std::byte);
+        unsigned char raw_hits{};
+        shift_pos(im_data, pos, raw_hits);
+        im.hits = raw_hits;
+        if (im.hits not_eq 0/*math in C++ cannot divide 0 values*/) im.hits /= 6; /* unknown reason behind why break hit is muliplied by 6 then having to divide by 6 */
         pos += sizeof(int);
         unsigned char cloth_type{};
         shift_pos(im_data, pos, cloth_type);

@@ -29,7 +29,7 @@ public:
 
 int main() {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("771f50b313192ec40cd19f98c3d66e6d8aebc462");
+    github_sync("54f25cf58814d9cc09f3cb5716a86fc9427b83d6");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};

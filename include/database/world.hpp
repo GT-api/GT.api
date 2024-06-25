@@ -44,7 +44,7 @@ void register_world(std::unique_ptr<world>& w) {
  @brief updates world.db for only 1 tile. this may save memory however the commit of opening world.db is already costly, please call this function sparingly
     NEVER use this function if your only updating worlds stack objects! these objects are not store-worthly
 */
-void overwrite_tile(std::unique_ptr<world>& w, int blockID, block b) {
+void overwrite_tile(std::unique_ptr<world>& w, int blockID, const block& b) {
     sqlite3* db;
     sqlite3_open("world.db", &db);
     std::string update_sql = "UPDATE " + w->name + " SET fg = ?, bg = ? WHERE id = ?;";
@@ -74,7 +74,7 @@ std::unique_ptr<world> read_world(const std::string& name) {
         return nullptr;
     }
     sqlite3_finalize(check_stmt);
-    std::string select = "SELECT fg, bg FROM \"" + name + "\";";
+    std::string select = "SELECT fg, bg FROM \"" + name + "\";"; /* ignore id as it's just an index for writing */
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, select.c_str(), -1, &stmt, nullptr);
     std::unique_ptr<world> w = std::make_unique<world>();
@@ -106,7 +106,7 @@ void OnRequestWorldSelectMenu(ENetEvent event) {
     gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
 }
 
-void send_data(ENetPeer& peer, std::vector<std::byte> data)
+void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
 {
     size_t size = data.size();
     unsigned four = 4;

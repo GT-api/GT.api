@@ -46,7 +46,7 @@ bool cache_items() {
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 im.raw_name += static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])),
                 ++pos;
         }
@@ -55,14 +55,10 @@ bool cache_items() {
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
-        pos += sizeof(int);
-        pos += sizeof(std::byte);
-        pos += sizeof(int);
-        pos += sizeof(int);
-        pos += sizeof(std::byte);
+        pos += 14;
         unsigned char raw_hits{};
         shift_pos(im_data, pos, raw_hits);
         im.hits = raw_hits;
@@ -71,90 +67,80 @@ bool cache_items() {
         unsigned char cloth_type{};
         shift_pos(im_data, pos, cloth_type);
         im.cloth_type = static_cast<clothing>(cloth_type);
-        pos += sizeof(short);
-        pos += sizeof(std::byte);
+        pos += 3;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
-        pos += sizeof(int);
-        pos += sizeof(int);
+        pos += 8;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
-                ++pos;
-        }
-        pos += sizeof(int);
-        pos += sizeof(int);
-        pos += sizeof(int);
-        pos += sizeof(int);
-        pos += sizeof(int);
-        pos += sizeof(short);
-        pos += sizeof(short);
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
+                ++pos;
+        }
+        pos += 24;
+        {
+            short len = *(reinterpret_cast<short*>(&im_data[pos]));
+            pos += sizeof(short);
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
+                ++pos;
+        }
+        {
+            short len = *(reinterpret_cast<short*>(&im_data[pos]));
+            pos += sizeof(short);
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         pos += 80;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         pos += 13;
-        pos += sizeof(int);
-        pos += sizeof(int);
+        pos += 8;
         pos += 25;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (int i = 0; i < std::move(len); i++)
+            for (short i = 0; i < std::move(len); i++)
                 ++pos;
         }
-        pos += sizeof(int);
-        pos += sizeof(int);
+        pos += 8;
         if (im.name.contains("ancestral") and not im.name.contains("seed"))
             im.cloth_type = clothing::ances;
         items.emplace(i, std::move(im));

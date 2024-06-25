@@ -71,7 +71,7 @@ std::unique_ptr<state> get_state(const std::vector<std::byte>& packet) {
 }
 
 /* put it back into it's original form */
-std::vector<std::byte> compress_state(state s)
+std::vector<std::byte> compress_state(const state& s)
 {
     std::vector<std::byte> data(56, std::byte{0x00});
     memcpy(data.data(), &s.type, sizeof(int));
@@ -97,7 +97,7 @@ void inventory_visuals(ENetPeer& p)
     *reinterpret_cast<int*>(data.data() + 66 - (2 * sizeof(int))) = _byteswap_ulong(getp->slot_size);
     for (int i = 0; i < size; ++i)
         *reinterpret_cast<int*>(data.data() + (i * sizeof(int)) + 66) = 
-            ((static_cast<int>(getp->slots.at(i).id) bitor (static_cast<int>(getp->slots.at(i).count) << 16) bitand 0x00FFFFFF) bitor (0x00 << 24));
+            ((static_cast<int>(getp->slots.at(i).id) bitor (static_cast<int>(getp->slots.at(i).count) << 16) bitand 0x00FFFFFF));
             
 	enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

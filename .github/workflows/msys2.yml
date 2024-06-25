@@ -1,0 +1,21 @@
+name: MSYS2
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4.1.7
+    - uses: msys2/setup-msys2@v2.23.0
+      with:
+        msystem: UCRT64
+        update: true
+        install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-curl mingw-w64-ucrt-x86_64-jsoncpp
+    - run: |
+        set +e
+        g++ -std=c++2b -Og -g main.cpp .\\include\\sqlite3.o .\\include\\compress.o .\\include\\github.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -ljsoncpp -ftime-report
+        exit_code=$?
+        set -e
+        if [ $exit_code -ne 0 ]; then
+          echo "Compilation failed with exit code $exit_code"
+        fi
+      shell: msys2 {0}

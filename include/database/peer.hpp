@@ -13,9 +13,11 @@ class peer {
 public:
     std::once_flag logging_in{}; /* without this, GT will keep pushing peer into the server. */
     std::once_flag entered_game{}; /* only enter game once. this fixes many problems and to-be problems by exploiters */
+    std::mutex post_enter{}; /* things that must be done when peer is in world, this value is reset once they leave. */
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
-    unsigned user_id{0}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
-    std::array<float, 2> pos{0.00, 0.00};
+    unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
+    std::array<float, 2> pos{};
+    bool facing_left{}; /* peer is directed towards the left direction */
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
     std::vector<slot> slots{}; /* an inventory slot starting at slot[0], don't know C++? just do slots.emplace_back to push a new item inside inventory */

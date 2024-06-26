@@ -2,6 +2,10 @@
 
 #include <cstring> /* std::strlen() */
 
+using floats = std::vector<float>;
+
+#include <iostream>
+
 /*
 @param p short for peer, the peer who will receive this packet, this can also be used with peers() to send to multiple peers.
 @param wait_for prep the packet ahead of time and send it within the time provided. (milliseconds) e.g. 1000 = 1 second, 60000 = 1 minute
@@ -9,10 +13,10 @@
                 respectfully void* entires will not be accepted. e.g. classes, ptr, void
 */
 template<typename... T>
-void gt_packet(ENetPeer& p, signed wait_for, T... params) {
+void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
 	std::unique_ptr<std::byte[]> data = std::make_unique<std::byte[]>(61);
         std::ranges::fill(std::span{data.get(), 61}, std::byte{0x00});
-        std::array<int, 5> buffer{0x4, 0x1, -1, 0x8, wait_for}; // TODO imply peer's netid
+        std::array<int, 5> buffer{0x4, 0x1, netid ? getp->netid : -1, 0x8, wait_for}; // TODO imply peer's netid
         for (size_t i = 0; i < buffer.size() * sizeof(int); ++i) 
             data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
                 = reinterpret_cast<const std::byte*>(&buffer[i / sizeof(int)])[i % sizeof(int)];
@@ -51,8 +55,8 @@ void gt_packet(ENetPeer& p, signed wait_for, T... params) {
                 //                             (NOTE: data's 61 bytes are state, NetID, delay, ect, and will always be the first inital bytes in a array)
                 // e.g. data's 61 bytes: 04 00 00 00 01 00 00 00 FF FF FF FF 00 00 00 00 08 00 (x42 0s)
             }
-            else if constexpr (std::is_same_v<std::decay_t<decltype(param)>, std::vector<float>>) {
-                auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + sizeof(float));
+            else if constexpr (std::is_same_v<std::decay_t<decltype(param)>, floats>) {
+                auto this_data = std::make_unique_for_overwrite<std::byte[]>(size + 2 + (sizeof(float) * param.size()));
                 for (size_t i = 0; i < size; ++i)
                     this_data[i] = data[i];
                 this_data[size] = index;

@@ -2,20 +2,22 @@
 #include <algorithm> /* string manipulation */
 #include <vector>
 
-#include "include/database/items.hpp"
-#include "include/network/enet.hpp"
+#include "include\database\items.hpp"
+#include "include\network\enet.hpp"
 #include <memory> /* std::unique_ptr<>  */
-#include "include/database/peer.hpp"
-#include "include/database/sqlite3.hpp"
-#include "include/network/packet.hpp"
-#include "include/database/world.hpp"
-#include "include/tools/random_engine.hpp"
+#include "include\database\peer.hpp"
+#include "include\database\sqlite3.hpp"
+#include "include\network\packet.hpp"
+#include "include\database\world.hpp"
+#include "include\tools\string_view.hpp"
+#include "include\tools\random_engine.hpp"
 
 #include <fstream> /* std::ifstream */
+#include <iostream>
 
 int main() {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("1e46698cb97840821d073af853c26525022835da");
+    github_sync("6b100aec2e828c132437ebbc7659da735592cd2d");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -56,7 +58,6 @@ int main() {
                 {
                     std::span packet{reinterpret_cast<char*>(event.packet->data), event.packet->dataLength};
                         std::string header{packet.begin() + 4, packet.end() - 1};
-                    std::vector<std::string> readpipe(const std::string& str); // -> import utility.o
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                     {
                         case 2: 
@@ -80,7 +81,7 @@ int main() {
                                     short offset = getpeer->tankIDName.empty() ? 0 : 4;
                                     getpeer->country = read_once[37 + offset];
                                 }
-                                gt_packet(*event.peer, 0,
+                                gt_packet(*event.peer, 0, true,
                                     "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
                                     hash, 
                                     "ubistatic-a.akamaihd.net", 
@@ -99,7 +100,7 @@ int main() {
                                 std::call_once(getpeer->entered_game, [&]() 
                                 {
                                     getpeer->user_id = peers().size();
-                                    gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->requestedName).c_str());
+                                    gt_packet(*event.peer, 0, true, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->requestedName).c_str());
                                     getpeer->slots.emplace_back(slot{18, 1});
                                     getpeer->slots.emplace_back(slot{32, 1});
                                     getpeer->slots.emplace_back(slot{2, 200});
@@ -117,12 +118,13 @@ int main() {
                                 {
                                     if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id) 
                                     {
-                                        gt_packet(p, 0, "OnConsoleMessage", std::format("`5<`w{0}`` left, `w{1}`` others here>``", getpeer->requestedName, --worlds[w->name].visitors).c_str());
-                                        gt_packet(p, 0, "OnRemove", std::format("netID|{}\npId|\n", getpeer->netid).c_str());
+                                        gt_packet(p, 0, true, "OnConsoleMessage", std::format("`5<`w{0}`` left, `w{1}`` others here>``", getpeer->requestedName, --worlds[w->name].visitors).c_str());
+                                        gt_packet(p, 0, true, "OnRemove", std::format("netID|{}\npId|\n", getpeer->netid).c_str());
                                     }
                                 });
                                 if (worlds[w->name].visitors <= 0)
                                     worlds.erase(w->name);
+                                getpeer->post_enter.unlock();
                                 OnRequestWorldSelectMenu(event);
                             }
                             else if (header.contains("action|quit")) 
@@ -187,23 +189,22 @@ int main() {
                                 for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
                                     getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
                                 getpeer->recent_worlds.back() = w->name;
-                                gt_packet(*event.peer, 0, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
+                                gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
                                     getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->requestedName, getpeer->country).c_str());
                                 peers([&](ENetPeer& p) 
                                 {
                                     if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() 
                                         and getp->user_id not_eq getpeer->user_id)
                                     {
-                                        gt_packet(*event.peer, 0, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
+                                        gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
                                             getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->requestedName, getp->country).c_str());
-                                        gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+                                        gt_packet(*event.peer, 0, true, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
                                             getpeer->requestedName, w->visitors).c_str());
-                                        gt_packet(*event.peer, 0, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+                                        gt_packet(*event.peer, 0, true, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
                                             getpeer->requestedName, w->visitors).c_str());
                                     }
                                 });
-                                gt_packet(*event.peer, 0, "OnSetPos", std::vector<float>{getpeer->pos[0], getpeer->pos[1]});
-                                gt_packet(*event.peer, 0, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
+                                gt_packet(*event.peer, 0, true, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
                                     w->name, w->visitors - 1, peers().size()).c_str());
                                 inventory_visuals(*event.peer);
                                 if (worlds.find(w->name) == worlds.end()) /* so basically checks if world already on the stack else push back it (emplace) */
@@ -216,7 +217,8 @@ int main() {
                             std::unique_ptr<state> state{};
                             {
                                 std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x00});
-                                if ((packet.size() + 4) >= 60) {
+                                if ((packet.size() + 4) >= 60) 
+                                {
                                     for (size_t i = 0; i < packet.size(); ++i)
                                         packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
                                     if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) 
@@ -224,22 +226,36 @@ int main() {
                                 }
                                 state = get_state(packet);
                             } /* deletes packet ahead of time */
+                            switch (state->peer_state) 
+                            {
+                                case 128 + 0x10: case 128: break; // peer is jumping
+                            }
                             switch (state->type) 
                             {
+                                case 0: {
+                                    if (getpeer->post_enter.try_lock()) 
+                                    {
+                                        gt_packet(*event.peer, 0, true, "OnSetPos", floats{getpeer->pos[0], getpeer->pos[1]});
+                                        gt_packet(*event.peer, 0, true, "OnChangeSkin", -1429995521);
+                                    }
+                                    getpeer->pos = state->pos;
+                                    getpeer->facing_left = state->peer_state bitand 0x10;
+                                    state_visuals(event, *state);
+                                }
                                 case 3: 
                                 {
                                     short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((destY * y + destX)) formula */
-                                    if (state->id == 18 and worlds[getpeer->recent_worlds.back()].blocks[block1D].bg not_eq 0/* blank */) /* punching blocks */
+                                    if (state->id == 18) /* punching blocks */
                                     {
                                         // ... TODO add a timer that resets hits every 6-8 seconds (threaded stopwatch)
+                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].bg == 0 and worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 0) break;
                                         if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 8/* bedrock */) {
-                                            gt_packet(*event.peer, 0, "OnTalkBubble", getpeer->netid, "It's too strong to break.");
+                                            gt_packet(*event.peer, 0, true, "OnTalkBubble", getpeer->netid, "It's too strong to break.");
                                             break;
                                         }
-                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 6/* main door */ and 
-                                            worlds[getpeer->recent_worlds.back()].blocks[static_cast<int>(state->pos[1]) + static_cast<int>(state->pos[0])].fg not_eq 6) 
+                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 6/* main door */)
                                         {
-                                            gt_packet(*event.peer, 0, "OnTalkBubble", getpeer->netid, "(stand over and punch to use)");
+                                            gt_packet(*event.peer, 0, true, "OnTalkBubble", getpeer->netid, "(stand over and punch to use)");
                                             break;
                                         }
                                         block_punched(event, *state, block1D);

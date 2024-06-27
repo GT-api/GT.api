@@ -1,6 +1,3 @@
-/* child: packet.hpp */
-/* parent: items.hpp */
-
 class slot {
     public:
     short id{0}; /* item id */
@@ -8,6 +5,7 @@ class slot {
 };
 
 #include <mutex> /* std::once_flag */
+#include <deque> /* std::deque */
 
 class peer {
 public:
@@ -27,13 +25,15 @@ public:
     std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
     std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */
 
-    std::array<std::chrono::steady_clock::time_point, 1> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
+    std::array<steady_clock::time_point, 2> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
 
     /* cached data from entering game; these values may not be changed */
     std::string requestedName{};
     std::string tankIDName{};
     std::string tankIDPass{};
     std::string country{};
+
+    std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
 };
 
 #define getpeer static_cast<peer*>(event.peer->data)

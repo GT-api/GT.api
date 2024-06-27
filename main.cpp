@@ -6,10 +6,10 @@
 #include "include\network\enet.hpp"
 #include <memory> /* std::unique_ptr<>  */
 #include <chrono>
-using namespace std::chrono;
+using namespace std::chrono; /* for faster writing. I hate typing std::chrono:: T_T */
 #include "include\database\peer.hpp"
-#include "include\database\sqlite3.hpp"
 #include "include\network\packet.hpp"
+#include "include\database\sqlite3.hpp"
 #include "include\database\world.hpp"
 #include "include\tools\string_view.hpp"
 #include "include\tools\random_engine.hpp"
@@ -17,35 +17,41 @@ using namespace std::chrono;
 int main() 
 {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("cfd88d941969133c02a6d53e734c9c34ec8b8758");
+    github_sync("78b1ea984c7710bab0cbbc93e0da99f308176381");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
 
         int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
-        server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 0, 0, 0);
+        server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
             server->checksum = enet_crc32;
             enet_host_compress_with_range_coder(server);
     } /* deletes address */
     {
-        struct _iobuf* file = fopen("items.dat", "rb");
-        fseek(file, 0, SEEK_END);
-        im_data.resize(ftell(file) + 60);
-        for (int i = 0; i < 5; ++i)
-            *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{0x4, 0x10, -1, 0x0, 0x8}[i];
-        *reinterpret_cast<int*>(im_data.data() + 56) = ftell(file);
-        long end_size = ftell(file); 
-        fseek(file, 0, SEEK_SET);
-        fread(im_data.data() + 60, 1, end_size, file);
-        auto span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size());
-            hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
-                [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
-    } /* deletes span, calls file.close(), deletes end_size */
+        errno_t error;
+        struct _iobuf* file;
+        error = fopen_s(&file, "items.dat", "rb");
+        if (error == 0) 
+        {
+            fseek(file, 0, SEEK_END);
+            im_data.resize(ftell(file) + 60);
+            for (int i = 0; i < 5; ++i)
+                *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{0x4, 0x10, -1, 0x0, 0x8}[i];
+            *reinterpret_cast<int*>(im_data.data() + 56) = ftell(file);
+            long end_size = ftell(file); 
+            fseek(file, 0, SEEK_SET);
+            fread(im_data.data() + 60, 1, end_size, file);
+            std::span<const unsigned char> span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size());
+                hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
+                    [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
+        } /* deletes span, deletes end_size */
+        fclose(file);
+    }
     cache_items();
 
     ENetEvent event{};
     while(true)
-        while (enet_host_service(server, &event, 1) > 0)
+        while (enet_host_service(server, &event, 1) > 0) /* waits 1 millisecond. it's a good pratice in C++ to always have a small timer for loops cause C++ is so damn fast */
             switch (event.type) 
             {
                 case ENET_EVENT_TYPE_CONNECT:
@@ -91,12 +97,12 @@ int main()
                                     "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=8643774|clash_active=1|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
                                 );
                             });
-                            if (header.starts_with("action|refresh_item_data")) 
+                            if (header.contains("action|refresh_item_data")) 
                             {
                                 enet_peer_send(event.peer, 0, enet_packet_create(im_data.data(), im_data.size(), ENET_PACKET_FLAG_NO_ALLOCATE));
                                 break;
                             }
-                            else if (header.starts_with("action|enter_game"))
+                            else if (header.contains("action|enter_game"))
                             {
                                 std::call_once(getpeer->entered_game, [&]() 
                                 {
@@ -122,7 +128,7 @@ int main()
                             }
                             else if (header.contains("action|quit")) 
                                 enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
-                            else if (header.starts_with("action|join_request")) {
+                            else if (header.starts_with("action|join_request\n")) {
                                 std::ranges::replace(header, '\n', '|');
                                 std::string big_name{readpipe(std::string{header})[3]};
                                 std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
@@ -186,14 +192,13 @@ int main()
                                     getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->requestedName, getpeer->country).c_str());
                                 peers([&](ENetPeer& p) 
                                 {
-                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() 
-                                        )
+                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id)
                                     {
-                                        //gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
-                                        //    getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->requestedName, getp->country).c_str());
-                                        gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+                                        gt_packet(p, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
+                                            getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->requestedName, getp->country).c_str());
+                                        gt_packet(p, 0, false, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
                                             getpeer->requestedName, w->visitors).c_str());
-                                        gt_packet(*event.peer, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+                                        gt_packet(p, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
                                             getpeer->requestedName, w->visitors).c_str());
                                     }
                                 });
@@ -202,6 +207,29 @@ int main()
                                 inventory_visuals(*event.peer);
                                 if (worlds.find(w->name) == worlds.end()) /* so basically checks if world already on the stack else push back it (emplace) */
                                     worlds.emplace(w->name, *w);
+                            }
+                            else if (header.starts_with("action|input\n")) 
+                            {
+                                if (duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[1]) <= 400ms) break;
+                                getpeer->rate_limit[1] = steady_clock::now();
+                                std::ranges::replace(header, '\n', '|');
+                                std::string text{readpipe(std::string{header})[4]};
+                                if (text.starts_with(" ") or text.starts_with("/")) break; // TODO add commands
+                                getpeer->messages.push_back(steady_clock::now());
+                                if (getpeer->messages.size() > 5) getpeer->messages.pop_front();
+                                if (getpeer->messages.size() == 5 and std::chrono::duration_cast<seconds>(steady_clock::now() - getpeer->messages.front()).count() < 6)
+                                {
+                                    gt_packet(*event.peer, 0, false, "OnConsoleMessage", "`6>>`4Spam detected! ``Please wait a bit before typing anything else.  Please note, any form of bot/macro/auto-paste will get all your accounts banned, so don't do it!");
+                                    break;
+                                }
+                                peers([&](ENetPeer& p) 
+                                {
+                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
+                                    {
+                                        gt_packet(p, 0, false, "OnTalkBubble", getpeer->netid, std::format("CP:0_PL:0_OID:_player_chat={}", text).c_str());
+                                        gt_packet(p, 0, false, "OnConsoleMessage", std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{0}``>`` `$`${1}````", getpeer->requestedName, text).c_str());
+                                    }
+                                });
                             }
                             break;
                         }
@@ -238,7 +266,8 @@ int main()
                                 }
                                 case 3: 
                                 {
-                                    if (std::chrono::duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[0]) <= 203ms) break;
+                                    if (duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[0]) <= 200ms) break;
+                                    getpeer->rate_limit[0] = steady_clock::now();
                                     short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((destY * y + destX)) formula */
                                     if (state->id == 18) /* punching blocks */
                                     {

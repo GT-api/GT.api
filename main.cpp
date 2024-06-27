@@ -14,10 +14,12 @@ using namespace std::chrono; /* for faster writing. I hate typing std::chrono:: 
 #include "include\tools\string_view.hpp"
 #include "include\tools\random_engine.hpp"
 
+#include "include\action\actions"
+
 int main() 
 {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("78b1ea984c7710bab0cbbc93e0da99f308176381");
+    github_sync("7de0ee666dc27eab6478439a5f3b7adab4a44eb0");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -28,10 +30,8 @@ int main()
             enet_host_compress_with_range_coder(server);
     } /* deletes address */
     {
-        errno_t error;
         struct _iobuf* file;
-        error = fopen_s(&file, "items.dat", "rb");
-        if (error == 0) 
+        if (fopen_s(&file, "items.dat", "rb") == 0) 
         {
             fseek(file, 0, SEEK_END);
             im_data.resize(ftell(file) + 60);
@@ -54,7 +54,7 @@ int main()
         while (enet_host_service(server, &event, 1) > 0) /* waits 1 millisecond. it's a good pratice in C++ to always have a small timer for loops cause C++ is so damn fast */
             switch (event.type) 
             {
-                case ENET_EVENT_TYPE_CONNECT:
+                case ENET_EVENT_TYPE_CONNECT: /* TODO: investigate random window freezing, could be Growtopia client or enet_peer_send() byte overflow */
                     if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
                     event.peer->data = new peer{};
                     break;
@@ -69,168 +69,22 @@ int main()
                     {
                         case 2: case 3: 
                         {
-                            std::call_once(getpeer->logging_in, [&]() 
-                            {
-                                std::ranges::replace(header, '\n', '|'); /* e.g. requestedName|test\n = requestedName|test| */
-                                std::vector<std::string> read_once = readpipe(header); 
-                                seed random{};
-                                if (read_once[0] == "requestedName" or read_once[0] == "tankIDName") 
-                                {
-                                    read_once[0] == "requestedName" ? 
-                                        getpeer->requestedName = read_once[1] + "_" + std::to_string(random.fast(100, 999)) :
-                                        getpeer->tankIDName = read_once[1];
-                                    if (not getpeer->tankIDName.empty() and getpeer->tankIDPass not_eq read_once[3])
-                                    {
-                                        gt_packet(*event.peer, 0, "OnConsoleMessage", "`4Unable to log on:`` That `wGrowID`` doesn't seem valid, or the password is wrong.  If you don't have one, press `wCancel``, un-check `w'I have a GrowID'``, then click `wConnect``.");
-                                        enet_peer_disconnect_later(event.peer, 0);
-                                        return;
-                                    }
-                                    short offset = getpeer->tankIDName.empty() ? 0 : 4;
-                                    getpeer->country = read_once[37 + offset];
-                                }
-                                gt_packet(*event.peer, 0, true,
-                                    "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
-                                    hash, 
-                                    "ubistatic-a.akamaihd.net", 
-                                    "0098/2521452/cache/", 
-                                    "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
-                                    "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=8643774|clash_active=1|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
-                                );
-                            });
-                            if (header.contains("action|refresh_item_data")) 
-                            {
+                            if (header.starts_with("requestedName|") or header.starts_with("tankIDName|"))
+                                logging_in(event, header);
+                            else if (header.contains("action|refresh_item_data")) 
                                 enet_peer_send(event.peer, 0, enet_packet_create(im_data.data(), im_data.size(), ENET_PACKET_FLAG_NO_ALLOCATE));
-                                break;
-                            }
                             else if (header.contains("action|enter_game"))
-                            {
-                                std::call_once(getpeer->entered_game, [&]() 
-                                {
-                                    getpeer->user_id = peers().size();
-                                    gt_packet(*event.peer, 0, true, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", getpeer->requestedName).c_str());
-                                    OnRequestWorldSelectMenu(event);
-                                });
-                            }
-                            else if (header.contains("action|quit_to_exit")) {
-                                std::unique_ptr<world> w = read_world(getpeer->recent_worlds.back());
-                                peers([&](ENetPeer& p) 
-                                {
-                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id) 
-                                    {
-                                        gt_packet(p, 0, false, "OnConsoleMessage", std::format("`5<`w{0}`` left, `w{1}`` others here>``", getpeer->requestedName, --worlds[w->name].visitors).c_str());
-                                        gt_packet(p, 0, true, "OnRemove", std::format("netID|{}\npId|\n", getpeer->netid).c_str());
-                                    }
-                                });
-                                if (worlds[w->name].visitors <= 0)
-                                    worlds.erase(w->name);
-                                getpeer->post_enter.unlock();
-                                OnRequestWorldSelectMenu(event);
-                            }
-                            else if (header.contains("action|quit")) 
+                                enter_game(event, header);
+                            else if (header.starts_with("action|input\n") and duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[1]) > 400ms)
+                                input(event, header);
+
+                            if (header.contains("action|quit_to_exit"))
+                                quit_to_exit(event, header);
+                            else if (header.contains("action|quit"))
                                 enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
-                            else if (header.starts_with("action|join_request\n")) {
-                                std::ranges::replace(header, '\n', '|');
-                                std::string big_name{readpipe(std::string{header})[3]};
-                                std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
-                                std::unique_ptr<world> w = read_world(big_name);
-                                if (w == nullptr) /* create a new world */
-                                {
-                                    w = std::make_unique<world>(world{.name = big_name}); /* replace nullptr with world constructor */
-                                    seed random{};
-                                    auto main_door = random.fast(2, 100 * 60 / 100 - 4);
-                                    std::vector<block> blocks(100 * 60, block{0, 0});
-                                    for (auto& b : blocks) 
-                                    {
-                                        auto i = &b - &blocks[0];
-                                        if (i >= 3700) 
-                                            b.bg = 14, // cave background
-                                            b.fg = (i >= 3800 and i < 5000 /* lava level */ and not random.fast(0, 38)) ? 10 : 
-                                                (i > 5000 and i < 5400 /* bedrock level */ and random.fast(0, 7) < 3) ? 4 : 
-                                                (i >= 5400) ? 8 : 2;
-                                        if (i == 3600 + main_door) b.fg = 6; // main door
-                                        if (i == 3700 + main_door) b.fg = 8; // bedrock below the main door
-                                    }
-                                    w->blocks = std::move(blocks);
-                                    register_world(w);
-                                }
-                                getpeer->netid = ++w->visitors;
-                                short y = w->blocks.size() / 100, x = w->blocks.size() / y;
-                                std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x00});
-                                data[0] = std::byte{0x4};
-                                data[4] = std::byte{0x4};
-                                data[16] = std::byte{0x8};
-                                unsigned char name_size = w->name.length(); /* Growtopia limits world name length hence 255 is plenty of space */
-                                data[66] = std::byte{name_size};
-                                for (size_t i = 0; i < name_size; ++i)
-                                    data[68 + i] = static_cast<std::byte>(w->name[i]);
-                                data[68 + name_size] = static_cast<std::byte>(x);
-                                data[72 + name_size] = static_cast<std::byte>(y);
-                                *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(w->blocks.size());
-                                int pos = 85 + name_size;
-                                for (size_t i = 0; i < w->blocks.size(); ++i) 
-                                {
-                                    *reinterpret_cast<short*>(data.data() + pos) = w->blocks[i].fg;
-                                    *reinterpret_cast<short*>(data.data() + (pos + 2)) = w->blocks[i].bg;
-                                    *reinterpret_cast<unsigned*>(data.data() + (pos + 4)) = 0x0;
-                                    if (w->blocks[i].fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
-                                    {
-                                        getpeer->pos[0] = (i % x) * 32;
-                                        getpeer->pos[1] = (i / x) * 32;
-                                        data[pos + 8] = std::byte{0x1};
-                                        *reinterpret_cast<short*>(data.data() + pos + 9) = 4;
-                                        for (size_t i = 0; i < 4; ++i)
-                                            data[pos + 11 + i] = static_cast<std::byte>(std::string_view{"EXIT"}[i]);
-                                        pos += 8;
-                                    }
-                                    pos += 8;
-                                }
-                                enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
-                                for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
-                                    getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
-                                getpeer->recent_worlds.back() = w->name;
-                                gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
-                                    getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->requestedName, getpeer->country).c_str());
-                                peers([&](ENetPeer& p) 
-                                {
-                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id)
-                                    {
-                                        gt_packet(p, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
-                                            getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->requestedName, getp->country).c_str());
-                                        gt_packet(p, 0, false, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
-                                            getpeer->requestedName, w->visitors).c_str());
-                                        gt_packet(p, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
-                                            getpeer->requestedName, w->visitors).c_str());
-                                    }
-                                });
-                                gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
-                                    w->name, w->visitors - 1, peers().size()).c_str());
-                                inventory_visuals(*event.peer);
-                                if (worlds.find(w->name) == worlds.end()) /* so basically checks if world already on the stack else push back it (emplace) */
-                                    worlds.emplace(w->name, *w);
-                            }
-                            else if (header.starts_with("action|input\n")) 
-                            {
-                                if (duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[1]) <= 400ms) break;
-                                getpeer->rate_limit[1] = steady_clock::now();
-                                std::ranges::replace(header, '\n', '|');
-                                std::string text{readpipe(std::string{header})[4]};
-                                if (text.starts_with(" ") or text.starts_with("/")) break; // TODO add commands
-                                getpeer->messages.push_back(steady_clock::now());
-                                if (getpeer->messages.size() > 5) getpeer->messages.pop_front();
-                                if (getpeer->messages.size() == 5 and std::chrono::duration_cast<seconds>(steady_clock::now() - getpeer->messages.front()).count() < 6)
-                                {
-                                    gt_packet(*event.peer, 0, false, "OnConsoleMessage", "`6>>`4Spam detected! ``Please wait a bit before typing anything else.  Please note, any form of bot/macro/auto-paste will get all your accounts banned, so don't do it!");
-                                    break;
-                                }
-                                peers([&](ENetPeer& p) 
-                                {
-                                    if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
-                                    {
-                                        gt_packet(p, 0, false, "OnTalkBubble", getpeer->netid, std::format("CP:0_PL:0_OID:_player_chat={}", text).c_str());
-                                        gt_packet(p, 0, false, "OnConsoleMessage", std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{0}``>`` `$`${1}````", getpeer->requestedName, text).c_str());
-                                    }
-                                });
-                            }
+                            else if (header.starts_with("action|join_request\n") and duration_cast<seconds>(steady_clock::now() - getpeer->rate_limit[2]) > 1s)
+                                join_request(event, header);
+                            else gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld"); /* maintain OnRequestWorldSelectMenu, without this it bugs out */
                             break;
                         }
                         case 4: 
@@ -238,13 +92,10 @@ int main()
                             std::unique_ptr<state> state{};
                             {
                                 std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x00});
-                                if ((packet.size() + 4) >= 60) 
-                                {
+                                if ((packet.size() + 4) >= 60)
                                     for (size_t i = 0; i < packet.size(); ++i)
                                         packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
-                                    if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) 
-                                        packet.clear();
-                                }
+                                if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;
                                 state = get_state(packet);
                             } /* deletes packet ahead of time */
                             switch (state->peer_state) 

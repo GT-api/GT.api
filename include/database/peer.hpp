@@ -25,7 +25,7 @@ public:
     std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
     std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */
 
-    std::array<steady_clock::time_point, 2> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
+    std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
 
     /* cached data from entering game; these values may not be changed */
     std::string requestedName{};

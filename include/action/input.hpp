@@ -2,7 +2,6 @@
 void input(ENetEvent& event, std::string& header)
 {
     getpeer->rate_limit[1] = steady_clock::now();
-    std::ranges::replace(header, '\n', '|');
     std::string text{readpipe(std::string{header})[4]};
     if (text.starts_with(" ") or text.starts_with("/")) return; // TODO add commands
     getpeer->messages.push_back(steady_clock::now());

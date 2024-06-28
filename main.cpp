@@ -69,22 +69,11 @@ int main()
                     {
                         case 2: case 3: 
                         {
-                            if (header.starts_with("requestedName|") or header.starts_with("tankIDName|"))
-                                logging_in(event, header);
-                            else if (header.contains("action|refresh_item_data")) 
-                                enet_peer_send(event.peer, 0, enet_packet_create(im_data.data(), im_data.size(), ENET_PACKET_FLAG_NO_ALLOCATE));
-                            else if (header.contains("action|enter_game"))
-                                enter_game(event, header);
-                            else if (header.starts_with("action|input\n") and duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[1]) > 400ms)
-                                input(event, header);
-
-                            if (header.contains("action|quit_to_exit"))
-                                quit_to_exit(event, header);
-                            else if (header.contains("action|quit"))
-                                enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
-                            else if (header.starts_with("action|join_request\n") and duration_cast<seconds>(steady_clock::now() - getpeer->rate_limit[2]) > 1s)
-                                join_request(event, header);
-                            else gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld"); /* maintain OnRequestWorldSelectMenu, without this it bugs out */
+                            std::ranges::replace(header, '\n', '|');
+                            std::vector<std::string> pipes = readpipe(header);
+                            std::string action{(pipes[0] == "requestedName" or pipes[0] == "tankIDName") ? pipes[0] : pipes[0] + "|" + pipes[1]};
+                            if (command_pool.count(action) > 0)
+                                command_pool.at(action)(event, header);
                             break;
                         }
                         case 4: 

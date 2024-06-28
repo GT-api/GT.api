@@ -3,7 +3,6 @@ void logging_in(ENetEvent& event, std::string& header)
 {
     std::call_once(getpeer->logging_in, [&]() 
     {
-        std::ranges::replace(header, '\n', '|'); /* e.g. requestedName|test\n = requestedName|test| */
         std::vector<std::string> read_once = readpipe(header); 
         seed random{};
         read_once[0] == "requestedName" ? 

@@ -2,7 +2,6 @@
 void join_request(ENetEvent& event, std::string& header) 
 {
     getpeer->rate_limit[2] = steady_clock::now();
-    std::ranges::replace(header, '\n', '|');
     std::string big_name{readpipe(std::string{header})[3]};
     std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
     std::unique_ptr<world> w = read_world(big_name);

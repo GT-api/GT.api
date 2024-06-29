@@ -1,5 +1,5 @@
 
-void join_request(ENetEvent& event, std::string& header) 
+void join_request(ENetEvent& event, std::string header) 
 {
     getpeer->rate_limit[2] = steady_clock::now();
     std::string big_name{readpipe(std::string{header})[3]};

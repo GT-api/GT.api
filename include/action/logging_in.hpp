@@ -1,5 +1,5 @@
 
-void logging_in(ENetEvent& event, std::string& header)
+void logging_in(ENetEvent& event, std::string header)
 {
     std::call_once(getpeer->logging_in, [&]() 
     {

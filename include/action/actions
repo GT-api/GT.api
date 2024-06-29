@@ -7,7 +7,7 @@
 #include "join_request.hpp"
 
 #include <map> // ordered
-std::map<std::string, std::function<void(ENetEvent&, std::string&)>> command_pool
+std::map<std::string, std::function<void(ENetEvent&, std::string)>> command_pool
 {
     {"requestedName", &logging_in}, {"tankIDName", &logging_in}, 
     {"action|refresh_item_data", &refresh_item_data}, 

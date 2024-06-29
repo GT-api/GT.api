@@ -1,5 +1,5 @@
 
-void input(ENetEvent& event, std::string& header)
+void input(ENetEvent& event, std::string header)
 {
     getpeer->rate_limit[1] = steady_clock::now();
     std::string text{readpipe(std::string{header})[4]};

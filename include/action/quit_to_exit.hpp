@@ -1,5 +1,5 @@
 
-void quit_to_exit(ENetEvent& event, std::string& header) 
+void quit_to_exit(ENetEvent& event, std::string header) 
 {
     std::unique_ptr<world> w = read_world(getpeer->recent_worlds.back());
     peers([&](ENetPeer& p) 

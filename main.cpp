@@ -2,6 +2,8 @@
 #include <algorithm> /* string manipulation */
 #include <vector>
 
+#include <iostream>
+
 #include "include\database\items.hpp"
 #include "include\network\enet.hpp"
 #include <memory> /* std::unique_ptr<>  */
@@ -15,11 +17,12 @@ using namespace std::chrono; /* for faster writing. I hate typing std::chrono:: 
 #include "include\tools\random_engine.hpp"
 
 #include "include\action\actions"
+#include <future>
 
 int main() 
 {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("7de0ee666dc27eab6478439a5f3b7adab4a44eb0");
+    github_sync("a53b0352c73f54a8d0b79ed25b1d498e3c3c0a0b");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -54,7 +57,7 @@ int main()
         while (enet_host_service(server, &event, 1) > 0) /* waits 1 millisecond. it's a good pratice in C++ to always have a small timer for loops cause C++ is so damn fast */
             switch (event.type) 
             {
-                case ENET_EVENT_TYPE_CONNECT: /* TODO: investigate random window freezing, could be Growtopia client or enet_peer_send() byte overflow */
+                case ENET_EVENT_TYPE_CONNECT:
                     if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
                     event.peer->data = new peer{};
                     break;
@@ -63,17 +66,17 @@ int main()
                     break;
                 case ENET_EVENT_TYPE_RECEIVE: 
                 {
-                    std::span packet{reinterpret_cast<char*>(event.packet->data), event.packet->dataLength};
-                        std::string header{packet.begin() + 4, packet.end() - 1};
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                     {
                         case 2: case 3: 
                         {
+                            std::span packet{event.packet->data, event.packet->dataLength};
+                                std::string header{packet.begin() + 4, packet.end() - 1};
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
-                            std::string action{(pipes[0] == "requestedName" or pipes[0] == "tankIDName") ? pipes[0] : pipes[0] + "|" + pipes[1]};
-                            if (command_pool.count(action) > 0)
-                                command_pool.at(action)(event, header);
+                            const std::string action{(pipes[0] == "requestedName" or pipes[0] == "tankIDName") ? pipes[0] : pipes[0] + "|" + pipes[1]};
+                            if (command_pool.contains(action))
+                                (static_cast<void>(std::async(std::launch::async, command_pool[std::move(action)], std::ref(event), std::move(header))));
                             break;
                         }
                         case 4: 
@@ -93,7 +96,8 @@ int main()
                             }
                             switch (state->type) 
                             {
-                                case 0: {
+                                case 0: 
+                                {
                                     if (getpeer->post_enter.try_lock()) 
                                     {
                                         gt_packet(*event.peer, 0, true, "OnSetPos", floats{getpeer->pos[0], getpeer->pos[1]});
@@ -143,9 +147,6 @@ int main()
                                     }
                                     break;
                                 }
-                                default:
-                                    state_visuals(event, *state); /* other visuals that will be sent to everyone in world */
-                                    break;
                             }
                             break;
                         }

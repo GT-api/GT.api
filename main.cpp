@@ -1,23 +1,15 @@
-#include <ranges> /* std::ranges:: */
-#include <algorithm> /* string manipulation */
-#include <vector>
-
-#include <iostream>
-
 #include "include\database\items.hpp"
 #include "include\network\enet.hpp"
-#include <memory> /* std::unique_ptr<>  */
-#include <chrono>
-using namespace std::chrono; /* for faster writing. I hate typing std::chrono:: T_T */
+#include "include\database\sqlite3.hpp"
 #include "include\database\peer.hpp"
 #include "include\network\packet.hpp"
-#include "include\database\sqlite3.hpp"
 #include "include\database\world.hpp"
 #include "include\tools\string_view.hpp"
 #include "include\tools\random_engine.hpp"
 
+#include <iostream>
 #include "include\action\actions"
-#include <future>
+#include <future> /* std::async & return future T */
 
 int main() 
 {
@@ -41,10 +33,10 @@ int main()
             for (int i = 0; i < 5; ++i)
                 *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{0x4, 0x10, -1, 0x0, 0x8}[i];
             *reinterpret_cast<int*>(im_data.data() + 56) = ftell(file);
-            long end_size = ftell(file); 
+            long end_size = ftell(file); /* SEEK_END it */
             fseek(file, 0, SEEK_SET);
             fread(im_data.data() + 60, 1, end_size, file);
-            std::span<const unsigned char> span = std::span<const unsigned char>(reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size());
+            std::span span{reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size()};
                 hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
                     [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
         } /* deletes span, deletes end_size */
@@ -61,9 +53,11 @@ int main()
                     if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1}, 4, ENET_PACKET_FLAG_RELIABLE)) < 0) break;
                     event.peer->data = new peer{};
                     break;
-                case ENET_EVENT_TYPE_DISCONNECT:
-                    delete getpeer;
+                case ENET_EVENT_TYPE_DISCONNECT: /* if peer closes growtopia.exe */
+                {
+                    quit(event, "action|quit"); /* treat closing growtopia.exe as a action|quit */
                     break;
+                }
                 case ENET_EVENT_TYPE_RECEIVE: 
                 {
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
@@ -110,8 +104,7 @@ int main()
                                 }
                                 case 3: 
                                 {
-                                    if (duration_cast<milliseconds>(steady_clock::now() - getpeer->rate_limit[0]) <= 200ms) break;
-                                    getpeer->rate_limit[0] = steady_clock::now();
+                                    if (create_rt(event, 0, 200ms));
                                     short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((destY * y + destX)) formula */
                                     if (state->id == 18) /* punching blocks */
                                     {

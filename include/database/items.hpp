@@ -1,20 +1,13 @@
 enum clothing
 { 
-    none,
-    shirt, 
-    legs, 
-    feet, 
-    face, 
-    hand, 
-    back, 
-    head, 
-    charms,
-    ances
+    none, shirt, legs, feet, face, hand, back, head, charms,ances
 };
 
 #include <unordered_map>
+#include <ranges> /* TODO */
 
-class item {
+class item 
+{
     public:
     unsigned short id{}; /* item identity */
     std::string raw_name{}; /* the exact name of the item including uppercases */
@@ -23,23 +16,30 @@ class item {
     bool seed;
 }; std::unordered_map<int, item> items;
 
+#include <vector>
+
 std::vector<std::byte> im_data(60, std::byte{0x00});
 signed hash{};
 
 template<typename T>
-void shift_pos(std::vector<std::byte>& data, int& pos, T& value) {
+void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 
+{
     for (size_t i = 0; i < sizeof(T); ++i) 
         reinterpret_cast<std::byte*>(&value)[i] = data[pos + i];
     pos += sizeof(T);
 }
 
-bool cache_items() {
+#include <algorithm>
+
+bool cache_items() 
+{
     short version{0};
     int pos{60}, count{0};
     shift_pos(im_data, pos, version);
     shift_pos(im_data, pos, count);
     items.reserve(count);
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) 
+    {
         item im{};
         shift_pos(im_data, pos, im.id); pos += sizeof(unsigned short);
         pos += sizeof(int);

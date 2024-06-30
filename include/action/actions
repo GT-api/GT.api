@@ -2,18 +2,22 @@
 #include "refresh_item_data.hpp"
 #include "enter_game.hpp"
 #include "input.hpp"
+#include "growid.hpp"
+#include "dialog_return.hpp"
 #include "quit_to_exit.hpp"
 #include "quit.hpp"
 #include "join_request.hpp"
 
-#include <map> // ordered
-std::map<std::string, std::function<void(ENetEvent&, std::string)>> command_pool
+std::unordered_map<std::string, std::function<void(ENetEvent&, std::string)>> command_pool
 {
-    {"requestedName", &logging_in}, {"tankIDName", &logging_in}, 
-    {"action|refresh_item_data", &refresh_item_data}, 
-    {"action|enter_game", &enter_game},
-    {"action|input", &input},
-    {"action|quit_to_exit", &quit_to_exit},
-    {"action|quit", &quit},
-    {"action|join_request", &join_request}
+    {"requestedName", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)}, 
+    {"tankIDName", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)}, 
+    {"action|refresh_item_data", std::bind(&refresh_item_data, std::placeholders::_1, std::placeholders::_2)}, 
+    {"action|enter_game", std::bind(&enter_game, std::placeholders::_1, std::placeholders::_2)},
+    {"action|input", std::bind(&input, std::placeholders::_1, std::placeholders::_2)},
+    {"action|growid", std::bind(&growid, std::placeholders::_1, std::placeholders::_2, "")},
+    {"action|dialog_return", std::bind(&dialog_return, std::placeholders::_1, std::placeholders::_2)},
+    {"action|quit_to_exit", std::bind(&quit_to_exit, std::placeholders::_1, std::placeholders::_2)},
+    {"action|quit", std::bind(&quit, std::placeholders::_1, std::placeholders::_2)},
+    {"action|join_request", std::bind(&join_request, std::placeholders::_1, std::placeholders::_2)}
 };

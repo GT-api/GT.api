@@ -1,21 +1,20 @@
 
-void logging_in(ENetEvent& event, std::string header)
+void logging_in(ENetEvent& event, const std::string header)
 {
     std::call_once(getpeer->logging_in, [&]() 
     {
-        std::vector<std::string> read_once = readpipe(header); 
-        seed random{};
-        read_once[0] == "requestedName" ? 
-            getpeer->requestedName = read_once[1] + "_" + std::to_string(random.fast(100, 999)) :
-            getpeer->tankIDName = read_once[1];
-        if (not getpeer->tankIDName.empty() and getpeer->tankIDPass not_eq read_once[3])
+        std::vector<std::string> pipes = readpipe(header);
+        if (pipes[0] == "tankIDName")
+        if (read_peer(event, pipes[1]) == false or pipes[3] not_eq getpeer->tankIDPass)
         {
             gt_packet(*event.peer, 0, false, "OnConsoleMessage", "`4Unable to log on:`` That `wGrowID`` doesn't seem valid, or the password is wrong.  If you don't have one, press `wCancel``, un-check `w'I have a GrowID'``, then click `wConnect``.");
             enet_peer_disconnect_later(event.peer, 0);
             return;
         }
+        seed random{};
+        getpeer->requestedName = pipes[1] + "_" + std::to_string(random.fast(100, 999));
         short offset = getpeer->tankIDName.empty() ? 0 : 4;
-        getpeer->country = read_once[37 + offset];
+        getpeer->country = pipes[37 + offset];
         gt_packet(*event.peer, 0, true,
             "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
             hash, 

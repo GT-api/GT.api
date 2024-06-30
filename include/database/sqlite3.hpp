@@ -13423,26 +13423,3 @@ struct fts5_api {
 #endif /* _FTS5_H */
 
 /******** End of fts5.h *********/
-
-/*
-@param cmd the 'command' that will be performed. e.g. CREATE, SELECT, INSERT -> create (table), read, modify
-@param before actions before the data gets written
-@param after actions after the data was written
-*/
-void update_db(sqlite3* sql, const std::string& cmd, 
-std::function<void(sqlite3_stmt*)> before = [](sqlite3_stmt* stmt){},
-std::function<void(sqlite3_stmt*)> after = [](sqlite3_stmt* stmt){}) 
-{
-    sqlite3_stmt* stmt;
-      sqlite3_prepare_v2(sql, cmd.c_str(), -1, &stmt, nullptr);
-      before(stmt);
-      after(stmt);
-      sqlite3_step(stmt);
-      sqlite3_finalize(stmt);
-}
-
-std::unique_ptr<sqlite3, decltype(&sqlite3_close)> open_db(const char* db_name) {
-    sqlite3* sql = nullptr;
-      sqlite3_open(db_name, &sql);
-      return {sql, sqlite3_close};
-}

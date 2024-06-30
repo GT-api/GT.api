@@ -1,6 +1,7 @@
 
-void input(ENetEvent& event, std::string header)
+void input(ENetEvent& event, const std::string header)
 {
+    if (create_rt(event, 1, 400ms));
     getpeer->rate_limit[1] = steady_clock::now();
     std::string text{readpipe(std::string{header})[4]};
     if (text.starts_with(" ") or text.starts_with("/")) return; // TODO add commands
@@ -16,7 +17,7 @@ void input(ENetEvent& event, std::string header)
         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
         {
             gt_packet(p, 0, false, "OnTalkBubble", getpeer->netid, std::format("CP:0_PL:0_OID:_player_chat={}", text).c_str());
-            gt_packet(p, 0, false, "OnConsoleMessage", std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{0}``>`` `$`${1}````", getpeer->requestedName, text).c_str());
+            gt_packet(p, 0, false, "OnConsoleMessage", std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{0}``>`` `$`${1}````", getpeer->nickname, text).c_str());
         }
     });
 }

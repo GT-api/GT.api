@@ -6,6 +6,8 @@ class slot {
 
 #include <mutex> /* std::once_flag */
 #include <deque> /* std::deque */
+#include <chrono>
+using namespace std::chrono;
 
 class peer {
 public:
@@ -20,24 +22,85 @@ public:
     bool facing_left{}; /* peer is directed towards the left direction */
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
-    std::vector<slot> slots{{18, 1}, {32, 1}}; /* an inventory slot starting at slot[0], don't know C++? just do slots.emplace_back to push a new item inside inventory */
+    std::vector<slot> slots{{18, 1}, {32, 1}}; /* an array of each slot. storing id, count */
 
     std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
     std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */
 
-    std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
+    std::array<steady_clock::time_point, 2> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
+    std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
+
+    std::string nickname{};
 
     /* cached data from entering game; these values may not be changed */
     std::string requestedName{};
     std::string tankIDName{};
+
     std::string tankIDPass{};
     std::string country{};
-
-    std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
 };
 
 #define getpeer static_cast<peer*>(event.peer->data)
 #define getp static_cast<peer*>(p.data)
+
+void register_peer(ENetEvent& event) {
+    sqlite3* db;
+    sqlite3_open("peer.db", &db);
+    std::string table = "CREATE TABLE IF NOT EXISTS \"" + getpeer->tankIDName + "\" ("
+                        "password TEXT);";
+    sqlite3_exec(db, table.c_str(), nullptr, nullptr, nullptr);
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+    std::string insert_sql = "INSERT INTO " + getpeer->tankIDName + " (password) VALUES (?);"; // Include password in your INSERT statement
+    sqlite3_stmt* stmt;
+    sqlite3_prepare_v2(db, insert_sql.c_str(), -1, &stmt, nullptr);
+    sqlite3_bind_text(stmt, 1, getpeer->tankIDPass.c_str(), -1, nullptr); // Bind the password to the first parameter
+    sqlite3_step(stmt);
+    sqlite3_reset(stmt);
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+}
+
+bool read_peer(ENetEvent& event, const std::string& name) {
+    sqlite3* db;
+    sqlite3_open("peer.db", &db);
+    std::string try_to = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + name + "';";
+    sqlite3_stmt* check_stmt;
+    if (sqlite3_prepare_v2(db, try_to.c_str(), -1, &check_stmt, nullptr) != SQLITE_OK) {
+        sqlite3_close(db);
+        return false;
+    }
+
+    if (sqlite3_step(check_stmt) != SQLITE_ROW) {
+        sqlite3_finalize(check_stmt);
+        sqlite3_close(db);
+        return false;
+    }
+    sqlite3_finalize(check_stmt);
+    std::string select = "SELECT password FROM \"" + name + "\";";
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, select.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            const unsigned char* password = sqlite3_column_text(stmt, 0);
+            if (password) {
+                getpeer->tankIDPass = reinterpret_cast<const char*>(password);
+            } else getpeer->tankIDPass = "";
+        }
+    }
+    getpeer->tankIDName = name;
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return true;
+}
+
+/* @param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. */
+template<typename length_T>
+bool create_rt(ENetEvent& event, size_t pos, length_T length) 
+{
+    if (std::chrono::duration_cast<length_T>(std::chrono::steady_clock::now() - getpeer->rate_limit[pos]) <= length) return false;
+    getpeer->rate_limit[pos] = std::chrono::steady_clock::now();
+    return true;
+}
 
 #include <functional>
 ENetHost* server;

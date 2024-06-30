@@ -1,5 +1,5 @@
 
-void quit(ENetEvent& event, std::string header) 
+void quit(ENetEvent& event, const std::string header) 
 {
-    enet_peer_disconnect(event.peer, ENET_NORMAL_DISCONNECTION);
+    enet_peer_reset(event.peer);
 }

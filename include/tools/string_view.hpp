@@ -12,3 +12,11 @@ std::vector<std::string> readpipe(const std::string& str) {
         separations.emplace_back(std::string(std::ranges::begin(part), std::ranges::end(part)));
     return separations;
 }
+
+/* @return true if string contains ONLY alpha [a, b, c] or digits [1, 2, 3] */
+bool alpha(const std::string& str) {
+    for (char c : str)
+        if (not std::isalnum(static_cast<unsigned char>(c)))
+            return false;
+    return true;
+}

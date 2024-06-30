@@ -1,5 +1,5 @@
 
-void join_request(ENetEvent& event, std::string header) 
+void join_request(ENetEvent& event, const std::string header) 
 {
     getpeer->rate_limit[2] = steady_clock::now();
     std::string big_name{readpipe(std::string{header})[3]};
@@ -61,17 +61,17 @@ void join_request(ENetEvent& event, std::string header)
         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
     getpeer->recent_worlds.back() = w->name;
     gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
-        getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->requestedName, getpeer->country).c_str());
+        getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->nickname, getpeer->country).c_str());
     peers([&](ENetPeer& p) 
     {
         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id)
         {
             gt_packet(p, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
-                getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->requestedName, getp->country).c_str());
+                getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->nickname, getp->country).c_str());
             gt_packet(p, 0, false, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
-                getpeer->requestedName, w->visitors).c_str());
+                getpeer->nickname, w->visitors).c_str());
             gt_packet(p, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
-                getpeer->requestedName, w->visitors).c_str());
+                getpeer->nickname, w->visitors).c_str());
         }
     });
     gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",

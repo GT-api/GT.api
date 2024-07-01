@@ -14,7 +14,7 @@
 int main() 
 {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("a53b0352c73f54a8d0b79ed25b1d498e3c3c0a0b");
+    github_sync("d770f4eb39ae9926a84f090ef05cc6bb5eb79a1a");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -69,6 +69,7 @@ int main()
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
                             const std::string action{(pipes[0] == "requestedName" or pipes[0] == "tankIDName") ? pipes[0] : pipes[0] + "|" + pipes[1]};
+                            std::cout << action << std::endl;
                             if (command_pool.contains(action))
                                 (static_cast<void>(std::async(std::launch::async, command_pool[std::move(action)], std::ref(event), std::move(header))));
                             break;

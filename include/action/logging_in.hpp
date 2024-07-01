@@ -7,8 +7,9 @@ void logging_in(ENetEvent& event, const std::string header)
         if (pipes[0] == "tankIDName")
         if (read_peer(event, pipes[1]) == false or pipes[3] not_eq getpeer->tankIDPass)
         {
-            gt_packet(*event.peer, 0, false, "OnConsoleMessage", "`4Unable to log on:`` That `wGrowID`` doesn't seem valid, or the password is wrong.  If you don't have one, press `wCancel``, un-check `w'I have a GrowID'``, then click `wConnect``.");
-            enet_peer_disconnect_later(event.peer, 0);
+            packet(*event.peer, "action|set_url\nurl|https://www.growtopiagame.com/account.php\nlabel|`$Retrieve lost password``");
+            packet(*event.peer, "action|log\nmsg|`4Unable to log on:`` That `wGrowID`` doesn't seem valid, or the password is wrong.  If you don't have one, press `wCancel``, un-check `w'I have a GrowID'``, then click `wConnect``.");
+            packet(*event.peer, "action|logon_fail\n");
             return;
         }
         seed random{};

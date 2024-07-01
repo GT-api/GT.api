@@ -3,6 +3,12 @@ void join_request(ENetEvent& event, const std::string header)
 {
     getpeer->rate_limit[2] = steady_clock::now();
     std::string big_name{readpipe(std::string{header})[3]};
+    if (not alpha(big_name) or big_name.empty())
+    {
+        gt_packet(*event.peer, 0, false, "OnConsoleMessage", "Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
+        gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld");
+        return;
+    }
     std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
     std::unique_ptr<world> w = read_world(big_name);
     if (w == nullptr) /* create a new world */

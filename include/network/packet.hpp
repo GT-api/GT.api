@@ -77,3 +77,13 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
 	if (enet_peer_send(&p, 0, enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE)) < 0) return;
     
 };
+
+void packet(ENetPeer& p, std::string str) 
+{
+    std::vector<std::byte> data(5 + str.length(), std::byte{0x0});
+    int three{3};
+    memcpy(data.data(), &three, sizeof(three));
+    for (size_t i = 0; i < str.length(); ++i) 
+        data[4 + i] = static_cast<std::byte>(str[i]);
+    enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
+}

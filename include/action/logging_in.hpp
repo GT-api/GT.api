@@ -15,7 +15,15 @@ void logging_in(ENetEvent& event, const std::string header)
         seed random{};
         getpeer->requestedName = pipes[1] + "_" + std::to_string(random.fast(100, 999));
         short offset = getpeer->tankIDName.empty() ? 0 : 4;
+        if (pipes[7 + offset] not_eq "4.59")
+        {
+            packet(*event.peer, "action|log\nmsg|`4UPDATE REQUIRED!`` : The `$V4.59`` update is now available for your device.  Go get it!  You'll need to install it before you can play online.");
+            packet(*event.peer, "action|set_url\nurl|https://growtopiagame.com/Growtopia-Installer.exe\nlabel|Download Latest Version");
+            packet(*event.peer, "action|logon_fail\n");
+            return;
+        }
         getpeer->country = pipes[37 + offset];
+        getpeer->user_id = std::stoi(pipes[43 + offset]);
         gt_packet(*event.peer, 0, true,
             "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
             hash, 

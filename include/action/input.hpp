@@ -12,7 +12,7 @@ void input(ENetEvent& event, const std::string header)
         gt_packet(*event.peer, 0, false, "OnConsoleMessage", "`6>>`4Spam detected! ``Please wait a bit before typing anything else.  Please note, any form of bot/macro/auto-paste will get all your accounts banned, so don't do it!");
         return;
     }
-    peers([&](ENetPeer& p) 
+    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
         {

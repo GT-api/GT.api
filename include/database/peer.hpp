@@ -4,6 +4,7 @@ class slot {
     short count{0}; /* the total amount of that item in that slot */
 };
 
+#include <stdfloat>
 #include <mutex> /* std::once_flag */
 #include <deque> /* std::deque */
 #include <chrono>
@@ -35,7 +36,6 @@ public:
     /* cached data from entering game; these values may not be changed */
     std::string requestedName{};
     std::string tankIDName{};
-
     std::string tankIDPass{};
     std::string country{};
 };
@@ -105,7 +105,7 @@ bool create_rt(ENetEvent& event, size_t pos, length_T length)
 #include <functional>
 ENetHost* server;
 
-std::vector<ENetPeer> peers(std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){}) {
+std::vector<ENetPeer> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){}) {
     std::vector<ENetPeer> peers{};
     for (ENetPeer& peer : std::ranges::subrange(server->peers, server->peers + server->peerCount)) 
         if (peer.state == ENET_PEER_STATE_CONNECTED)

@@ -12,6 +12,7 @@ class item
     unsigned short id{}; /* item identity */
     std::string raw_name{}; /* the exact name of the item including uppercases */
     short hits{};
+    char type{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
     bool seed;
 }; std::unordered_map<int, item> items;
@@ -38,11 +39,13 @@ bool cache_items()
     shift_pos(im_data, pos, version);
     shift_pos(im_data, pos, count);
     items.reserve(count);
-    for (int i = 0; i < count; i++) 
+    for (int i = 0; i < count; ++i) 
     {
         item im{};
-        shift_pos(im_data, pos, im.id); pos += sizeof(unsigned short);
-        pos += sizeof(int);
+        shift_pos(im_data, pos, im.id); pos += 2; /* downsized id to a 2 bit */
+        pos += 2;
+        shift_pos(im_data, pos, im.type);
+        pos += 1;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);

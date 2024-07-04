@@ -7,13 +7,13 @@
 #include "include\tools\string_view.hpp"
 #include "include\tools\random_engine.hpp"
 
+#include <future> /* std::async & future */
 #include "include\action\actions"
-#include <future> /* std::async & return future T */
 
 int main() 
 {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("0d8e04d4cdaf5449672d47bc80b22d5747b93f82");
+    github_sync("b2ee1f9e704c61962255272e59c1280059dc0ea9");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -45,7 +45,7 @@ int main()
 
     ENetEvent event{};
     while(true)
-        while (enet_host_service(server, &event, 1) > 0) /* waits 1 millisecond. it's a good pratice in C++ to always have a small timer for loops cause C++ is so damn fast */
+        while (enet_host_service(server, &event, 1) > 0)
             switch (event.type) 
             {
                 case ENET_EVENT_TYPE_CONNECT:
@@ -57,7 +57,7 @@ int main()
                     break;
                 case ENET_EVENT_TYPE_DISCONNECT: /* if peer closes growtopia.exe */
                 {
-                    quit(event, "action|quit"); /* treat closing growtopia.exe as a action|quit */
+                    quit(event, "");
                     break;
                 }
                 case ENET_EVENT_TYPE_RECEIVE: 
@@ -66,13 +66,12 @@ int main()
                     {
                         case 2: case 3: 
                         {
-                            std::span packet{event.packet->data, event.packet->dataLength};
-                                std::string header{packet.begin() + 4, packet.end() - 1};
+                            std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
                             const std::string action{(pipes[0] == "requestedName" or pipes[0] == "tankIDName") ? pipes[0] : pipes[0] + "|" + pipes[1]};
-                            if (command_pool.contains(action))
-                                (static_cast<void>(std::async(std::launch::async, command_pool[std::move(action)], std::ref(event), std::move(header))));
+                            if (action_pool.contains(action))
+                                (static_cast<void>(std::async(std::launch::async, action_pool[action], std::ref(event), std::ref(header))));
                             break;
                         }
                         case 4: 
@@ -104,7 +103,6 @@ int main()
                                 {
                                     if (create_rt(event, 0, 200ms)); /* this will only affect hackers (or macro spammers) */
                                     short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((destY * y + destX)) formula */
-                                    auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
                                     if (state->id == 18) /* punching blocks */
                                     {
                                         // ... TODO add a timer that resets hits every 6-8 seconds (threaded stopwatch)
@@ -125,11 +123,10 @@ int main()
                                         else worlds[getpeer->recent_worlds.back()].blocks[block1D].bg = 0;
                                     }
                                     else /* placing blocks */
-                                    {
                                         (int{items[state->id].type} == 18) ? 
                                             worlds[getpeer->recent_worlds.back()].blocks[block1D].bg = state->id : 
                                             worlds[getpeer->recent_worlds.back()].blocks[block1D].fg = state->id;
-                                    }
+                                    auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
                                     overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]);
                                     state_visuals(event, *state);
                                     break;

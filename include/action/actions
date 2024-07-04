@@ -8,7 +8,7 @@
 #include "quit.hpp"
 #include "join_request.hpp"
 
-std::unordered_map<std::string, std::function<void(ENetEvent&, std::string)>> command_pool
+std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string&)>> action_pool
 {
     {"requestedName", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)}, 
     {"tankIDName", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)}, 

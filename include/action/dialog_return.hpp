@@ -1,5 +1,5 @@
 
-void dialog_return(ENetEvent& event, const std::string header) 
+void dialog_return(ENetEvent& event, const std::string& header) 
 {
     std::vector<std::string> pipes = readpipe(header);
     std::string dialog_name = pipes[3];

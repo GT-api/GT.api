@@ -1,5 +1,5 @@
 
-void enter_game(ENetEvent& event, const std::string header) 
+void enter_game(ENetEvent& event, const std::string& header) 
 {
     std::call_once(getpeer->entered_game, [&]() 
     {

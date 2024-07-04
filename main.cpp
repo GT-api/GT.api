@@ -13,7 +13,7 @@
 int main() 
 {
     void github_sync(const char* commit); // -> import github.o
-    github_sync("b2ee1f9e704c61962255272e59c1280059dc0ea9");
+    github_sync("dac07ef4049ee1648d0b7b47ccb4c88d991d4776");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};

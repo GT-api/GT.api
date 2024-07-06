@@ -8,13 +8,13 @@
 #include "include\tools\random_engine.hpp"
 
 #include <future> /* std::async & future */
-#include "include/on/on"
+#include "include\on\on"
 #include "include\action\actions"
 
 int main() 
 {
-    void github_sync(const char* commit); // -> import github.o
-    github_sync("379e8e6c5eecc9add3cad708320778afc9dac583");
+    void github_sync(const std::string& commit); // -> import github.o
+    github_sync("1007e5d003303cdc25c1147378227c9a62fc7ed1");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -53,14 +53,13 @@ int main()
                     if (peers(ENET_PEER_STATE_CONNECTING).size() > 2)
                         packet(*event.peer, "action|log\nmsg|`4OOPS:`` Too many people logging in at once. Please press `5CANCEL`` and try again in a few seconds."),
                         enet_peer_disconnect_later(event.peer, ENET_NORMAL_DISCONNECTION);
-                    else if (enet_peer_send(event.peer, 0, enet_packet_create((const enet_uint8[4]){0x1}, 4, ENET_PACKET_FLAG_RELIABLE)) == 0)
+                    else if (enet_peer_send(event.peer, 0, enet_packet_create(
+                        []{ std::array<enet_uint8, 4> data = {0x1}; return data.data(); }(), 4, ENET_PACKET_FLAG_RELIABLE)) == 0)
                     event.peer->data = new peer{};
                     break;
                 case ENET_EVENT_TYPE_DISCONNECT: /* if peer closes growtopia.exe */
-                {
                     quit(event, "");
                     break;
-                }
                 case ENET_EVENT_TYPE_RECEIVE: 
                 {
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
@@ -71,8 +70,8 @@ int main()
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
                             const std::string action{(pipes[0] == "requestedName" or pipes[0] == "tankIDName") ? pipes[0] : pipes[0] + "|" + pipes[1]};
-                            if (action_pool.contains(action))
-                                (static_cast<void>(std::async(std::launch::async, action_pool[action], std::ref(event), std::ref(header))));
+                            if (auto i = action_pool.find(action); i not_eq action_pool.end())
+                                (static_cast<void>(std::async(std::launch::async, i->second, std::ref(event), std::ref(header))));
                             break;
                         }
                         case 4: 
@@ -83,7 +82,8 @@ int main()
                                 if ((packet.size() + 4) >= 60)
                                     for (size_t i = 0; i < packet.size(); ++i)
                                         packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
-                                if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;
+                                if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and 
+                                    packet.size() < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;
                                 state = get_state(packet);
                             } /* deletes packet ahead of time */
                             switch (state->type) 
@@ -102,33 +102,26 @@ int main()
                                 }
                                 case 3: 
                                 {
-                                    if (create_rt(event, 0, 200ms)); /* this will only affect hackers (or macro spammers) */
-                                    short block1D = state->punch[1] * 100 + state->punch[0]; /* 2D (x, y) to 1D ((destY * y + destX)) formula */
-                                    if (state->id == 18) /* punching blocks */
+                                    if (create_rt(event, 0, 200ms)); // this will only affect hackers (or macro spammers)
+                                    short block1D = state->punch[1] * 100 + state->punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
+                                    block& b = worlds[getpeer->recent_worlds.back()].blocks[block1D];
+                                    if (state->id == 18) // punching blocks
                                     {
                                         // ... TODO add a timer that resets hits every 6-8 seconds (threaded stopwatch)
-                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].bg == 0 and worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 0) break;
-                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 8 or worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 6) {
-                                            gt_packet(*event.peer, 0, false, "OnTalkBubble", getpeer->netid, worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 8 ? 
+                                        if (b.bg == 0 and b.fg == 0) break;
+                                        if (b.fg == 8 or b.fg == 6) {
+                                            gt_packet(*event.peer, 0, false, "OnTalkBubble", getpeer->netid, b.fg == 8 ? 
                                                 "It's too strong to break." : "(stand over and punch to use)");
                                             break;
                                         }
                                         block_punched(event, *state, block1D);
-                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].fg not_eq 0) 
-                                        {
-                                            if (worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0] < items[worlds[getpeer->recent_worlds.back()].blocks[block1D].fg].hits) break;
-                                            else worlds[getpeer->recent_worlds.back()].blocks[block1D].fg = 0;
-                                        }
-                                        else if (worlds[getpeer->recent_worlds.back()].blocks[block1D].bg not_eq 0)
-                                        if (worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1] < items[worlds[getpeer->recent_worlds.back()].blocks[block1D].bg].hits) break;
-                                        else worlds[getpeer->recent_worlds.back()].blocks[block1D].bg = 0;
+                                        if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) b.fg = 0;
+                                        else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
                                     }
-                                    else /* placing blocks */
-                                        (int{items[state->id].type} == 18) ? 
-                                            worlds[getpeer->recent_worlds.back()].blocks[block1D].bg = state->id : 
-                                            worlds[getpeer->recent_worlds.back()].blocks[block1D].fg = state->id;
+                                    else // placing blocks
+                                        (items[state->id].type == 18) ? b.bg = state->id : b.fg = state->id;
                                     auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
-                                    overwrite_tile(w, block1D, worlds[getpeer->recent_worlds.back()].blocks[block1D]);
+                                    overwrite_tile(w, block1D, b);
                                     state_visuals(event, *state);
                                     break;
                                 }

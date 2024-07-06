@@ -15,7 +15,8 @@ class world {
 std::unordered_map<std::string, world> worlds{}; 
 
 /* @brief push back a world in world.db */
-void register_world(std::unique_ptr<world>& w) {
+void register_world(std::unique_ptr<world>& w) 
+{
     sqlite3* db;
     sqlite3_open("world.db", &db);
     std::string table = "CREATE TABLE IF NOT EXISTS \"" + w->name + "\" ("
@@ -27,7 +28,8 @@ void register_world(std::unique_ptr<world>& w) {
     std::string insert_sql = "INSERT INTO " + w->name + " (id, fg, bg) VALUES (?, ?, ?);";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, insert_sql.c_str(), -1, &stmt, nullptr);
-    for (size_t i = 0; i < w->blocks.size(); ++i) {
+    for (size_t i = 0; i < w->blocks.size(); ++i) 
+    {
         sqlite3_bind_int(stmt, 1, i);
         sqlite3_bind_int(stmt, 2, w->blocks[i].fg);
         sqlite3_bind_int(stmt, 3, w->blocks[i].bg);
@@ -43,7 +45,8 @@ void register_world(std::unique_ptr<world>& w) {
  @brief updates world.db for only 1 tile. this may save memory however the commit of opening world.db is already costly, please call this function sparingly
     NEVER use this function if your only updating worlds stack objects! these objects are not store-worthly
 */
-void overwrite_tile(std::unique_ptr<world>& w, int blockID, const block& b) {
+void overwrite_tile(std::unique_ptr<world>& w, int blockID, const block& b) 
+{
     sqlite3* db;
     sqlite3_open("world.db", &db);
     std::string update_sql = "UPDATE " + w->name + " SET fg = ?, bg = ? WHERE id = ?;";
@@ -57,17 +60,20 @@ void overwrite_tile(std::unique_ptr<world>& w, int blockID, const block& b) {
     sqlite3_close(db);
 }
 
-std::unique_ptr<world> read_world(const std::string& name) {
+std::unique_ptr<world> read_world(const std::string& name) 
+{
     sqlite3* db;
     sqlite3_open("world.db", &db);
     std::string try_to = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + name + "';";
     sqlite3_stmt* check_stmt;
-    if (sqlite3_prepare_v2(db, try_to.c_str(), -1, &check_stmt, nullptr) != SQLITE_OK) {
+    if (sqlite3_prepare_v2(db, try_to.c_str(), -1, &check_stmt, nullptr) != SQLITE_OK) 
+    {
         sqlite3_close(db);
         return nullptr;
     }
 
-    if (sqlite3_step(check_stmt) != SQLITE_ROW) {
+    if (sqlite3_step(check_stmt) != SQLITE_ROW) 
+    {
         sqlite3_finalize(check_stmt);
         sqlite3_close(db);
         return nullptr;
@@ -77,7 +83,8 @@ std::unique_ptr<world> read_world(const std::string& name) {
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, select.c_str(), -1, &stmt, nullptr);
     std::unique_ptr<world> w = std::make_unique<world>();
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) 
+    {
         short fg = sqlite3_column_int(stmt, 0);
         short bg = sqlite3_column_int(stmt, 1);
         w->blocks.push_back(block{fg, bg});
@@ -88,8 +95,9 @@ std::unique_ptr<world> read_world(const std::string& name) {
     return w;
 }
 
-void OnRequestWorldSelectMenu(ENetEvent event) {
-    auto section = [](const auto& range, const char* color) 
+void OnRequestWorldSelectMenu(ENetEvent event) 
+{
+    auto section = [](const auto& range, const auto& color) 
     {
         std::string result;
         for (const auto& name : range)
@@ -117,16 +125,18 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
     enet_peer_send(&peer, 0, packet);
 }
 
-void state_visuals(ENetEvent& event, state s) {
-    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) {
-            if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) {
-            s.netid = getpeer->netid;
+void state_visuals(ENetEvent& event, state s) 
+{
+    s.netid = getpeer->netid;
+    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
+    {
+        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) 
             send_data(p, compress_state(s));
-        }
     });
 }
 
-void block_punched(ENetEvent& event, state s, int block1D) {
+void block_punched(ENetEvent& event, state s, int block1D) 
+{
     worlds[getpeer->recent_worlds.back()].blocks[block1D].fg == 0 ?
     worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[1]++ :
     worlds[getpeer->recent_worlds.back()].blocks[block1D].hits[0]++;

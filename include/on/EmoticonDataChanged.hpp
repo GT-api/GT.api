@@ -1,4 +1,3 @@
-#include <unordered_map>
 
 std::unordered_map<std::string_view, std::string_view> emoticon = 
 {

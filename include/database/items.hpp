@@ -49,14 +49,15 @@ bool cache_items()
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
-                im.raw_name += static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])),
+            im.raw_name.resize(len);
+            for (short i = 0; i < len; ++i) 
+                im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])),
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         pos += 14;
@@ -72,58 +73,58 @@ bool cache_items()
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         pos += 8;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         pos += 24;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         pos += 80;
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         pos += 13;
@@ -132,13 +133,13 @@ bool cache_items()
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
-            for (short i = 0; i < std::move(len); i++)
+            for (short i = 0; i < len; ++i)
                 ++pos;
         }
         pos += 8;
@@ -147,7 +148,7 @@ bool cache_items()
         std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });
         if (small_name.contains("ancestral") and not im.seed)
             im.cloth_type = clothing::ances;
-        items.emplace(i, std::move(im));
+        items.emplace(i, im);
     }
     return true;
 }

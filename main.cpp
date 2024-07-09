@@ -17,7 +17,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    git_check("d916a0ad25ccbd3a0290da11a267c268945ace71");
+    git_check("c22216e2ea100b23751f68e015018a81df287b3c");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};

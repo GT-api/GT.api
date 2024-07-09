@@ -1,1 +1,2 @@
+#include <future>
 #include "EmoticonDataChanged.hpp"

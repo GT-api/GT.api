@@ -1,7 +1,17 @@
-class block {
+class block 
+{
     public:
     short fg{0}, bg{0};
     std::array<int, 2> hits{0, 0}; /* fg, bg */ // -> stack object
+};
+
+class ifloat 
+{
+    public:
+    int uid{0};
+    short id{0};
+    short count{0};
+    float x, y;
 };
 
 class world {
@@ -10,6 +20,7 @@ class world {
     std::string name{};
     short visitors{0}; // -> stack object
     std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
+    std::vector<ifloat> ifloats{}; /* floating items */
 }; 
 /* modify stack objects easily. these objects will remain in the stack not in world.db */
 std::unordered_map<std::string, world> worlds{}; 

@@ -33,7 +33,7 @@ void join_request(ENetEvent& event, const std::string& header)
     }
     getpeer->netid = ++w->visitors;
     short y = w->blocks.size() / 100, x = w->blocks.size() / y;
-    std::vector<std::byte> data(78 + w->name.length() + w->blocks.size() + 24 + (8 * w->blocks.size()), std::byte{0x00});
+    std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()), std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
@@ -45,22 +45,39 @@ void join_request(ENetEvent& event, const std::string& header)
     data[72 + name_size] = static_cast<std::byte>(y);
     *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(w->blocks.size());
     int pos = 85 + name_size;
-    for (size_t i = 0; i < w->blocks.size(); ++i) 
+    short i = 0; 
+    for (const auto& block : w->blocks)
     {
-        *reinterpret_cast<short*>(data.data() + pos) = w->blocks[i].fg;
-        *reinterpret_cast<short*>(data.data() + (pos + 2)) = w->blocks[i].bg;
-        *reinterpret_cast<unsigned*>(data.data() + (pos + 4)) = 0x0;
-        if (w->blocks[i].fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
+        auto [fg, bg, hits] = block;
+        *reinterpret_cast<short*>(data.data() + pos) = fg;
+        *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
+        *reinterpret_cast<unsigned*>(data.data() + (pos + 4)) = 0;
+        if (fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
         {
+            data.resize(data.capacity() + 8); // manual allocated resize (this is experimental!!)
             getpeer->pos[0] = (i % x) * 32;
             getpeer->pos[1] = (i / x) * 32;
             data[pos + 8] = std::byte{0x1};
             *reinterpret_cast<short*>(data.data() + pos + 9) = 4;
             for (size_t i = 0; i < 4; ++i)
-                data[pos + 11 + i] = static_cast<std::byte>(std::string_view{"EXIT"}[i]);
+                data[pos + 11 + i] = static_cast<std::byte>("EXIT"[i]);
             pos += 8;
         }
         pos += 8;
+        ++i;
+    }
+    *reinterpret_cast<int*>(data.data() + pos) = static_cast<int>(w->ifloats.size());
+    *reinterpret_cast<int*>(data.data() + pos + 4) = static_cast<int>(w->ifloats.size());
+    pos += 8;
+    for (const auto& ifloat : w->ifloats) 
+    {
+        auto [id, count, uid, x, y] = ifloat;
+        *reinterpret_cast<short*>(data.data() + pos) = id;
+        *reinterpret_cast<float*>(data.data() + pos + 2) = x;
+        *reinterpret_cast<float*>(data.data() + pos + 6) = y;
+        *reinterpret_cast<short*>(data.data() + pos + 10) = count;
+        *reinterpret_cast<int*>(data.data() + pos + 12) = uid;
+        pos += 16;
     }
     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
     for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)

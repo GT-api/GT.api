@@ -43,6 +43,7 @@ bool cache_items()
     {
         item im{};
         shift_pos(im_data, pos, im.id); pos += 2; /* downsized id to a 2 bit */
+        im.seed = im.id % 2 == 0;
         pos += 2;
         shift_pos(im_data, pos, im.type);
         pos += 1;
@@ -51,8 +52,9 @@ bool cache_items()
             pos += sizeof(short);
             im.raw_name.resize(len);
             for (short i = 0; i < len; ++i) 
-                im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])),
-                ++pos;
+                if (not im.seed) 
+                    im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()]));
+            pos += len;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));
@@ -143,11 +145,13 @@ bool cache_items()
                 ++pos;
         }
         pos += 8;
-        im.seed = im.id % 2 == 0;
-        std::string small_name = im.raw_name; /* waste of memory to store a lowercase version on the stack so we localize it. */
-        std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });
-        if (small_name.contains("ancestral") and not im.seed)
-            im.cloth_type = clothing::ances;
+        if (not im.seed) 
+        {
+            std::string small_name = im.raw_name; /* waste of memory to store a lowercase version on the stack so we localize it. */
+            std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });
+            if (small_name.contains("ancestral"))
+                im.cloth_type = clothing::ances;
+        }
         items.emplace(i, im);
     }
     return true;

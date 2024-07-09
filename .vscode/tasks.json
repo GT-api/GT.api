@@ -12,13 +12,15 @@
                 "main.cpp",
                 ".\\include\\sqlite3.o",
                 ".\\include\\compress.o",
-                ".\\include\\github.o",
+                ".\\include\\git.o",
+                ".\\include\\https.o",
                 "-o main.exe",
                 "-lws2_32",
                 "-lwinmm",
                 "-lpthread",
                 "-lcurl",
                 "-lssl",
+                "-lcrypto",
                 "-ljsoncpp"
             ],
             "group": {

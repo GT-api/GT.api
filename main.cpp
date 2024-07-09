@@ -7,19 +7,21 @@
 #include "include\tools\string_view.hpp"
 #include "include\tools\random_engine.hpp"
 
-#include <future> /* std::async & future */
+#include <future>
 #include "include\on\on"
 #include "include\action\actions"
 
+void git_check(const std::string& commit); // -> import git.o
+void basic_https(const std::string& s_ip, u_short s_port, u_short https_port); // -> import https.o
+int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
+
 int main() 
 {
-    void github_sync(const std::string& commit); // -> import github.o
-    github_sync("1007e5d003303cdc25c1147378227c9a62fc7ed1");
+    git_check("d916a0ad25ccbd3a0290da11a267c268945ace71");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
-
-        int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
+        std::thread(&basic_https, "127.0.0.1", address.port, 443).detach();
         server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
             server->checksum = enet_crc32;
             enet_host_compress_with_range_coder(server);
@@ -117,6 +119,7 @@ int main()
                                         block_punched(event, *state, block1D);
                                         if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) b.fg = 0;
                                         else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
+                                        else break;
                                     }
                                     else // placing blocks
                                         (items[state->id].type == 18) ? b.bg = state->id : b.fg = state->id;

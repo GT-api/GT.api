@@ -17,11 +17,11 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    git_check("69ad7502bec9555593fe4cab0677f3562cbb65f0");
+    git_check("8e57614d25f3859c8c0d05ac3f06c63b47f6f605");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
-        //std::thread(&basic_https, "127.0.0.1", address.port, 443).detach();
+        std::thread(&basic_https, "127.0.0.1", address.port, 443).detach();
         server = enet_host_create(&address, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
             server->checksum = enet_crc32;
             enet_host_compress_with_range_coder(server);
@@ -66,22 +66,24 @@ int main()
                 {
                     std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
                     std::cout << header << std::endl;
-                    std::call_once(getpeer->logging_in, [&]() 
-                            {
-                                gt_packet(*event.peer, 0, true,
-                                    "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
-                                    hash, 
-                                    "ubistatic-a.akamaihd.net",
-                                    "0098/2521452/cache/", 
-                                    "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
-                                    "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=29681641|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
-                                );
-                            });
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                     {
                         case 2: case 3: 
                         {
-                            std::cout << "case 2: case 3:" << std::endl;
+                            if (header.starts_with("protocol|208")) // TODO
+                                std::call_once(getpeer->logging_in, [&]() 
+                                {
+                                    gt_packet(*event.peer, 0, true,
+                                        "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
+                                        hash, 
+                                        "ubistatic-a.akamaihd.net",
+                                        "0098/2521452/cache/", 
+                                        "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
+                                        "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=29681641|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
+                                    );
+                                });
+                            getpeer->requestedName = "guest"; // TODO read player actual name
+                            getpeer->country = "us"; // TODO read players region/country
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
                             const std::string action{pipes[0] + "|" + pipes[1]};
@@ -91,7 +93,6 @@ int main()
                         }
                         case 4: 
                         {
-                            std::cout << "case 4:" << std::endl;
                             std::unique_ptr<state> state{};
                             {
                                 std::vector<std::byte> packet(event.packet->dataLength - 4, std::byte{0x00});

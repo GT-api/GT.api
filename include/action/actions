@@ -2,6 +2,7 @@
 #include "refresh_item_data.hpp"
 #include "enter_game.hpp"
 #include "input.hpp"
+#include "drop.hpp"
 #include "growid.hpp"
 #include "dialog_return.hpp"
 #include "quit_to_exit.hpp"
@@ -15,6 +16,7 @@ std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string
     {"action|refresh_item_data", std::bind(&refresh_item_data, std::placeholders::_1, std::placeholders::_2)}, 
     {"action|enter_game", std::bind(&enter_game, std::placeholders::_1, std::placeholders::_2)},
     {"action|input", std::bind(&input, std::placeholders::_1, std::placeholders::_2)},
+    {"action|drop", std::bind(&drop, std::placeholders::_1, std::placeholders::_2)},
     {"action|growid", std::bind(&growid, std::placeholders::_1, std::placeholders::_2, "")},
     {"action|dialog_return", std::bind(&dialog_return, std::placeholders::_1, std::placeholders::_2)},
     {"action|quit_to_exit", std::bind(&quit_to_exit, std::placeholders::_1, std::placeholders::_2)},

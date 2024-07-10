@@ -31,6 +31,7 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
 }
 
 #include <algorithm>
+#include <iostream>
 
 bool cache_items() 
 {
@@ -52,9 +53,8 @@ bool cache_items()
             pos += sizeof(short);
             im.raw_name.resize(len);
             for (short i = 0; i < len; ++i) 
-                if (not im.seed) 
-                    im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()]));
-            pos += len;
+                im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])), 
+                ++pos;
         }
         {
             short len = *(reinterpret_cast<short*>(&im_data[pos]));

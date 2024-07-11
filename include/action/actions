@@ -11,8 +11,7 @@
 
 std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string&)>> action_pool
 {
-    {"requestedName", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)}, 
-    {"tankIDName", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)}, 
+    {"protocol", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)},
     {"action|refresh_item_data", std::bind(&refresh_item_data, std::placeholders::_1, std::placeholders::_2)}, 
     {"action|enter_game", std::bind(&enter_game, std::placeholders::_1, std::placeholders::_2)},
     {"action|input", std::bind(&input, std::placeholders::_1, std::placeholders::_2)},

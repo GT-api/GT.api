@@ -51,10 +51,9 @@ void join_request(ENetEvent& event, const std::string& header)
         auto [fg, bg, hits] = block;
         *reinterpret_cast<short*>(data.data() + pos) = fg;
         *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
-        *reinterpret_cast<unsigned*>(data.data() + (pos + 4)) = 0;
         if (fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
         {
-            data.resize(data.capacity() + 8); // manual allocated resize (this is experimental!!)
+            data.resize(data.size() + 8); // manual allocated resize (this is experimental!!)
             getpeer->pos[0] = (i % x) * 32;
             getpeer->pos[1] = (i / x) * 32;
             data[pos + 8] = std::byte{0x1};

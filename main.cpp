@@ -17,7 +17,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    git_check("8e57614d25f3859c8c0d05ac3f06c63b47f6f605");
+    git_check("5a1372d1d58de3248bdfed089fa2dac7df111e9c");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -64,29 +64,15 @@ int main()
                     break;
                 case ENET_EVENT_TYPE_RECEIVE: 
                 {
-                    std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
-                    std::cout << header << std::endl;
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                     {
                         case 2: case 3: 
                         {
-                            if (header.starts_with("protocol|208")) // TODO
-                                std::call_once(getpeer->logging_in, [&]() 
-                                {
-                                    gt_packet(*event.peer, 0, true,
-                                        "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
-                                        hash, 
-                                        "ubistatic-a.akamaihd.net",
-                                        "0098/2521452/cache/", 
-                                        "cc.cz.madkite.freedom org.aqua.gg idv.aqua.bulldog com.cih.gamecih2 com.cih.gamecih com.cih.game_cih cn.maocai.gamekiller com.gmd.speedtime org.dax.attack com.x0.strai.frep com.x0.strai.free org.cheatengine.cegui org.sbtools.gamehack com.skgames.traffikrider org.sbtoods.gamehaca com.skype.ralder org.cheatengine.cegui.xx.multi1458919170111 com.prohiro.macro me.autotouch.autotouch com.cygery.repetitouch.free com.cygery.repetitouch.pro com.proziro.zacro com.slash.gamebuster", 
-                                        "proto=208|choosemusic=audio/mp3/about_theme.mp3|active_holiday=0|wing_week_day=0|ubi_week_day=0|server_tick=29681641|clash_active=0|drop_lavacheck_faster=1|isPayingUser=0|usingStoreNavigation=1|enableInventoryTab=1|bigBackpack=1|"
-                                    );
-                                });
-                            getpeer->requestedName = "guest"; // TODO read player actual name
-                            getpeer->country = "us"; // TODO read players region/country
+                            std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
+                            std::cout << header << std::endl;
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
-                            const std::string action{pipes[0] + "|" + pipes[1]};
+                             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
                             if (auto i = action_pool.find(action); i not_eq action_pool.end())
                                 (static_cast<void>(std::async(std::launch::async, i->second, std::ref(event), std::ref(header))));
                             break;

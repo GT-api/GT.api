@@ -14,6 +14,7 @@
                 ".\\include\\compress.o",
                 ".\\include\\git.o",
                 ".\\include\\https.o",
+                ".\\include\\anti-vpn.o",
                 "-o main.exe",
                 "-lws2_32",
                 "-lwinmm",

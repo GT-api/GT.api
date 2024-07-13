@@ -1,7 +1,6 @@
 
 void quit_to_exit(ENetEvent& event, const std::string& header) 
 {
-    if (getpeer->recent_worlds.back().empty()) return;
     worlds[getpeer->recent_worlds.back()].visitors--;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {

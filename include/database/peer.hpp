@@ -15,6 +15,7 @@ public:
     std::once_flag logging_in{}; /* without this, GT will keep pushing peer into the server. */
     std::once_flag entered_game{}; /* only enter game once. this fixes many problems and to-be problems by exploiters */
     std::mutex post_enter{}; /* things that must be done when peer is in world, this value is reset once they leave. */
+    char ipv6[INET6_ADDRSTRLEN]; // modern-day IP for security. e.g. 2001:0db8:85a3:0000:0000:8a2e:0370:7334 -> https://en.wikipedia.org/wiki/IPv6_address
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */

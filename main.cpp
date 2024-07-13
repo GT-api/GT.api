@@ -13,11 +13,12 @@
 
 void git_check(const std::string& commit); // -> import git.o
 void basic_https(const std::string& s_ip, u_short s_port, u_short https_port); // -> import https.o
+bool ip_is_real(const std::string& ip, const std::string& token); // -> import anti-vpn.o
 int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    git_check("e1677034488c85067932bde025d9a653cdaca4e6");
+    git_check("247ad42fd0a7fbcff3644209e519a51ed20b87f5");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -51,19 +52,29 @@ int main()
         while (enet_host_service(server, &event, 1) > 0)
             switch (event.type) 
             {
-                case ENET_EVENT_TYPE_CONNECT:  
-                    if (peers(ENET_PEER_STATE_CONNECTING).size() > 2)
-                        packet(*event.peer, "action|log\nmsg|`4OOPS:`` Too many people logging in at once. Please press `5CANCEL`` and try again in a few seconds."),
-                        enet_peer_disconnect_later(event.peer, ENET_NORMAL_DISCONNECTION);
+                case ENET_EVENT_TYPE_CONNECT: // cleanup later...
+                {
+                    event.peer->data = new peer{}; // TODO
+                    inet_ntop(AF_INET6, &(event.peer->address.host), getpeer->ipv6, INET6_ADDRSTRLEN); // I think this will also map-out peer's IPv4. I am too lazy to add IPv4 on it's own!
+
+                    std::string problem{}; // waste of memory but it looks better this way...
+                    if (not ip_is_real(getpeer->ipv6, "7fff5d956e4445e6943055fc17fcd0eb")) // only when hosting. this will not include localhost (::ffff:127.0.0.1)
+                        problem = std::format("`4Can not make a new account!`` Sorry, but IP {} is not permitted to create NEW Growtopia account at this time. (this can be because there is an open proxy/VPN here or abuse has come from this IP) Please try again from another IP address.", getpeer->ipv6).c_str();
+                    else if (peers(ENET_PEER_STATE_CONNECTING).size() > 2) 
+                        problem = "`4OOPS:`` Too many people logging in at once. Please press `5CANCEL`` and try again in a few seconds.";
                     else if (enet_peer_send(event.peer, 0, enet_packet_create(
-                        []{ std::array<enet_uint8, 4> data = {0x1}; return data.data(); }(), 4, ENET_PACKET_FLAG_RELIABLE)) == 0)
-                    event.peer->data = new peer{};
+                        []{ std::array<enet_uint8, 4> data = {0x1}; return data.data(); }(), 4, ENET_PACKET_FLAG_RELIABLE)) == 0) break;
+                    else [[unlikely]] problem = "`4ERROR:`` try reconnecting to the `wserver``."; // a static byte array. this outcome is unlikely. (tell me otherwise...)
+                    packet(*event.peer, std::format("action|log\nmsg|{}", problem).c_str());
+                    enet_peer_disconnect_later(event.peer, ENET_NORMAL_DISCONNECTION); // calls ENET_EVENT_TYPE_DISCONNECT. this is nice for deleting that pre-allocated peer class!
                     break;
+                }
                 case ENET_EVENT_TYPE_DISCONNECT: /* if peer closes growtopia.exe */
                     quit(event, "");
                     break;
                 case ENET_EVENT_TYPE_RECEIVE: 
                 {
+                    std::cout << int{std::span{event.packet->data, event.packet->dataLength}[0]} << std::endl;
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                     {
                         case 2: case 3: 
@@ -72,7 +83,7 @@ int main()
                             std::cout << header << std::endl;
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
-                             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
+                            const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
                             if (auto i = action_pool.find(action); i not_eq action_pool.end())
                                 (static_cast<void>(std::async(std::launch::async, i->second, std::ref(event), std::ref(header))));
                             break;
@@ -93,7 +104,7 @@ int main()
                             {
                                 case 0: 
                                 {
-                                    if (getpeer->post_enter.try_lock()) 
+                                    if (getpeer->post_enter.try_lock()) // memory optimize- push only during an actual world enter
                                     {
                                         gt_packet(*event.peer, 0, true, "OnSetPos", floats{getpeer->pos[0], getpeer->pos[1]});
                                         gt_packet(*event.peer, 0, true, "OnChangeSkin", -1429995521);
@@ -131,7 +142,7 @@ int main()
                                 }
                                 case 11:
                                 {
-                                    gt_packet(*event.peer, 0, false, "OnConsoleMessage", "Collected `w{} {} Seed{}``. Rarity: `w{}``");
+                                    gt_packet(*event.peer, 0, false, "OnConsoleMessage", "Collected `w{amount} {item name}{(s) >= 2}``. Rarity: `w{rarity}``"); // incomplete
                                     break;
                                 }
                             }

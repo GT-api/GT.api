@@ -12,7 +12,7 @@ jobs:
         install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-curl mingw-w64-ucrt-x86_64-jsoncpp
     - run: |
         set +e
-        g++ -std=c++2b -Og -g main.cpp .\\include\\sqlite3.o .\\include\\compress.o .\\include\\github.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -ljsoncpp -ftime-report
+        g++ -std=c++2b -Og -g main.cpp .\\include\\sqlite3.o .\\include\\compress.o .\\include\\github.o .\\include\\anti-vpn.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -ljsoncpp -ftime-report
         exit_code=$?
         set -e
         if [ $exit_code -ne 0 ]; then

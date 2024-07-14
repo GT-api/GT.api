@@ -1,7 +1,8 @@
 
 void join_request(ENetEvent& event, const std::string& header) 
 {
-    if (not create_rt(event, 2, 1s)) {
+    if (not create_rt(event, 2, 500ms)) 
+    {
         gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld");
         return;
     }
@@ -36,19 +37,19 @@ void join_request(ENetEvent& event, const std::string& header)
     }
     getpeer->netid = ++w->visitors;
     short y = w->blocks.size() / 100, x = w->blocks.size() / y;
-    std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()), std::byte{0x00});
+    std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()) + 1000/*TODO*/, std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
-    unsigned char name_size = w->name.length(); /* Growtopia limits world name length hence 255 is plenty of space */
-    data[66] = std::byte{name_size};
-    for (size_t i = 0; i < name_size; ++i)
+    unsigned char len = w->name.length(); /* Growtopia limits world name length hence 255 is plenty of space */
+    data[66] = std::byte{len};
+    for (size_t i = 0; i < static_cast<int>(len); ++i)
         data[68 + i] = static_cast<std::byte>(w->name[i]);
-    data[68 + name_size] = static_cast<std::byte>(x);
-    data[72 + name_size] = static_cast<std::byte>(y);
-    *reinterpret_cast<unsigned short*>(data.data() + 76 + name_size) = static_cast<unsigned short>(w->blocks.size());
-    int pos = 85 + name_size;
-    short i = 0; 
+    data[68 + static_cast<int>(len)] = static_cast<std::byte>(x);
+    data[72 + static_cast<int>(len)] = static_cast<std::byte>(y);
+    *reinterpret_cast<unsigned short*>(data.data() + 76 + len) = static_cast<unsigned short>(w->blocks.size());
+    int pos = 85 + static_cast<int>(len);
+    short i = 0;
     for (const auto& block : w->blocks)
     {
         auto [fg, bg, hits] = block;
@@ -56,7 +57,6 @@ void join_request(ENetEvent& event, const std::string& header)
         *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
         if (fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
         {
-            data.resize(data.size() + 8); // manual allocated resize (this is experimental!!)
             getpeer->pos[0] = (i % x) * 32;
             getpeer->pos[1] = (i / x) * 32;
             data[pos + 8] = std::byte{0x1};

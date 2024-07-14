@@ -31,7 +31,6 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
 }
 
 #include <algorithm>
-#include <iostream>
 
 bool cache_items() 
 {

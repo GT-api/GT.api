@@ -3,8 +3,8 @@
 #include "include\database\sqlite3.hpp"
 #include "include\database\peer.hpp"
 #include "include\network\packet.hpp"
-#include "include\database\world.hpp"
 #include "include\tools\string_view.hpp"
+#include "include\database\world.hpp"
 #include "include\tools\random_engine.hpp"
 
 #include <future>
@@ -18,7 +18,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    git_check("0ff7da61e1ee40afda59b987605ef449cdbe536f");
+    git_check("8c820f1b1cf543a1c764e66091b3a296a0d5209c");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -74,13 +74,12 @@ int main()
                     break;
                 case ENET_EVENT_TYPE_RECEIVE: 
                 {
-                    std::cout << int{std::span{event.packet->data, event.packet->dataLength}[0]} << std::endl;
                     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 
                     {
                         case 2: case 3: 
                         {
                             std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
-                            std::cout << header << std::endl;
+                            printf("%s \n", header.c_str());
                             std::ranges::replace(header, '\n', '|');
                             std::vector<std::string> pipes = readpipe(header);
                             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
@@ -116,14 +115,15 @@ int main()
                                 }
                                 case 3: 
                                 {
-                                    if (not create_rt(event, 0, 200ms)) break; // this will only affect hackers (or macro spammers)
+                                    if (not create_rt(event, 0, 120ms)) break; // this will only affect hackers (or macro spammers)
                                     short block1D = state->punch[1] * 100 + state->punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
                                     block& b = worlds[getpeer->recent_worlds.back()].blocks[block1D];
                                     if (state->id == 18) // punching blocks
                                     {
                                         // ... TODO add a timer that resets hits every 6-8 seconds (threaded stopwatch)
                                         if (b.bg == 0 and b.fg == 0) break;
-                                        if (b.fg == 8 or b.fg == 6) {
+                                        if (b.fg == 8 or b.fg == 6) 
+                                        {
                                             gt_packet(*event.peer, 0, false, "OnTalkBubble", getpeer->netid, b.fg == 8 ? 
                                                 "It's too strong to break." : "(stand over and punch to use)");
                                             break;
@@ -133,8 +133,12 @@ int main()
                                         else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
                                         else break;
                                     }
-                                    else // placing blocks
-                                        (items[state->id].type == 18) ? b.bg = state->id : b.fg = state->id;
+                                    else 
+                                    {
+                                        if (state->punch[0] not_eq static_cast<int>(getpeer->pos[0] / 32) or state->punch[1] not_eq static_cast<int>(getpeer->pos[1] / 32))
+                                            (items[state->id].type == 18) ? b.bg = state->id : b.fg = state->id;
+                                        else break; 
+                                    }
                                     auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
                                     overwrite_tile(w, block1D, b);
                                     state_visuals(event, *state);

@@ -1,4 +1,3 @@
-#include <iostream>
 
 void dialog_return(ENetEvent& event, const std::string& header) 
 {
@@ -7,7 +6,6 @@ void dialog_return(ENetEvent& event, const std::string& header)
     if (pipes.size() > 3)
         pipes.erase(pipes.begin(), pipes.begin() + 4);
     else return; // button has no name.
-    for (const auto& p : pipes) std::cout << p << std::endl;
     if (dialog_name == "growid_apply" and pipes[0] == "logon" and pipes[2] == "password" and pipes[4] == "password_verify" and pipes[6] == "email")
     {
         std::string& logon = pipes[1];
@@ -33,8 +31,8 @@ void dialog_return(ENetEvent& event, const std::string& header)
         short id = stoi(pipes[1]), count = stoi(pipes[4]);
         auto slot = std::find_if(getpeer->slots.begin(), getpeer->slots.end(), 
             [&](const auto& slot) { return slot.id == id and slot.count >= count; });
-        if (slot not_eq getpeer->slots.end()) {
-            std::cout << getpeer->pos[0] << ":" << getpeer->pos[1] << std::endl; // drop position useful for constructing ifloat
+        if (slot not_eq getpeer->slots.end()) 
+        {
             slot->count -= count;
             inventory_visuals(*event.peer);
         }

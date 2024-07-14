@@ -106,24 +106,19 @@ std::unique_ptr<world> read_world(const std::string& name)
     return w;
 }
 
-#include <thread>
-
 void OnRequestWorldSelectMenu(ENetEvent event) 
 {
-    printf("OnRequestWorldSelectMenu");
     auto section = [](const auto& range, const auto& color) 
     {
         std::string result;
         for (const auto& name : range)
             if (not name.empty()) /* some may be stored empty but still an object. e.g. std::array */
-                result += std::format("add_floater|{0}|0|0.5|{1}\n", name, color);
-        if (not result.empty())
-            result.pop_back(); 
+                result += std::format("\nadd_floater|{0}|0|0.5|{1}", name, color);
         return result;
     };
-    gt_packet(*event.peer, 0, true, "OnRequestWorldSelectMenu", std::format(
-        "add_filter|\nadd_heading|Top Worlds<ROW2>|{0}\nadd_heading|My Worlds<CR>|{1}\nadd_heading|Recently Visited Worlds<CR>|{2}",
-        "", section(getpeer->locked_worlds, "2147418367"), section(getpeer->recent_worlds, "3417414143")).c_str());
+    gt_packet(*event.peer, 0, false, "OnRequestWorldSelectMenu", std::format(
+        "add_filter|\nadd_heading|Top Worlds<ROW2>|{0}\nadd_heading|My Worlds<CR>|{1}\nadd_heading|Recently Visited Worlds<CR>|{2}\n",
+        "\nadd_floater|wotd_world|\u013B WOTD|0|0.5|3529161471", section(getpeer->locked_worlds, "2147418367"), section(getpeer->recent_worlds, "3417414143")).c_str(), 0);
     gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
 }
 

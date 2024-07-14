@@ -1,7 +1,10 @@
 
 void join_request(ENetEvent& event, const std::string& header) 
 {
-    getpeer->rate_limit[2] = steady_clock::now();
+    if (not create_rt(event, 2, 1s)) {
+        gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld");
+        return;
+    }
     std::string big_name{readpipe(std::string{header})[3]};
     if (not alpha(big_name) or big_name.empty())
     {
@@ -82,6 +85,7 @@ void join_request(ENetEvent& event, const std::string& header)
     for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
     getpeer->recent_worlds.back() = w->name;
+    getpeer->post_world = w->name;
     EmoticonDataChanged(event);
     gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
         getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->nickname, getpeer->country).c_str());

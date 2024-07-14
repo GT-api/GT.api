@@ -23,7 +23,7 @@ std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string
 
 void input(ENetEvent& event, const std::string& header)
 {
-    if (create_rt(event, 1, 400ms));
+    if (not create_rt(event, 1, 400ms)) return;
     std::string text{readpipe(std::string{header})[4]};
     getpeer->messages.push_back(steady_clock::now());
     if (getpeer->messages.size() > 5) getpeer->messages.pop_front();

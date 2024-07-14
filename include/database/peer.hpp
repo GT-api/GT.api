@@ -28,8 +28,9 @@ public:
 
     std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
     std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */
+    std::string post_world{};
 
-    std::array<steady_clock::time_point, 2> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
+    std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
 
     std::string nickname{};
@@ -94,7 +95,10 @@ bool read_peer(ENetEvent& event, const std::string& name) {
     return true;
 }
 
-/* @param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. */
+/* 
+@param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. 
+@return false if ratelimited
+*/
 template<typename length_T>
 bool create_rt(ENetEvent& event, size_t pos, length_T length) 
 {

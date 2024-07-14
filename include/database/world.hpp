@@ -106,8 +106,11 @@ std::unique_ptr<world> read_world(const std::string& name)
     return w;
 }
 
+#include <thread>
+
 void OnRequestWorldSelectMenu(ENetEvent event) 
 {
+    printf("OnRequestWorldSelectMenu");
     auto section = [](const auto& range, const auto& color) 
     {
         std::string result;
@@ -118,7 +121,7 @@ void OnRequestWorldSelectMenu(ENetEvent event)
             result.pop_back(); 
         return result;
     };
-    gt_packet(*event.peer, 1000, false, "OnRequestWorldSelectMenu", std::format(
+    gt_packet(*event.peer, 0, true, "OnRequestWorldSelectMenu", std::format(
         "add_filter|\nadd_heading|Top Worlds<ROW2>|{0}\nadd_heading|My Worlds<CR>|{1}\nadd_heading|Recently Visited Worlds<CR>|{2}",
         "", section(getpeer->locked_worlds, "2147418367"), section(getpeer->recent_worlds, "3417414143")).c_str());
     gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
@@ -127,12 +130,17 @@ void OnRequestWorldSelectMenu(ENetEvent event)
 void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
 {
     size_t size = data.size();
+    if (size < 14) return;
     unsigned four = 4;
     auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
     memcpy(packet->data, &four, sizeof(unsigned));
     memcpy(packet->data + 4, data.data(), size);
     if (static_cast<int>(data[12]) bitand 0x8)
-        enet_packet_resize(packet, packet->dataLength + *std::bit_cast<DWORD*>(data.data() + 13)); /* resizes cause of data[12] -> peer_state */
+    {
+        DWORD resize_forecast = *std::bit_cast<DWORD*>(data.data() + 13); // we just wanna see if we can resize safely
+        if (packet->dataLength + resize_forecast <= size_t{512})
+            enet_packet_resize(packet, packet->dataLength + resize_forecast);
+    }
     enet_peer_send(&peer, 0, packet);
 }
 

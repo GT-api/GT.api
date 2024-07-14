@@ -18,7 +18,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    git_check("247ad42fd0a7fbcff3644209e519a51ed20b87f5");
+    git_check("0ff7da61e1ee40afda59b987605ef449cdbe536f");
     enet_initialize();
     {
         ENetAddress address{.host = ENET_HOST_ANY, .port = 17091};
@@ -36,7 +36,7 @@ int main()
             for (int i = 0; i < 5; ++i)
                 *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{0x4, 0x10, -1, 0x0, 0x8}[i];
             *reinterpret_cast<int*>(im_data.data() + 56) = ftell(file);
-            long end_size = ftell(file); /* SEEK_END it */
+            long end_size = ftell(file);
             fseek(file, 0, SEEK_SET);
             fread(im_data.data() + 60, 1, end_size, file);
             std::span span{reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size()};
@@ -52,7 +52,7 @@ int main()
         while (enet_host_service(server, &event, 1) > 0)
             switch (event.type) 
             {
-                case ENET_EVENT_TYPE_CONNECT: // cleanup later...
+                case ENET_EVENT_TYPE_CONNECT:
                 {
                     event.peer->data = new peer{}; // TODO
                     inet_ntop(AF_INET6, &(event.peer->address.host), getpeer->ipv6, INET6_ADDRSTRLEN); // I think this will also map-out peer's IPv4. I am too lazy to add IPv4 on it's own!
@@ -116,7 +116,7 @@ int main()
                                 }
                                 case 3: 
                                 {
-                                    if (create_rt(event, 0, 200ms)); // this will only affect hackers (or macro spammers)
+                                    if (not create_rt(event, 0, 200ms)) break; // this will only affect hackers (or macro spammers)
                                     short block1D = state->punch[1] * 100 + state->punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
                                     block& b = worlds[getpeer->recent_worlds.back()].blocks[block1D];
                                     if (state->id == 18) // punching blocks

@@ -984,7 +984,7 @@ extern "C" {
     ENET_API ENetPacket * enet_packet_create_offset(const void *, size_t, size_t, enet_uint32);
     ENET_API enet_uint32  enet_crc32(const ENetBuffer *, size_t);
 
-    ENET_API ENetHost * enet_host_create(const ENetAddress *, size_t, size_t, enet_uint32, enet_uint32);
+    ENET_API ENetHost * enet_host_create(ENetAddress, size_t, size_t, enet_uint32, enet_uint32);
     ENET_API void       enet_host_destroy(ENetHost *);
     ENET_API ENetPeer * enet_host_connect(ENetHost *, const ENetAddress *, size_t, enet_uint32);
     ENET_API int        enet_host_check_events(ENetHost *, ENetEvent *);
@@ -4431,7 +4431,7 @@ extern "C" {
      *  the window size of a connection which limits the amount of reliable packets that may be in transit
      *  at any given time.
      */
-    ENetHost * enet_host_create(const ENetAddress *address, size_t peerCount, size_t channelLimit, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth) {
+    ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth) {
         ENetHost *host;
         ENetPeer *currentPeer;
 
@@ -4456,7 +4456,7 @@ extern "C" {
             enet_socket_set_option (host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
         }
 
-        if (host->socket == ENET_SOCKET_NULL || (address != NULL && enet_socket_bind(host->socket, address) < 0)) {
+        if (host->socket == ENET_SOCKET_NULL || (&address != NULL && enet_socket_bind(host->socket, &address) < 0)) {
             if (host->socket != ENET_SOCKET_NULL) {
                 enet_socket_destroy(host->socket);
             }
@@ -4473,8 +4473,8 @@ extern "C" {
         enet_socket_set_option(host->socket, ENET_SOCKOPT_SNDBUF, ENET_HOST_SEND_BUFFER_SIZE);
         enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
 
-        if (address != NULL && enet_socket_get_address(host->socket, &host->address) < 0) {
-            host->address = *address;
+        if (&address != NULL && enet_socket_get_address(host->socket, &host->address) < 0) {
+            host->address = address;
         }
 
         if (!channelLimit || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT) {

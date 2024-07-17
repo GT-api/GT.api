@@ -1,4 +1,4 @@
-void drop(ENetEvent& event, const std::string& header)
+void drop(ENetEvent event, const std::string& header)
 {
     std::string id{readpipe(std::string{header})[4]};
     for (const auto& slot : getpeer->slots)

@@ -21,7 +21,7 @@ std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string
     {"stubborn", &OnAction}, {"fold", &OnAction}, {"dab", &OnAction}, {"sassy", &OnAction}, {"dance2", &OnAction}, {"march", &OnAction}, {"grumpy", &OnAction}, {"shy", &OnAction}
 };
 
-void input(ENetEvent& event, const std::string& header)
+void input(ENetEvent event, const std::string& header)
 {
     if (not create_rt(event, 1, 400ms)) return;
     std::string text{readpipe(std::string{header})[4]};

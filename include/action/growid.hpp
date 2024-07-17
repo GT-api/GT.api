@@ -1,6 +1,6 @@
 #include <thread>
 
-void growid(ENetEvent& event, const std::string& header, std::string error = "")
+void growid(ENetEvent event, const std::string& header, std::string error = "")
 {
     std::this_thread::sleep_for(500ms); /* unknown reason, due to slow reponse I reduce to 500ms, it surprisingly worked!- real GT has to up there game xD  */
     gt_packet(*event.peer, 0, false, "OnDialogRequest", 

@@ -28,7 +28,7 @@ public:
 
     std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
     std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */
-    std::string post_world{};
+    std::string ongoing_world{}; /* the world the peer is inside. */
 
     std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
@@ -129,9 +129,9 @@ class state {
     std::array<int, 2> punch{}; /* punch pos (not range, but world pos) */
 };
 
-std::unique_ptr<state> get_state(const std::vector<std::byte>& packet) {
+state get_state(const std::vector<std::byte>& packet) {
     auto s = std::make_unique<state>();
-   s->type = *reinterpret_cast<const int*>(packet.data());
+    s->type = *reinterpret_cast<const int*>(packet.data());
     s->netid = *reinterpret_cast<const int*>(packet.data() + 4);
     s->peer_state = *reinterpret_cast<const int*>(packet.data() + 12);
     /* unknown data */
@@ -142,7 +142,7 @@ std::unique_ptr<state> get_state(const std::vector<std::byte>& packet) {
     s->speed[1] = *reinterpret_cast<const float*>(packet.data() + 36);
     s->punch[0] = *reinterpret_cast<const int*>(packet.data() + 44);
     s->punch[1] = *reinterpret_cast<const int*>(packet.data() + 48);
-    return s;
+    return *s;
 }
 
 /* put it back into it's original form */

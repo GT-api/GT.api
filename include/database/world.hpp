@@ -8,10 +8,9 @@ class block
 class ifloat 
 {
     public:
-    int uid{0};
     short id{0};
     short count{0};
-    float x, y;
+    std::array<float, 2> pos;
 };
 
 class world {
@@ -20,7 +19,7 @@ class world {
     std::string name{};
     short visitors{0}; // -> stack object
     std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
-    std::vector<ifloat> ifloats{}; /* floating items */
+    std::vector<ifloat> ifloats{}; /* (i)tem floating */
 }; 
 /* modify stack objects easily. these objects will remain in the stack not in world.db */
 std::unordered_map<std::string, world> worlds{}; 
@@ -157,4 +156,19 @@ void block_punched(ENetEvent& event, state s, int block1D)
     s.type = 8; /* change packet type from 3 to 8. */
     s.id = 6; /* hit phase visuals */
 	state_visuals(event, s);
+}
+
+void drop_visuals(ENetEvent& event, short id, short count) 
+{
+    float x_nabor = (getpeer->facing_left ? getpeer->pos[0] - 1 : getpeer->pos[0] + 1); // @note get the x naboring tile of peer's position. Oー
+    std::array<float, 2> nabor_pos = {x_nabor, getpeer->pos[1]}; // @note getpeer->pos but [0] is the naboring tile. O|
+    ifloat& it = worlds[getpeer->recent_worlds.back()].ifloats.emplace_back(ifloat{id, count, nabor_pos}); // @note a iterator ahead of time
+    std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1,.id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
+    *reinterpret_cast<int*>(compress.data() + 8) = worlds[getpeer->recent_worlds.back()].ifloats.size(); // @note theory of getting float ID via distance iterator
+    *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(it.count);
+    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
+    {
+        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) 
+            send_data(*event.peer, compress);
+    });
 }

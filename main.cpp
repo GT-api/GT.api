@@ -25,7 +25,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 int main() 
 {
     jtpool jt_handler{};
-    git_check("9bc19452a099a5a0c50e584f892f8f9872f9033e");
+    git_check("4d7a47c5a9899fabb60e3be4225face537166009");
     enet_initialize();
     server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
         server->checksum = enet_crc32;

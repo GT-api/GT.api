@@ -33,6 +33,7 @@ void dialog_return(ENetEvent event, const std::string& header)
         if (slot not_eq getpeer->slots.end()) 
         {
             slot->count -= count;
+            drop_visuals(event, id, count);
             inventory_visuals(*event.peer);
         }
     }

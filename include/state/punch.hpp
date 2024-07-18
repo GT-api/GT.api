@@ -21,7 +21,7 @@ void punch(ENetEvent event, state state)
     }
     else 
     {
-        if (state.punch[0] not_eq static_cast<int>(getpeer->pos[0] / 32) or state.punch[1] not_eq static_cast<int>(getpeer->pos[1] / 32))
+        if (state.punch[0] not_eq static_cast<int>(getpeer->pos[0]) or state.punch[1] not_eq static_cast<int>(getpeer->pos[1]))
             (items[state.id].type == 18) ? b.bg = state.id : b.fg = state.id;
         else return; 
     }

@@ -1,8 +1,10 @@
 #include "movement.hpp"
 #include "punch.hpp"
+#include "pickup.hpp"
 
 std::unordered_map<int, std::function<void(ENetEvent, state)>> state_pool
 {
     {0, std::bind(&movement, std::placeholders::_1, std::placeholders::_2)},
-    {3, std::bind(&punch, std::placeholders::_1, std::placeholders::_2)}
+    {3, std::bind(&punch, std::placeholders::_1, std::placeholders::_2)},
+    {11, std::bind(&pickup, std::placeholders::_1, std::placeholders::_2)}
 };

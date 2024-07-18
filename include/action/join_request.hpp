@@ -68,17 +68,17 @@ void join_request(ENetEvent event, const std::string& header)
         pos += 8;
         ++i;
     }
-    *reinterpret_cast<int*>(data.data() + pos) = static_cast<int>(w->ifloats.size());
+    *reinterpret_cast<int*>(data.data() + pos) = static_cast<int>(w->ifloats.size()); // ?
     *reinterpret_cast<int*>(data.data() + pos + 4) = static_cast<int>(w->ifloats.size());
     pos += 8;
     for (const auto& ifloat : w->ifloats) 
     {
-        auto [id, count, uid, x, y] = ifloat;
+        auto [id, count, position] = ifloat; // @note pos is already a name so we extend to position
         *reinterpret_cast<short*>(data.data() + pos) = id;
-        *reinterpret_cast<float*>(data.data() + pos + 2) = x;
-        *reinterpret_cast<float*>(data.data() + pos + 6) = y;
+        *reinterpret_cast<float*>(data.data() + pos + 2) = position[0];
+        *reinterpret_cast<float*>(data.data() + pos + 6) = position[1];
         *reinterpret_cast<short*>(data.data() + pos + 10) = count;
-        *reinterpret_cast<int*>(data.data() + pos + 12) = uid;
+        *reinterpret_cast<int*>(data.data() + pos + 12) = w->ifloats.size();
         pos += 16;
     }
     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));

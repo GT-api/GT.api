@@ -13,97 +13,41 @@ class ifloat
     std::array<float, 2> pos;
 };
 
-class world {
-    public:
-    short x{100}, y{60};
+#include <fstream>
+
+class world 
+{
+public:
+    world& read(std::string name)
+    {
+        std::ifstream i(std::format("worlds\\{}.json", name));
+        if (i.is_open()) 
+        {
+            nlohmann::json j;
+            i >> j;
+            this->name = name;
+            for (const auto& i : j["bs"]) blocks.push_back(block{i["f"], i["b"]});
+            for (const auto& i : j["fs"]) ifloats.push_back(ifloat{i["i"], i["c"], std::array<float, 2>{i["xy"][0], i["xy"][1]}});
+        }
+        return *this;
+    }
     std::string name{};
     short visitors{0}; // -> stack object
     std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
     std::vector<ifloat> ifloats{}; /* (i)tem floating */
+    ~world() 
+    {
+        if (not this->name.empty())
+        {
+            nlohmann::json j;
+            for (const auto& [fg, bg, hits] : blocks) j["bs"].push_back({{"f", fg}, {"b", bg}});
+            for (const auto& [id, count, pos] : ifloats) j["fs"].push_back({{"i", id}, {"c", count}, {"xy", pos}});
+            std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
+        }
+    }
 }; 
 /* modify stack objects easily. these objects will remain in the stack not in world.db */
-std::unordered_map<std::string, world> worlds{}; 
-
-/* @brief push back a world in world.db */
-void register_world(std::unique_ptr<world>& w) 
-{
-    sqlite3* db;
-    sqlite3_open("world.db", &db);
-    std::string table = "CREATE TABLE IF NOT EXISTS \"" + w->name + "\" ("
-                        "id INTEGER PRIMARY KEY, "
-                        "fg INTEGER, "
-                        "bg INTEGER);";
-    sqlite3_exec(db, table.c_str(), nullptr, nullptr, nullptr);
-    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-    std::string insert_sql = "INSERT INTO " + w->name + " (id, fg, bg) VALUES (?, ?, ?);";
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, insert_sql.c_str(), -1, &stmt, nullptr);
-    for (size_t i = 0; i < w->blocks.size(); ++i) 
-    {
-        sqlite3_bind_int(stmt, 1, i);
-        sqlite3_bind_int(stmt, 2, w->blocks[i].fg);
-        sqlite3_bind_int(stmt, 3, w->blocks[i].bg);
-        sqlite3_step(stmt);
-        sqlite3_reset(stmt);
-    }
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-}
-
-/*
- @brief updates world.db for only 1 tile. this may save memory however the commit of opening world.db is already costly, please call this function sparingly
-    NEVER use this function if your only updating worlds stack objects! these objects are not store-worthly
-*/
-void overwrite_tile(std::unique_ptr<world>& w, int blockID, const block& b) 
-{
-    sqlite3* db;
-    sqlite3_open("world.db", &db);
-    std::string update_sql = "UPDATE " + w->name + " SET fg = ?, bg = ? WHERE id = ?;";
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, update_sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_int(stmt, 1, b.fg);
-    sqlite3_bind_int(stmt, 2, b.bg);
-    sqlite3_bind_int(stmt, 3, blockID);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-}
-
-std::unique_ptr<world> read_world(const std::string& name) 
-{
-    sqlite3* db;
-    sqlite3_open("world.db", &db);
-    std::string try_to = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + name + "';";
-    sqlite3_stmt* check_stmt;
-    if (sqlite3_prepare_v2(db, try_to.c_str(), -1, &check_stmt, nullptr) != SQLITE_OK) 
-    {
-        sqlite3_close(db);
-        return nullptr;
-    }
-
-    if (sqlite3_step(check_stmt) != SQLITE_ROW) 
-    {
-        sqlite3_finalize(check_stmt);
-        sqlite3_close(db);
-        return nullptr;
-    }
-    sqlite3_finalize(check_stmt);
-    std::string select = "SELECT fg, bg FROM \"" + name + "\";"; /* ignore id as it's just an index for writing */
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, select.c_str(), -1, &stmt, nullptr);
-    std::unique_ptr<world> w = std::make_unique<world>();
-    while (sqlite3_step(stmt) == SQLITE_ROW) 
-    {
-        short fg = sqlite3_column_int(stmt, 0);
-        short bg = sqlite3_column_int(stmt, 1);
-        w->blocks.push_back(block{fg, bg});
-    }
-    w->name = name;
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-    return w;
-}
+std::unordered_map<std::string, world> worlds{};
 
 void OnRequestWorldSelectMenu(ENetEvent event) 
 {

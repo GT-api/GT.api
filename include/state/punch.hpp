@@ -26,6 +26,5 @@ void punch(ENetEvent event, state state)
         else return; 
     }
     auto w = std::make_unique<world>(worlds[getpeer->recent_worlds.back()]);
-    overwrite_tile(w, block1D, b);
     state_visuals(event, std::move(state)); // finished.
 }

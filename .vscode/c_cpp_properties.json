@@ -3,7 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}\\**"
+                "${workspaceFolder}\\**",
+                "${workspaceFolder}\\include\\**"
             ],
             "defines": [
                 "_DEBUG",
@@ -15,7 +16,7 @@
                 "-std=c++2b",
                 "-Og",
                 "-g",
-                ".\\include\\sqlite3.o",
+                "-I.\\include\\",
                 ".\\include\\compress.o",
                 ".\\include\\git.o",
                 ".\\include\\https.o",

@@ -1,4 +1,4 @@
-#include <random> /* std::minstd_rand */
+#include <random>
 
 class seed 
 {

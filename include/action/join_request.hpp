@@ -14,10 +14,9 @@ void join_request(ENetEvent event, const std::string& header)
         return;
     }
     std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
-    std::unique_ptr<world> w = read_world(big_name);
-    if (w == nullptr) /* create a new world */
+    auto w = std::make_unique<world>(world().read(big_name));
+    if (w->name.empty()) 
     {
-        w = std::make_unique<world>(world{.name = big_name}); /* replace nullptr with world constructor */
         seed random{};
         auto main_door = random.fast(2, 100 * 60 / 100 - 4);
         std::vector<block> blocks(100 * 60, block{0, 0});
@@ -33,11 +32,11 @@ void join_request(ENetEvent event, const std::string& header)
             if (i == 3700 + main_door) b.fg = 8; // bedrock below the main door
         }
         w->blocks = std::move(blocks);
-        register_world(w);
+        w->name = big_name; // init
     }
     getpeer->netid = ++w->visitors;
     short y = w->blocks.size() / 100, x = w->blocks.size() / y;
-    std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()) + 1000/*TODO*/, std::byte{0x00});
+    std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()) + 500/*TODO*/, std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
@@ -60,7 +59,7 @@ void join_request(ENetEvent event, const std::string& header)
             getpeer->pos[0] = (i % x) * 32;
             getpeer->pos[1] = (i / x) * 32;
             data[pos + 8] = std::byte{0x1};
-            *reinterpret_cast<short*>(data.data() + pos + 9) = 4;
+            *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
             for (size_t i = 0; i < 4; ++i)
                 data[pos + 11 + i] = static_cast<std::byte>("EXIT"[i]);
             pos += 8;
@@ -71,14 +70,15 @@ void join_request(ENetEvent event, const std::string& header)
     *reinterpret_cast<int*>(data.data() + pos) = static_cast<int>(w->ifloats.size()); // ?
     *reinterpret_cast<int*>(data.data() + pos + 4) = static_cast<int>(w->ifloats.size());
     pos += 8;
-    for (const auto& ifloat : w->ifloats) 
+    int uid = 0; // floating item indentifier
+    for (const auto& [id, count, position] : w->ifloats) 
     {
-        auto [id, count, position] = ifloat; // @note pos is already a name so we extend to position
+        ++uid;
         *reinterpret_cast<short*>(data.data() + pos) = id;
-        *reinterpret_cast<float*>(data.data() + pos + 2) = position[0];
-        *reinterpret_cast<float*>(data.data() + pos + 6) = position[1];
-        *reinterpret_cast<short*>(data.data() + pos + 10) = count;
-        *reinterpret_cast<int*>(data.data() + pos + 12) = w->ifloats.size();
+        *reinterpret_cast<float*>(data.data() + (pos + 2)) = static_cast<int>(position[0]);
+        *reinterpret_cast<float*>(data.data() + (pos + 6)) = static_cast<int>(position[1]);
+        *reinterpret_cast<short*>(data.data() + (pos + 10)) = count;
+        *reinterpret_cast<int*>(data.data() + (pos + 12)) = uid;
         pos += 16;
     }
     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
@@ -99,8 +99,10 @@ void join_request(ENetEvent event, const std::string& header)
                 getpeer->nickname, w->visitors).c_str());
             gt_packet(p, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
                 getpeer->nickname, w->visitors).c_str());
+            play_sfx(p, "open_door");
         }
     });
+    play_sfx(*event.peer, "open_door");
     gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
         w->name, w->visitors - 1, peers().size()).c_str());
     inventory_visuals(*event.peer);

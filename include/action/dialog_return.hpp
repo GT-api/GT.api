@@ -14,7 +14,7 @@ void dialog_return(ENetEvent event, const std::string& header)
         if (password not_eq password_verify) growid(event, header, "`4Oops!``  Passwords don't match.  Try again.");
         else if (password.size() < 8 or password.size() > 18) growid(event, header, "`4Oops!``  Your password must be between `$8`` and `$18`` characters long.");
         else if (logon.size() < 3 or logon.size() > 18) growid(event, header, "`4Oops!``  Your `wGrowID`` must be between `$3`` and `$18`` characters long.");
-        else if (read_peer(event, logon) == true or alpha(logon)) growid(event, header, std::format("`4Oops!`` The name `w{}`` is unavailable.  Please choose a different name.", logon));
+        else if (alpha(logon)) growid(event, header, std::format("`4Oops!`` The name `w{}`` is unavailable.  Please choose a different name.", logon));
         else 
         {
             getpeer->tankIDName = logon;
@@ -22,7 +22,6 @@ void dialog_return(ENetEvent event, const std::string& header)
             getpeer->nickname = (getpeer->tankIDName.empty()) ? getpeer->requestedName : getpeer->tankIDName;
             gt_packet(*event.peer, 0, false, "SetHasGrowID", 1, getpeer->tankIDName.c_str(), getpeer->tankIDPass.c_str());
             gt_packet(*event.peer, 0, false, "OnNameChange", getpeer->nickname.c_str());
-            register_peer(event);
         }
     }
     else if (dialog_name == "drop_item" and pipes[0] == "itemID" and pipes[3] == "count")

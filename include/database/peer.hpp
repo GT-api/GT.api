@@ -45,56 +45,6 @@ public:
 #define getpeer static_cast<peer*>(event.peer->data)
 #define getp static_cast<peer*>(p.data)
 
-void register_peer(ENetEvent& event) {
-    sqlite3* db;
-    sqlite3_open("peer.db", &db);
-    std::string table = "CREATE TABLE IF NOT EXISTS \"" + getpeer->tankIDName + "\" ("
-                        "password TEXT);";
-    sqlite3_exec(db, table.c_str(), nullptr, nullptr, nullptr);
-    sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-    std::string insert_sql = "INSERT INTO " + getpeer->tankIDName + " (password) VALUES (?);"; // Include password in your INSERT statement
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, insert_sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, getpeer->tankIDPass.c_str(), -1, nullptr); // Bind the password to the first parameter
-    sqlite3_step(stmt);
-    sqlite3_reset(stmt);
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-}
-
-bool read_peer(ENetEvent& event, const std::string& name) {
-    sqlite3* db;
-    sqlite3_open("peer.db", &db);
-    std::string try_to = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + name + "';";
-    sqlite3_stmt* check_stmt;
-    if (sqlite3_prepare_v2(db, try_to.c_str(), -1, &check_stmt, nullptr) != SQLITE_OK) {
-        sqlite3_close(db);
-        return false;
-    }
-
-    if (sqlite3_step(check_stmt) != SQLITE_ROW) {
-        sqlite3_finalize(check_stmt);
-        sqlite3_close(db);
-        return false;
-    }
-    sqlite3_finalize(check_stmt);
-    std::string select = "SELECT password FROM \"" + name + "\";";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(db, select.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-            const unsigned char* password = sqlite3_column_text(stmt, 0);
-            if (password) {
-                getpeer->tankIDPass = reinterpret_cast<const char*>(password);
-            } else getpeer->tankIDPass = "";
-        }
-    }
-    getpeer->tankIDName = name;
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-    return true;
-}
-
 /* 
 @param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. 
 @return false if ratelimited

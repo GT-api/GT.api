@@ -14,7 +14,7 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
 	std::vector<std::byte> data(61, std::byte(0x00));
         for (size_t i = 0; i < 5 * sizeof(int); ++i) 
             data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
-                = reinterpret_cast<const std::byte*>(&std::array<int, 5>{0x4, 0x1, netid ? getp->netid : -1, 0x8, wait_for}[i / sizeof(int)])[i % sizeof(int)];
+                = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? getp->netid : -1, 8, wait_for}[i / sizeof(int)])[i % sizeof(int)];
     size_t size = 61;
     std::byte index;
     std::apply([&](auto const&... param) {
@@ -85,4 +85,9 @@ void packet(ENetPeer& p, std::string str)
     for (size_t i = 0; i < str.length(); ++i) 
         data[4 + i] = static_cast<std::byte>(str[i]);
     enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
+}
+
+void play_sfx(ENetPeer& p, const std::string& file, milliseconds delayMS = 0ms)
+{
+    packet(p, std::format("action|play_sfx\nfile|audio/{}.wav\ndelayMS|{}", file, delayMS.count()));
 }

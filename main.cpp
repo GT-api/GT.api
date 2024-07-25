@@ -3,9 +3,9 @@
     Project has open arms for contribution (friendly, no stress)
     @author leeendl | Discord: leeendl
 */
+#include "include\nlohmann\json.hpp" // @note nlohmann::json for writing/reading JSON format
 #include "include\database\items.hpp" // @note items.dat reading
 #include "include\network\enet.hpp" // @note ENet supporting AF_INET6
-#include "include\database\sqlite3.hpp" // @note SQLlite library
 #include "include\database\peer.hpp" // @note everything relating to the peer
 #include "include\network\packet.hpp" // @note back-end packet dealing (using ENet & basic C++ concepts)
 #include "include\tools\string_view.hpp" // @note stuff that isn't in the standard C++ library
@@ -25,7 +25,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 int main() 
 {
     jtpool jt_handler{};
-    git_check("4d7a47c5a9899fabb60e3be4225face537166009");
+    git_check("79dae251e60fc7340217727998b939feb377e96c");
     enet_initialize();
     server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
         server->checksum = enet_crc32;
@@ -38,7 +38,7 @@ int main()
             fseek(file, 0, SEEK_END);
             im_data.resize(ftell(file) + 60);
             for (int i = 0; i < 5; ++i)
-                *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{0x4, 0x10, -1, 0x0, 0x8}[i];
+                *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{4, 16, -1, 0, 8}[i];
             *reinterpret_cast<int*>(im_data.data() + 56) = ftell(file);
             long end_size = ftell(file);
             fseek(file, 0, SEEK_SET);

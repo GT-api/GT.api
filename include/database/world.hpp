@@ -1,3 +1,4 @@
+
 class block 
 {
     public:
@@ -14,6 +15,7 @@ class ifloat
 };
 
 #include <fstream>
+#include "nlohmann\json.hpp" // @note nlohmann::json for writing/reading JSON format
 
 class world 
 {

@@ -1463,13 +1463,10 @@ extern "C" {
      * @param packet packet to be destroyed
      */
     void enet_packet_destroy(ENetPacket *packet) {
-        if (packet == NULL) {
-            return;
-        }
+        if (not packet) return;
 
-        if (packet->freeCallback != NULL) {
-            (*packet->freeCallback)((void *)packet);
-        }
+        if (packet->freeCallback)
+            packet->freeCallback(packet);
 
         enet_free(packet);
     }

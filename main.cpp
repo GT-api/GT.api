@@ -3,7 +3,6 @@
     Project has open arms for contribution (friendly, no stress)
     @author leeendl | Discord: leeendl
 */
-#include "include\nlohmann\json.hpp" // @note nlohmann::json for writing/reading JSON format
 #include "include\database\items.hpp" // @note items.dat reading
 #include "include\network\enet.hpp" // @note ENet supporting AF_INET6
 #include "include\database\peer.hpp" // @note everything relating to the peer
@@ -13,9 +12,9 @@
 #include "include\tools\random_engine.hpp" // @note optimized random number generator
 
 #include "include\on\on"
-#include "include\network\jtpool.hpp"
 #include "include\action\actions"
 #include "include\state\states"
+#include "include\network\jtpool.hpp"
 
 void git_check(const std::string& commit); // -> import git.o
 void basic_https(const std::string& s_ip, u_short s_port, u_short https_port); // -> import https.o
@@ -24,34 +23,28 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    jtpool jt_handler{};
-    git_check("79dae251e60fc7340217727998b939feb377e96c");
+    git_check("fb8c805336f5fc0a871f9fb64031e45903e1c8f7");
     enet_initialize();
     server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);
     std::thread(&basic_https, "127.0.0.1", server->address.port, 443).detach();
     {
-        struct _iobuf* file;
-        if (fopen_s(&file, "items.dat", "rb") == 0) 
-        {
-            fseek(file, 0, SEEK_END);
-            im_data.resize(ftell(file) + 60);
-            for (int i = 0; i < 5; ++i)
-                *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{4, 16, -1, 0, 8}[i];
-            *reinterpret_cast<int*>(im_data.data() + 56) = ftell(file);
-            long end_size = ftell(file);
-            fseek(file, 0, SEEK_SET);
-            fread(im_data.data() + 60, 1, end_size, file);
-            std::span span{reinterpret_cast<const unsigned char*>(im_data.data()), im_data.size()};
-                hash = std::accumulate(span.begin(), span.end(), 0x55555555u, 
-                    [](auto start, auto end) { return (start >> 27) + (start << 5) + end; });
-        } /* @note deletes span, deletes end_size */
-        fclose(file);
-    }
+        std::ifstream file("items.dat", std::ios::binary bitor std::ios::ate);
+        std::streamsize size = file.tellg();
+        im_data.resize(size + 60);
+        for (int i = 0; i < 5; ++i)
+            *reinterpret_cast<int*>(im_data.data() + i * sizeof(int)) = std::array<int, 5>{4, 16, -1, 0, 8}[i];
+        *reinterpret_cast<int*>(im_data.data() + 56) = size;
+        file.seekg(0, std::ios::beg);
+        file.read(reinterpret_cast<char*>(im_data.data() + 60), size);
+        hash = std::ranges::fold_left(std::span(reinterpret_cast<unsigned int*>(im_data.data()), im_data.size() / sizeof(unsigned int)), 
+            0x55555555u, [](auto start, auto end){ return std::rotl(start, 5) + end; });
+    } // @note closes file.
     cache_items();
 
     ENetEvent event{};
+    jtpool jt_handler{};
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
             switch (event.type) 
@@ -68,7 +61,6 @@ int main()
                         problem = "`4OOPS:`` Too many people logging in at once. Please press `5CANCEL`` and try again in a few seconds.";
                     else if (enet_peer_send(event.peer, 0, enet_packet_create(
                         []{ std::array<enet_uint8, 4> data = {0x1}; return data.data(); }(), 4, ENET_PACKET_FLAG_RELIABLE)) == 0) break;
-                    else [[unlikely]] problem = "`4ERROR:`` try reconnecting to the `wserver``.";
                     packet(*event.peer, std::format("action|log\nmsg|{}", problem).c_str());
                     enet_peer_disconnect_later(event.peer, ENET_NORMAL_DISCONNECTION);
                     break;

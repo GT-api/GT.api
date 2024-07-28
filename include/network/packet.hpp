@@ -1,4 +1,4 @@
-#include <cstring> /* std::strlen() */
+#include <cstring> // @note std::strlen() - TODO modernize c-style while respecting typename.
 
 using floats = std::vector<float>;
 
@@ -77,7 +77,7 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
     
 };
 
-void packet(ENetPeer& p, std::string str) 
+void packet(ENetPeer& p, const std::string& str) 
 {
     std::vector<std::byte> data(5 + str.length(), std::byte{0x0});
     int three{3};

@@ -1,10 +1,10 @@
+
 class slot {
     public:
     short id{0}; /* item id */
     short count{0}; /* the total amount of that item in that slot */
 };
 
-#include <stdfloat>
 #include <mutex> /* std::once_flag */
 #include <deque> /* std::deque */
 #include <chrono>
@@ -57,7 +57,7 @@ bool create_rt(ENetEvent& event, size_t pos, length_T length)
     return true;
 }
 
-#include <functional>
+#include <functional> // @note std::function<>
 ENetHost* server;
 
 std::vector<ENetPeer> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){}) {

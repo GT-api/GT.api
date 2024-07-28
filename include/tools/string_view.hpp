@@ -1,5 +1,3 @@
-#include <vector>
-#include <ranges>
 
 /* 
 @param str the whole content

@@ -1,10 +1,10 @@
+
 enum clothing
 { 
     none, shirt, legs, feet, face, hand, back, head, charms,ances
 };
 
-#include <unordered_map>
-#include <ranges> /* TODO */
+#include <string> // @note std::string
 
 class item 
 {
@@ -15,12 +15,13 @@ class item
     char type{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
     bool seed;
-}; std::unordered_map<int, item> items;
+}; 
+#include <unordered_map>
+std::unordered_map<int, item> items;
 
 #include <vector>
-
 std::vector<std::byte> im_data(60, std::byte{0x00});
-signed hash{};
+unsigned hash{};
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 
@@ -31,118 +32,68 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
 }
 
 #include <algorithm>
+#include <ranges>
 
 bool cache_items() 
 {
-    short version{0};
     int pos{60}, count{0};
-    shift_pos(im_data, pos, version);
+    pos += sizeof(short); // @note items.dat version.
     shift_pos(im_data, pos, count);
     items.reserve(count);
     for (int i = 0; i < count; ++i) 
     {
         item im{};
-        shift_pos(im_data, pos, im.id); pos += 2; /* downsized id to a 2 bit */
-        im.seed = im.id % 2 == 0;
+        shift_pos(im_data, pos, im.id); pos += 2; // @note downsize im.id to 2 bit
+        im.seed = im.id % 2 == 0; // @note every item has a seed, hence every other item is a im.seed
         pos += 2;
         shift_pos(im_data, pos, im.type);
         pos += 1;
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            im.raw_name.resize(len);
-            for (short i = 0; i < len; ++i) 
-                im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])), 
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
+        short len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short);
+        im.raw_name.resize(len);
+        for (short i = 0; i < len; ++i) 
+            im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])), 
+            ++pos;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
         pos += 14;
         unsigned char raw_hits{};
         shift_pos(im_data, pos, raw_hits);
         im.hits = static_cast<short>(raw_hits);
-        if (im.hits not_eq 0/*math in C++ cannot divide 0 values*/) im.hits /= 6; /* unknown reason behind why break hit is muliplied by 6 then having to divide by 6 */
+        if (im.hits not_eq 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
         pos += sizeof(int);
         unsigned char cloth_type{};
         shift_pos(im_data, pos, cloth_type);
         im.cloth_type = static_cast<unsigned short>(cloth_type);
         pos += 3;
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
         pos += 8;
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
         pos += 24;
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
         pos += 80;
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
         pos += 13;
         pos += 8;
         pos += 25;
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
-        {
-            short len = *(reinterpret_cast<short*>(&im_data[pos]));
-            pos += sizeof(short);
-            for (short i = 0; i < len; ++i)
-                ++pos;
-        }
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
+        len = *(reinterpret_cast<short*>(&im_data[pos]));
+        pos += sizeof(short) + len;
         pos += 8;
         if (not im.seed) 
         {

@@ -1,9 +1,17 @@
 
+unsigned hash{};
+std::once_flag hash_init{};
+
 void logging_in(ENetEvent event, const std::string& header)
 {
     std::call_once(getpeer->logging_in, [&]() 
     {
         std::vector<std::string> pipes = readpipe(header);
+        std::call_once(hash_init, [=]()
+        {
+            hash = std::ranges::fold_left(std::span(reinterpret_cast<unsigned int*>(im_data.data()), im_data.size() / sizeof(unsigned int)), 
+            0x55555555u, [](auto start, auto end){ return std::rotl(start, 5) + end; });
+        });
         gt_packet(*event.peer, 0, true,
             "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
             hash, 

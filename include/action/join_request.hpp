@@ -34,9 +34,7 @@ void join_request(ENetEvent event, const std::string& header)
         w->blocks = std::move(blocks);
         w->name = big_name; // init
     }
-    getpeer->netid = ++w->visitors;
-    short y = w->blocks.size() / 100, x = w->blocks.size() / y;
-    std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()) + 500/*TODO*/, std::byte{0x00});
+    {std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()) + 500/*TODO*/, std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
@@ -44,6 +42,7 @@ void join_request(ENetEvent event, const std::string& header)
     data[66] = std::byte{len};
     for (size_t i = 0; i < static_cast<int>(len); ++i)
         data[68 + i] = static_cast<std::byte>(w->name[i]);
+    short y = w->blocks.size() / 100, x = w->blocks.size() / y;
     data[68 + static_cast<int>(len)] = static_cast<std::byte>(x);
     data[72 + static_cast<int>(len)] = static_cast<std::byte>(y);
     *reinterpret_cast<unsigned short*>(data.data() + 76 + len) = static_cast<unsigned short>(w->blocks.size());
@@ -70,7 +69,7 @@ void join_request(ENetEvent event, const std::string& header)
     *reinterpret_cast<int*>(data.data() + pos) = static_cast<int>(w->ifloats.size()); // ?
     *reinterpret_cast<int*>(data.data() + pos + 4) = static_cast<int>(w->ifloats.size());
     pos += 8;
-    int uid = 0; // floating item indentifier
+    {int uid = 0; // floating item indentifier
     for (const auto& [id, count, position] : w->ifloats) 
     {
         ++uid;
@@ -80,13 +79,14 @@ void join_request(ENetEvent event, const std::string& header)
         *reinterpret_cast<short*>(data.data() + (pos + 10)) = count;
         *reinterpret_cast<int*>(data.data() + (pos + 12)) = uid;
         pos += 16;
-    }
-    enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
+    }} // @note delete uid
+    enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));} // @note delete data
     for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
     getpeer->recent_worlds.back() = w->name;
     getpeer->ongoing_world = w->name;
     EmoticonDataChanged(event);
+    getpeer->netid = ++w->visitors;
     gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
         getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->nickname, getpeer->country).c_str());
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 

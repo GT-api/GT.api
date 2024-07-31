@@ -21,7 +21,6 @@ std::unordered_map<int, item> items;
 
 #include <vector>
 std::vector<std::byte> im_data(60, std::byte{0x00});
-unsigned hash{};
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 

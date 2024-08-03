@@ -12,7 +12,6 @@
                 "-I.\\include\\",
                 "main.cpp",
                 ".\\include\\compress.o",
-                ".\\include\\git.o",
                 ".\\include\\https.o",
                 ".\\include\\anti-vpn.o",
                 "-o main.exe",

@@ -22,11 +22,11 @@ class world
 public:
     world& read(std::string name)
     {
-        std::ifstream i(std::format("worlds\\{}.json", name));
-        if (i.is_open()) 
+        std::ifstream file(std::format("worlds\\{}.json", name));
+        if (file.is_open()) 
         {
             nlohmann::json j;
-            i >> j;
+            file >> j;
             this->name = name;
             for (const auto& i : j["bs"]) blocks.push_back(block{i["f"], i["b"]});
             for (const auto& i : j["fs"]) ifloats.push_back(ifloat{i["i"], i["c"], std::array<float, 2>{i["xy"][0], i["xy"][1]}});
@@ -47,9 +47,8 @@ public:
             std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
         }
     }
-}; 
-/* modify stack objects easily. these objects will remain in the stack not in world.db */
-std::unordered_map<std::string, world> worlds{};
+};
+std::unordered_map<std::string, world> worlds{}; // @note remove in future commit...
 
 void OnRequestWorldSelectMenu(ENetEvent event) 
 {

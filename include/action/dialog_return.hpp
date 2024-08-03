@@ -17,11 +17,9 @@ void dialog_return(ENetEvent event, const std::string& header)
         else if (alpha(logon)) growid(event, header, std::format("`4Oops!`` The name `w{}`` is unavailable.  Please choose a different name.", logon));
         else 
         {
-            getpeer->tankIDName = logon;
-            getpeer->tankIDPass = password;
-            getpeer->nickname = (getpeer->tankIDName.empty()) ? getpeer->requestedName : getpeer->tankIDName;
-            gt_packet(*event.peer, 0, false, "SetHasGrowID", 1, getpeer->tankIDName.c_str(), getpeer->tankIDPass.c_str());
-            gt_packet(*event.peer, 0, false, "OnNameChange", getpeer->nickname.c_str());
+            getpeer->login = {logon, password};
+            gt_packet(*event.peer, 0, false, "SetHasGrowID", 1, getpeer->login[0].c_str(), getpeer->login[1].c_str());
+            gt_packet(*event.peer, 0, false, "OnNameChange", getpeer->nickname = getpeer->login[0].c_str());
         }
     }
     else if (dialog_name == "drop_item" and pipes[0] == "itemID" and pipes[3] == "count")

@@ -33,13 +33,9 @@ public:
     std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
 
-    std::string nickname{};
-
-    /* cached data from entering game; these values may not be changed */
-    std::string requestedName{};
-    std::string tankIDName{};
-    std::string tankIDPass{};
-    std::string country{};
+    const char* nickname{}; // @note peer's displayed name. this is only used in packets hence it is a C-type container
+    std::array<std::string, 2> login{}; // @note IDName, Pass
+    std::string country{}; // @note country initials e.g. us, id, jp, uk
 };
 
 #define getpeer static_cast<peer*>(event.peer->data)

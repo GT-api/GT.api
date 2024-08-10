@@ -66,21 +66,14 @@ void join_request(ENetEvent event, const std::string& header)
         pos += 8;
         ++i;
     }
-    *reinterpret_cast<int*>(data.data() + pos) = static_cast<int>(w->ifloats.size()); // ?
-    *reinterpret_cast<int*>(data.data() + pos + 4) = static_cast<int>(w->ifloats.size());
-    pos += 8;
-    {int uid = 0; // floating item indentifier
-    for (const auto& [id, count, position] : w->ifloats) 
-    {
-        ++uid;
-        *reinterpret_cast<short*>(data.data() + pos) = id;
-        *reinterpret_cast<float*>(data.data() + (pos + 2)) = static_cast<int>(position[0]);
-        *reinterpret_cast<float*>(data.data() + (pos + 6)) = static_cast<int>(position[1]);
-        *reinterpret_cast<short*>(data.data() + (pos + 10)) = count;
-        *reinterpret_cast<int*>(data.data() + (pos + 12)) = uid;
-        pos += 16;
-    }} // @note delete uid
     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));} // @note delete data
+    for (const auto& [id, count, position] : w->ifloats) // @todo
+    {
+        std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1,.id = id, .pos = {position[0] * 32, position[1] * 32}});
+        *reinterpret_cast<int*>(compress.data() + 8) = w->ifloats.size();
+        *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(count);
+        send_data(*event.peer, compress);
+    }
     for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
         getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
     getpeer->recent_worlds.back() = w->name;

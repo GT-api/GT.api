@@ -33,7 +33,7 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
 #include <algorithm>
 #include <ranges>
 
-bool cache_items() 
+void cache_items() 
 {
     int pos{60}, count{0};
     pos += sizeof(short); // @note items.dat version.
@@ -103,5 +103,4 @@ bool cache_items()
         }
         items.emplace(i, im);
     }
-    return true;
 }

@@ -114,6 +114,6 @@ void drop_visuals(ENetEvent& event, short id, short count)
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back()) 
-            send_data(*event.peer, compress);
+            send_data(p, compress);
     });
 }

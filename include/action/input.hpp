@@ -1,24 +1,13 @@
 
-
-void OnAction(ENetEvent& event, const std::string& text) 
-{
-    std::string to_slang = (text == "facepalm") ? "fp" : (text == "shrug") ? "idk" : (text == "foldarms") ? "fold" : (text == "fa") ? "fold" : (text == "stubborn") ? "fold" : text;
-    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
-    {
-        if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
-            gt_packet(p, 0, true, "OnAction", std::string("/" + to_slang).c_str());
-    });
-}
-
 std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string&)>> cmd_pool
 {
     {"help", [](ENetEvent& event, const std::string& text) 
     {
         packet(*event.peer, "action|log\nmsg|>> Commands: /wave /dance /love /sleep /facepalm /fp /smh /yes /no /omg /idk /shrug /furious /rolleyes /foldarms /stubborn /fold /dab /sassy /dance2 /march /grumpy /shy");
     }},
-    {"wave", &OnAction}, {"dance", &OnAction}, {"love", &OnAction}, {"sleep", &OnAction}, {"facepalm", &OnAction}, {"fp", &OnAction}, {"smh", &OnAction}, {"yes", &OnAction}, 
-    {"no", &OnAction}, {"omg", &OnAction}, {"idk", &OnAction}, {"shrug", &OnAction}, {"furious", &OnAction}, {"rolleyes", &OnAction}, {"foldarms", &OnAction}, {"fa", &OnAction}, 
-    {"stubborn", &OnAction}, {"fold", &OnAction}, {"dab", &OnAction}, {"sassy", &OnAction}, {"dance2", &OnAction}, {"march", &OnAction}, {"grumpy", &OnAction}, {"shy", &OnAction}
+    {"wave", &Action}, {"dance", &Action}, {"love", &Action}, {"sleep", &Action}, {"facepalm", &Action}, {"fp", &Action}, {"smh", &Action}, {"yes", &Action}, 
+    {"no", &Action}, {"omg", &Action}, {"idk", &Action}, {"shrug", &Action}, {"furious", &Action}, {"rolleyes", &Action}, {"foldarms", &Action}, {"fa", &Action}, 
+    {"stubborn", &Action}, {"fold", &Action}, {"dab", &Action}, {"sassy", &Action}, {"dance2", &Action}, {"march", &Action}, {"grumpy", &Action}, {"shy", &Action}
 };
 
 void input(ENetEvent event, const std::string& header)

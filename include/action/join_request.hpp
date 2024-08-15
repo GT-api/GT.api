@@ -1,4 +1,5 @@
 
+
 void join_request(ENetEvent event, const std::string& header) 
 {
     if (not create_rt(event, 2, 500ms)) 
@@ -68,16 +69,18 @@ void join_request(ENetEvent event, const std::string& header)
     }
     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));} // @note delete data
 
-    for (const auto& [uid, id, count, position] : w->ifloats) // @todo
+    for (const auto& [uid, id, count, position] : w->ifloats)
     {
         std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = id, .pos = {position[0] * 32, position[1] * 32}});
-        *reinterpret_cast<int*>(compress.data() + 8) = uid + 1;
+        *reinterpret_cast<int*>(compress.data() + 8) = uid + 1; // @todo
         *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(count);
         send_data(*event.peer, compress);
     }
-    for (size_t i = 0; i < getpeer->recent_worlds.size() - 1; ++i)
-        getpeer->recent_worlds[i] = getpeer->recent_worlds[i + 1];
-    getpeer->recent_worlds.back() = w->name;
+    if (std::find(getpeer->recent_worlds.begin(), getpeer->recent_worlds.end(), w->name) == getpeer->recent_worlds.end()) 
+    {
+        std::rotate(getpeer->recent_worlds.begin(), getpeer->recent_worlds.begin() + 1, getpeer->recent_worlds.end());
+        getpeer->recent_worlds.back() = w->name;
+    }
     getpeer->ongoing_world = w->name;
     EmoticonDataChanged(event);
     getpeer->netid = ++w->visitors;

@@ -7,11 +7,11 @@
 #include "include\network\enet.hpp" // @note ENet supporting AF_INET6
 #include "include\database\peer.hpp" // @note everything relating to the peer
 #include "include\network\packet.hpp" // @note back-end packet dealing (using ENet & basic C++ concepts)
-#include "include\tools\string_view.hpp" // @note stuff that isn't in the standard C++ library
 #include "include\database\world.hpp" // @note everything related to a world
 #include "include\tools\random_engine.hpp" // @note optimized random number generator
 
 #include "include\on\on"
+#include "include\tools\string_view.hpp" // @note read '|' in strings & check if string uses standard char(s)
 #include "include\action\actions"
 #include "include\state\states"
 #include "include\network\jtpool.hpp"

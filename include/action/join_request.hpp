@@ -34,7 +34,7 @@ void join_request(ENetEvent event, const std::string& header)
         w->blocks = std::move(blocks);
         w->name = big_name; // init
     }
-    {std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 8 + (16 * w->ifloats.size()) + 500/*TODO*/, std::byte{0x00});
+    {std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 500/*TODO*/, std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
@@ -67,10 +67,11 @@ void join_request(ENetEvent event, const std::string& header)
         ++i;
     }
     enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));} // @note delete data
-    for (const auto& [id, count, position] : w->ifloats) // @todo
+
+    for (const auto& [uid, id, count, position] : w->ifloats) // @todo
     {
-        std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1,.id = id, .pos = {position[0] * 32, position[1] * 32}});
-        *reinterpret_cast<int*>(compress.data() + 8) = w->ifloats.size();
+        std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = id, .pos = {position[0] * 32, position[1] * 32}});
+        *reinterpret_cast<int*>(compress.data() + 8) = uid + 1;
         *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(count);
         send_data(*event.peer, compress);
     }
@@ -92,10 +93,8 @@ void join_request(ENetEvent event, const std::string& header)
                 getpeer->nickname, w->visitors).c_str());
             gt_packet(p, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
                 getpeer->nickname, w->visitors).c_str());
-            play_sfx(p, "open_door");
         }
     });
-    play_sfx(*event.peer, "open_door");
     gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
         w->name, w->visitors - 1, peers().size()).c_str());
     inventory_visuals(*event.peer);

@@ -9,6 +9,7 @@ class block
 class ifloat 
 {
     public:
+    int uid{0};
     short id{0};
     short count{0};
     std::array<float, 2> pos;
@@ -29,7 +30,7 @@ public:
             file >> j;
             this->name = name;
             for (const auto& i : j["bs"]) blocks.push_back(block{i["f"], i["b"]});
-            for (const auto& i : j["fs"]) ifloats.push_back(ifloat{i["i"], i["c"], std::array<float, 2>{i["xy"][0], i["xy"][1]}});
+            for (const auto& i : j["fs"]) ifloats.push_back(ifloat{i["ui"], i["i"], i["c"], std::array<float, 2>{i["xy"][0], i["xy"][1]}});
         }
         return *this;
     }
@@ -43,7 +44,7 @@ public:
         {
             nlohmann::json j;
             for (const auto& [fg, bg, hits] : blocks) j["bs"].push_back({{"f", fg}, {"b", bg}});
-            for (const auto& [id, count, pos] : ifloats) j["fs"].push_back({{"i", id}, {"c", count}, {"xy", pos}});
+            for (const auto& [uid, id, count, pos] : ifloats) j["fs"].push_back({{"ui", uid}, {"i", id}, {"c", count}, {"xy", pos}});
             std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
         }
     }
@@ -70,13 +71,12 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
 {
     size_t size = data.size();
     if (size < 14) return;
-    unsigned four = 4;
     auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
-    memcpy(packet->data, &four, sizeof(unsigned));
-    memcpy(packet->data + 4, data.data(), size);
-    if (static_cast<int>(data[12]) bitand 0x8)
+    *reinterpret_cast<std::array<enet_uint8, 4>*>(packet->data) = {0x4};
+    memcpy(packet->data + 4, data.data(), size); // @note for safety reasons I will not reinterpret the values.
+    if (static_cast<int>(data[12]) bitand 0x8) // @note data[12] = peer_state in state class.
     {
-        DWORD resize_forecast = *std::bit_cast<DWORD*>(data.data() + 13); // we just wanna see if we can resize safely
+        size_t resize_forecast = *std::bit_cast<size_t*>(data.data() + 13); // @note we just wanna see if we can resize safely
         if (packet->dataLength + resize_forecast <= size_t{512})
             enet_packet_resize(packet, packet->dataLength + resize_forecast);
     }
@@ -107,9 +107,9 @@ void drop_visuals(ENetEvent& event, short id, short count)
 {
     float x_nabor = (getpeer->facing_left ? getpeer->pos[0] - 1 : getpeer->pos[0] + 1); // @note get the x naboring tile of peer's position. Oー
     std::array<float, 2> nabor_pos = {x_nabor, getpeer->pos[1]}; // @note getpeer->pos but [0] is the naboring tile. O|
-    ifloat& it = worlds[getpeer->recent_worlds.back()].ifloats.emplace_back(ifloat{id, count, nabor_pos}); // @note a iterator ahead of time
-    std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1,.id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
-    *reinterpret_cast<int*>(compress.data() + 8) = worlds[getpeer->recent_worlds.back()].ifloats.size(); // @note theory of getting float ID via distance iterator
+    ifloat& it = worlds[getpeer->recent_worlds.back()].ifloats.emplace_back(ifloat{worlds[getpeer->recent_worlds.back()].ifloats.size(), id, count, nabor_pos}); // @note a iterator ahead of time
+    std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
+    *reinterpret_cast<int*>(compress.data() + 8) = it.uid;
     *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(it.count);
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {

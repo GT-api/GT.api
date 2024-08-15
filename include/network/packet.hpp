@@ -73,21 +73,16 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
         }()
     ));
     }, std::make_tuple(params...));
-	if (enet_peer_send(&p, 0, enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE)) < 0) return;
+    ENetPacket* packet = enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE);
+    if (packet not_eq nullptr and packet->dataLength > 61) enet_peer_send(&p, 0, packet);
     
 };
 
 void packet(ENetPeer& p, const std::string& str) 
 {
     std::vector<std::byte> data(5 + str.length(), std::byte{0x0});
-    int three{3};
-    memcpy(data.data(), &three, sizeof(three));
+    *reinterpret_cast<std::array<uint8_t, 4>*>(data.data()) = {0x3}; 
     for (size_t i = 0; i < str.length(); ++i) 
         data[4 + i] = static_cast<std::byte>(str[i]);
     enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
-}
-
-void play_sfx(ENetPeer& p, const std::string& file, milliseconds delayMS = 0ms)
-{
-    packet(p, std::format("action|play_sfx\nfile|audio/{}.wav\ndelayMS|{}", file, delayMS.count()));
 }

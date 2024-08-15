@@ -7,6 +7,7 @@
 std::vector<std::string> readpipe(const std::string& str) 
 {
     std::vector<std::string> separations;
+    separations.reserve(std::count(str.begin(), str.end(), '|') + 1); 
     for (auto&& part : str | std::views::split('|'))
         separations.emplace_back(std::string(std::ranges::begin(part), std::ranges::end(part)));
     return separations;

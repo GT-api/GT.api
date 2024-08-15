@@ -23,7 +23,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 int main() 
 {
     enet_initialize();
-    server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, 1, 0, 0);
+    server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);
     std::thread(&basic_https, "127.0.0.1", server->address.port, 443).detach();

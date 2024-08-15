@@ -984,7 +984,7 @@ extern "C" {
     ENET_API ENetPacket * enet_packet_create_offset(const void *, size_t, size_t, enet_uint32);
     ENET_API enet_uint32  enet_crc32(const ENetBuffer *, size_t);
 
-    ENET_API ENetHost * enet_host_create(ENetAddress, size_t, size_t, enet_uint32, enet_uint32);
+    ENET_API ENetHost * enet_host_create(ENetAddress, size_t, size_t);
     ENET_API void       enet_host_destroy(ENetHost *);
     ENET_API ENetPeer * enet_host_connect(ENetHost *, const ENetAddress *, size_t, enet_uint32);
     ENET_API int        enet_host_check_events(ENetHost *, ENetEvent *);
@@ -4418,8 +4418,6 @@ extern "C" {
      *  @param address   the address at which other peers may connect to this host.  If NULL, then no peers may connect to the host.
      *  @param peerCount the maximum number of peers that should be allocated for the host.
      *  @param channelLimit the maximum number of channels allowed; if 0, then this is equivalent to ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT
-     *  @param incomingBandwidth downstream bandwidth of the host in bytes/second; if 0, ENet will assume unlimited bandwidth.
-     *  @param outgoingBandwidth upstream bandwidth of the host in bytes/second; if 0, ENet will assume unlimited bandwidth.
      *
      *  @returns the host on success and NULL on failure
      *
@@ -4428,7 +4426,7 @@ extern "C" {
      *  the window size of a connection which limits the amount of reliable packets that may be in transit
      *  at any given time.
      */
-    ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth) {
+    ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit) {
         ENetHost *host;
         ENetPeer *currentPeer;
 
@@ -4482,8 +4480,8 @@ extern "C" {
         host->randomSeed                    += enet_host_random_seed();
         host->randomSeed                    = (host->randomSeed << 16) | (host->randomSeed >> 16);
         host->channelLimit                  = channelLimit;
-        host->incomingBandwidth             = incomingBandwidth;
-        host->outgoingBandwidth             = outgoingBandwidth;
+        host->incomingBandwidth             = 0;
+        host->outgoingBandwidth             = 0;
         host->bandwidthThrottleEpoch        = 0;
         host->recalculateBandwidthLimits    = 0;
         host->mtu                           = ENET_HOST_DEFAULT_MTU;

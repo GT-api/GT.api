@@ -1,5 +1,5 @@
 
-jtpool jt_handler{}; // @note handle tasks using jthread pool (a pool of jthreads)
+jtpool jt_handler{}; // @note handle tasks (a pool of jthreads)
 
 void type_receive(ENetEvent event) 
 {
@@ -8,17 +8,16 @@ void type_receive(ENetEvent event)
         case 2: case 3: 
         {
             std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
-            printf("%s \n", header.c_str());
             std::ranges::replace(header, '\n', '|');
             std::vector<std::string> pipes = readpipe(header);
             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
             if (auto i = action_pool.find(action); i not_eq action_pool.end())
-                jt_handler.enqueue(3, [=] { i->second(event, std::ref(header)); });
+                jt_handler.enqueue(3, [=, &header] { i->second(event, header); });
             break;
         }
         case 4: 
         {
-            state state{};
+            state state{}; // @note deleted at break
             {std::vector<std::byte> packet(event.packet->dataLength - 4);
                 {size_t size = packet.size();
                 if ((size + 4) >= 60)
@@ -32,5 +31,5 @@ void type_receive(ENetEvent event)
             break;
         }
     }
-    enet_packet_destroy(event.packet); /* cleanup */ // @todo understand timing with jtpool...
+    enet_packet_destroy(event.packet);
 }

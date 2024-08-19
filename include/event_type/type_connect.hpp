@@ -11,7 +11,7 @@ void type_connect(ENetEvent event)
         : (peers(ENET_PEER_STATE_CONNECTING).size() > 2) 
             ? "`4OOPS:`` Too many people logging in at once. Please press `5CANCEL`` and try again in a few seconds." : "";
     if (not problem.empty())
-        packet(*event.peer, std::format("action|log\nmsg|{}", problem).c_str()), enet_peer_disconnect_later(event.peer, ENET_NORMAL_DISCONNECTION);
+        packet(*event.peer, std::format("action|log\nmsg|{}", problem).c_str()), enet_peer_disconnect_later(event.peer, disconnection::normal);
     else enet_peer_send(event.peer, 0, enet_packet_create(
         []{ std::array<enet_uint8, 4> data = {0x1}; return data.data(); }(), 4, ENET_PACKET_FLAG_RELIABLE));
 }

@@ -3943,7 +3943,7 @@ extern "C" {
         enet_peer_reset(peer);
     }
 
-    enum { ENET_NORMAL_DISCONNECTION, ENET_INACTIVE_DISCONNECTION, ENET_ERROR_DISCONNECTION };
+    enum disconnection { normal, inactive, error };
 
     /** Request a disconnection from a peer.
      *  @param peer peer to request a disconnection

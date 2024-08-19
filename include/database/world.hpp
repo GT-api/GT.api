@@ -15,7 +15,7 @@ class ifloat
     std::array<float, 2> pos;
 };
 
-#include <fstream>
+#include <fstream> // @note i/o fstream for reading/writing files
 #include "nlohmann\json.hpp" // @note nlohmann::json for writing/reading JSON format
 
 class world 
@@ -29,8 +29,8 @@ public:
             nlohmann::json j;
             file >> j;
             this->name = name;
-            for (const auto& i : j["bs"]) blocks.push_back(block{i["f"], i["b"]});
-            for (const auto& i : j["fs"]) ifloats.push_back(ifloat{i["ui"], i["i"], i["c"], std::array<float, 2>{i["xy"][0], i["xy"][1]}});
+            for (const auto& i : j["bs"]) blocks.emplace_back(block{i["f"], i["b"]});
+            for (const auto& i : j["fs"]) ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2>{i["p"][0], i["p"][1]}});
         }
         return *this;
     }
@@ -44,7 +44,7 @@ public:
         {
             nlohmann::json j;
             for (const auto& [fg, bg, hits] : blocks) j["bs"].push_back({{"f", fg}, {"b", bg}});
-            for (const auto& [uid, id, count, pos] : ifloats) j["fs"].push_back({{"ui", uid}, {"i", id}, {"c", count}, {"xy", pos}});
+            for (const auto& [uid, id, count, pos] : ifloats) j["fs"].push_back({{"u", uid}, {"i", id}, {"c", count}, {"p", pos}});
             std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
         }
     }
@@ -108,7 +108,7 @@ void drop_visuals(ENetEvent& event, short id, short count)
     std::vector<ifloat>& ifloats{worlds[getpeer->recent_worlds.back()].ifloats};
     float x_nabor = (getpeer->facing_left ? getpeer->pos[0] - 1 : getpeer->pos[0] + 1); // @note get the x naboring tile of peer's position. Oー
     std::array<float, 2> nabor_pos = {x_nabor, getpeer->pos[1]}; // @note getpeer->pos but [0] is the naboring tile. O|
-    ifloat it = ifloats.emplace_back(ifloat{ifloats.size(), id, count, nabor_pos}); // @note a iterator ahead of time
+    ifloat it = ifloats.emplace_back(ifloat{static_cast<int>(ifloats.size()), id, count, nabor_pos}); // @note a iterator ahead of time
     std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
     *reinterpret_cast<int*>(compress.data() + 8) = it.uid;
     *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(it.count);

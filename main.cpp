@@ -29,7 +29,7 @@ int main()
     std::thread(&basic_https, "127.0.0.1", server->address.port, 443).detach();
     {
         std::ifstream file("items.dat", std::ios::binary bitor std::ios::ate);
-        std::streamsize size = file.tellg();
+        std::streamsize size = file.tellg(); // @note size of ios::ate (end of file). this is called before seekg (ios::beg (beginning of file)).
         im_data.resize(im_data.size() + size);
         *reinterpret_cast<std::array<unsigned char, 56>*>(im_data.data()) = {0x4, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0xFF, 0xFF, 0xFF, 0xFF, 0x0, 0x0, 0x0, 0x0, 0x8};
         *reinterpret_cast<std::streamsize*>(im_data.data() + 56) = size;
@@ -37,7 +37,7 @@ int main()
     } // @note delete & close file
     cache_items();
 
-    ENetEvent event{}; // @todo
+    ENetEvent event{};
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
             if (auto i = event_pool.find(event.type); i not_eq event_pool.end())

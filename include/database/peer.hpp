@@ -113,10 +113,9 @@ void inventory_visuals(ENetPeer& p)
 {
 	int size = getp->slots.size();
     std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte(0x0));
-    std::array<int, 5> buffer{0x4, 0x9, -1, 0x0/* unknown data */, 0x8}; 
-    *reinterpret_cast<std::array<int, 5>*>(data.data()) = buffer;
-    *reinterpret_cast<int*>(data.data() + 66 - sizeof(int)) = _byteswap_ulong(size);
-    *reinterpret_cast<int*>(data.data() + 66 - (2 * sizeof(int))) = _byteswap_ulong(getp->slot_size);
+    *reinterpret_cast<std::array<int, 5>*>(data.data()) = {0x4, 0x9, -1, 0x0, 0x8};
+    *reinterpret_cast<unsigned long*>(data.data() + 62) = _byteswap_ulong(size); // @note 66....
+    *reinterpret_cast<unsigned long*>(data.data() + 58) = _byteswap_ulong(getp->slot_size); // @note 62....
     for (int i = 0; i < size; ++i)
         *reinterpret_cast<int*>(data.data() + (i * sizeof(int)) + 66) = 
             ((static_cast<int>(getp->slots.at(i).id) bitor (static_cast<int>(getp->slots.at(i).count) << 16) bitand 0x00FFFFFF));

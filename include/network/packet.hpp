@@ -1,7 +1,5 @@
 #include <cstring> // @note std::strlen() - TODO modernize c-style while respecting typename.
 
-using floats = std::vector<float>;
-
 /*
 @param p short for peer, the peer who will receive this packet, this can also be used with peers() to send to multiple peers.
 @param wait_for prep the packet ahead of time and send it within the time provided. (milliseconds) e.g. 1000 = 1 second, 60000 = 1 minute
@@ -15,9 +13,10 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
         for (size_t i = 0; i < 5 * sizeof(int); ++i) 
             data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
                 = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? getp->netid : -1, 8, wait_for}[i / sizeof(int)])[i % sizeof(int)];
-    size_t size = 61;
+    size_t size = data.size();
     std::byte index;
-    std::apply([&](auto const&... param) {
+    std::apply([&](auto const&... param) 
+    {
         (..., (void)([&]()
         {
             if constexpr (std::is_same_v<std::decay_t<decltype(param)>, const char*>) 
@@ -52,7 +51,7 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
                 //                             (NOTE: data's 61 bytes are state, NetID, delay, ect, and will always be the first inital bytes in a array)
                 // e.g. data's 61 bytes: 04 00 00 00 01 00 00 00 FF FF FF FF 00 00 00 00 08 00 (x42 0s)
             }
-            else if constexpr (std::is_same_v<std::decay_t<decltype(param)>, floats>) 
+            else if constexpr (std::is_same_v<std::decay_t<decltype(param)>, std::vector<float>>) 
             {
                 std::vector<std::byte> t_data(size + 2 + (sizeof(float) * param.size()));
                 for (size_t i = 0; i < size; ++i)
@@ -60,10 +59,8 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
                 t_data[size] = index;
                 t_data[size + 1] = static_cast<std::byte>(0x1 + 0x2 * (param.size() - 1));
                 for (size_t i = 0; i < param.size(); ++i) 
-                {
                     for (size_t ii = 0; ii < sizeof(param[i]); ++ii)
                         t_data[size + 2 + sizeof(float) * i + ii] = reinterpret_cast<std::byte const*>(&param[i])[ii];
-                }
                 size = size + 2 + sizeof(float) * param.size();
                 data = std::move(t_data);
             }
@@ -72,7 +69,7 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
                 data[60] = index;
         }()
     ));
-    }, std::make_tuple(params...));
+    }, std::forward_as_tuple(params...));
     ENetPacket* packet = enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE);
     if (packet not_eq nullptr and packet->dataLength > 61) enet_peer_send(&p, 0, packet);
     
@@ -80,8 +77,8 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
 
 void packet(ENetPeer& p, const std::string& str) 
 {
-    std::vector<std::byte> data(5 + str.length(), std::byte{0x0});
-    *reinterpret_cast<std::array<uint8_t, 4>*>(data.data()) = {0x3}; 
+    std::vector<std::byte> data(4 + str.length(), std::byte{0x0});
+    data[0] = static_cast<std::byte>(0x3);
     for (size_t i = 0; i < str.length(); ++i) 
         data[4 + i] = static_cast<std::byte>(str[i]);
     enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));

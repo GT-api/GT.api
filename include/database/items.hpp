@@ -14,7 +14,6 @@ class item
     short hits{};
     char type{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
-    bool seed;
 }; 
 #include <unordered_map>
 std::unordered_map<int, item> items;
@@ -43,7 +42,6 @@ void cache_items()
     {
         item im{};
         shift_pos(im_data, pos, im.id); pos += 2; // @note downsize im.id to 2 bit
-        im.seed = im.id % 2 == 0; // @note every item has a seed, hence every other item is a im.seed
         pos += 2;
         shift_pos(im_data, pos, im.type);
         pos += 1;
@@ -94,7 +92,7 @@ void cache_items()
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;
         pos += 8;
-        if (not im.seed) 
+        if (not im.id % 2) 
         {
             std::string small_name = im.raw_name; /* waste of memory to store a lowercase version on the stack so we localize it. */
             std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });

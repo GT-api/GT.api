@@ -1,5 +1,4 @@
 
-
 void join_request(ENetEvent event, const std::string& header) 
 {
     if (not create_rt(event, 2, 500ms)) 
@@ -18,16 +17,16 @@ void join_request(ENetEvent event, const std::string& header)
     auto w = std::make_unique<world>(world().read(big_name));
     if (w->name.empty()) 
     {
-        seed random{};
-        auto main_door = random.fast(2, 100 * 60 / 100 - 4);
+        engine::simple random(time(0));
+        auto main_door = scope(random, 2, 100 * 60 / 100 - 4);
         std::vector<block> blocks(100 * 60, block{0, 0});
         for (auto& b : blocks) 
         {
             auto i = &b - &blocks[0];
             if (i >= 3700) 
                 b.bg = 14, // cave background
-                b.fg = (i >= 3800 and i < 5000 /* lava level */ and not random.fast(0, 38)) ? 10 : 
-                    (i > 5000 and i < 5400 /* bedrock level */ and random.fast(0, 7) < 3) ? 4 : 
+                b.fg = (i >= 3800 and i < 5000 /* lava level */ and not scope(random, 0, 38)) ? 10 : 
+                    (i > 5000 and i < 5400 /* bedrock level */ and scope(random, 0, 7) < 3) ? 4 : 
                     (i >= 5400) ? 8 : 2;
             if (i == 3600 + main_door) b.fg = 6; // main door
             if (i == 3700 + main_door) b.fg = 8; // bedrock below the main door

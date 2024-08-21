@@ -1,16 +1,24 @@
-#include <random> // @note for integer randomization generator/engine.
 
-class seed 
+namespace engine
 {
-    std::minstd_rand lcg; // @note linear intfast generator
-    std::uniform_int_distribution<uint_fast32_t> uniform;
-public:
-    seed() : lcg(system_clock::now().time_since_epoch().count()) {}
-    // @brief instant number generator
-    // @return uint_fast32_t (unsigned int)
-    inline uint_fast32_t fast(const uint_fast32_t min, const uint_fast32_t max) 
+    /* Simple LCP Random Engine API 1.0.2 made by LeeEndl */
+    class simple
     {
-        return (uniform.param(std::uniform_int_distribution<uint_fast32_t>
-            ::param_type(min, max > 2147483647UL ? 2147483647UL : max)), uniform(lcg)); 
-    }
-};
+        unsigned seed;
+    public:
+        // @param seed advice using time(0) for the optimial outcome.
+        simple(unsigned seed) : seed(std::clamp<unsigned>(seed, 0, UINT_MAX)) {}
+
+        unsigned operator()() 
+        {
+            seed = 1664525 * seed + 1013904223;
+            return seed;
+        }
+    };
+}
+
+unsigned scope(engine::simple& seed, unsigned min, unsigned max) 
+{
+    unsigned range = max - min + 1;
+    return min + (seed() % range);
+}

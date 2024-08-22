@@ -10,7 +10,7 @@ void punch(ENetEvent event, state state)
         if (b.bg == 0 and b.fg == 0) return;
         if (b.fg == 8 or b.fg == 6) 
         {
-            gt_packet(*event.peer, 0, false, "OnTalkBubble", getpeer->netid, b.fg == 8 ? 
+            gt_packet(*event.peer, false, "OnTalkBubble", getpeer->netid, b.fg == 8 ? 
                 "It's too strong to break." : "(stand over and punch to use)");
             return;
         }

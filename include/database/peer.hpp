@@ -21,6 +21,7 @@ public:
     unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
 
     std::array<float, 2> pos{}; /* x, y */
+    std::array<float, 2> rest_pos{}; /* respawn position AKA main door: x, y */
     bool facing_left{}; /* peer is directed towards the left direction */
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
@@ -34,7 +35,6 @@ public:
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
 
     const char* nickname{}; // @note peer's displayed name. this is only used in packets hence it is a C-type container
-    std::array<std::string, 2> login{}; // @note IDName, Pass
     std::string country{}; // @note country initials e.g. us, id, jp, uk
 };
 

@@ -5,6 +5,6 @@ void Action(ENetEvent& event, const std::string& text)
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back())
-            gt_packet(p, 0, true, "OnAction", std::string("/" + to_slang).c_str());
+            gt_packet(p, true, "OnAction", std::string("/" + to_slang).c_str());
     });
 }

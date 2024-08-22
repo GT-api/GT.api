@@ -2,17 +2,16 @@
 
 /*
 @param p short for peer, the peer who will receive this packet, this can also be used with peers() to send to multiple peers.
-@param wait_for prep the packet ahead of time and send it within the time provided. (milliseconds) e.g. 1000 = 1 second, 60000 = 1 minute
 @param netid to my knowledge this value should be true if it relates to a peer's state in a world (OnRemove, OnSpawn OnChangeSkin, ect), else false (OnConsoleMessage, OnTalkBubble, ect.). 
 @param params list of param that structures your packet. each entry will be than identified as a const char* or signed/unsigned or float/double, 
                 respectfully void* entires will not be accepted. e.g. classes, ptr, void
 */
 template<typename... T>
-void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
+void gt_packet(ENetPeer& p, bool netid, T... params) {
 	std::vector<std::byte> data(61, std::byte(0x00));
         for (size_t i = 0; i < 5 * sizeof(int); ++i) 
             data[size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
-                = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? getp->netid : -1, 8, wait_for}[i / sizeof(int)])[i % sizeof(int)];
+                = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? getp->netid : -1, 8, 0}[i / sizeof(int)])[i % sizeof(int)];
     size_t size = data.size();
     std::byte index;
     std::apply([&](auto const&... param) 
@@ -71,6 +70,7 @@ void gt_packet(ENetPeer& p, signed wait_for, bool netid, T... params) {
     ));
     }, std::forward_as_tuple(params...));
     ENetPacket* packet = enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE);
+    printf("%d\n", packet->dataLength);
     if (packet not_eq nullptr and packet->dataLength > 61) enet_peer_send(&p, 0, packet);
     
 };

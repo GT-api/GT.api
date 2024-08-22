@@ -3,12 +3,12 @@
 void growid(ENetEvent event, const std::string& header, std::string error = "")
 {
     std::this_thread::sleep_for(500ms); /* unknown reason, due to slow reponse I reduce to 500ms, it surprisingly worked!- real GT has to up there game xD  */
-    gt_packet(*event.peer, 0, false, "OnDialogRequest", 
+    gt_packet(*event.peer, false, "OnDialogRequest", 
 std::format(R"(text_scaling_string|Dirttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt|
 set_default_color|`o
 add_label_with_icon|big|`wGet a GrowID``|left|206|
 add_spacer|small|
-add_textbox|{0}
+add_textbox|{}
 add_textbox|By choosing a `wGrowID``, you can use a name and password to logon from any device. Your `wname`` will be shown to other players!|left|
 add_spacer|small|
 add_text_input|logon|Name||18|

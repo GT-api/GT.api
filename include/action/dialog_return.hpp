@@ -15,12 +15,6 @@ void dialog_return(ENetEvent event, const std::string& header)
         else if (password.size() < 8 or password.size() > 18) growid(event, header, "`4Oops!``  Your password must be between `$8`` and `$18`` characters long.");
         else if (logon.size() < 3 or logon.size() > 18) growid(event, header, "`4Oops!``  Your `wGrowID`` must be between `$3`` and `$18`` characters long.");
         else if (alpha(logon)) growid(event, header, std::format("`4Oops!`` The name `w{}`` is unavailable.  Please choose a different name.", logon));
-        else 
-        {
-            getpeer->login = {logon, password};
-            gt_packet(*event.peer, 0, false, "SetHasGrowID", 1, getpeer->login[0].c_str(), getpeer->login[1].c_str());
-            gt_packet(*event.peer, 0, false, "OnNameChange", getpeer->nickname = getpeer->login[0].c_str());
-        }
     }
     else if (dialog_name == "drop_item" and pipes[0] == "itemID" and pipes[3] == "count")
     {

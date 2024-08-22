@@ -3,14 +3,14 @@ void join_request(ENetEvent event, const std::string& header)
 {
     if (not create_rt(event, 2, 500ms)) 
     {
-        gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld");
+        gt_packet(*event.peer, false, "OnFailedToEnterWorld");
         return;
     }
     std::string big_name{readpipe(std::string{header})[3]};
     if (not alpha(big_name) or big_name.empty())
     {
-        gt_packet(*event.peer, 0, false, "OnConsoleMessage", "Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
-        gt_packet(*event.peer, 0, false, "OnFailedToEnterWorld");
+        gt_packet(*event.peer, false, "OnConsoleMessage", "Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
+        gt_packet(*event.peer, false, "OnFailedToEnterWorld");
         return;
     }
     std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
@@ -55,8 +55,9 @@ void join_request(ENetEvent event, const std::string& header)
         *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
         if (fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
         {
-            getpeer->pos[0] = (i % x) * 32;
-            getpeer->pos[1] = (i / x) * 32;
+            getpeer->pos.front() = (i % x) * 32;
+            getpeer->pos.back() = (i / x) * 32;
+            getpeer->rest_pos = getpeer->pos; // @note static repsawn position
             data[pos + 8] = std::byte{0x1};
             *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
             for (size_t i = 0; i < 4; ++i)
@@ -83,23 +84,23 @@ void join_request(ENetEvent event, const std::string& header)
     getpeer->ongoing_world = w->name;
     EmoticonDataChanged(event);
     getpeer->netid = ++w->visitors;
-    gt_packet(*event.peer, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
+    gt_packet(*event.peer, false, "OnSpawn", std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
         getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->nickname, getpeer->country).c_str());
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id)
         {
-            gt_packet(p, 0, false, "OnSpawn", std::format("spawn|avatar\nnetID|{0}\nuserID|{1}\ncolrect|0|0|20|30\nposXY|{2}|{3}\nname|{4}\ncountry|{5}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
-                getp->netid, getp->user_id, static_cast<int>(getp->pos[0]), static_cast<int>(getp->pos[1]), getp->nickname, getp->country).c_str());
-            gt_packet(p, 0, false, "OnConsoleMessage", std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+            gt_packet(p, false, "OnSpawn", std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
+                getp->netid, getp->user_id, static_cast<int>(getp->pos.front()), static_cast<int>(getp->pos.back()), getp->nickname, getp->country).c_str());
+            gt_packet(p, false, "OnConsoleMessage", std::format("`5<`w{}`` entered, `w{}`` others here>``", 
                 getpeer->nickname, w->visitors).c_str());
-            gt_packet(p, 0, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{0}`` entered, `w{1}`` others here>``", 
+            gt_packet(p, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{}`` entered, `w{}`` others here>``", 
                 getpeer->nickname, w->visitors).c_str());
         }
     });
-    gt_packet(*event.peer, 0, false, "OnConsoleMessage", std::format("World `w{0}`` entered.  There are `w{1}`` other people here, `w{2}`` online.",
+    gt_packet(*event.peer, false, "OnConsoleMessage", std::format("World `w{}`` entered.  There are `w{}`` other people here, `w{}`` online.",
         w->name, w->visitors - 1, peers().size()).c_str());
     inventory_visuals(*event.peer);
-    if (worlds.find(w->name) == worlds.end()) /* so basically checks if world already on the stack else push back it (emplace) */
+    if (worlds.find(w->name) == worlds.end())
         worlds.emplace(w->name, *w);
 }

@@ -17,7 +17,7 @@ void join_request(ENetEvent event, const std::string& header)
     auto w = std::make_unique<world>(world().read(big_name));
     if (w->name.empty()) 
     {
-        engine::simple random(time(0));
+        engine::simple random;
         auto main_door = scope(random, 2, 100 * 60 / 100 - 4);
         std::vector<block> blocks(100 * 60, block{0, 0});
         for (auto& b : blocks) 

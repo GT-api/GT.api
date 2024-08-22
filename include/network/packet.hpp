@@ -70,9 +70,7 @@ void gt_packet(ENetPeer& p, bool netid, T... params) {
     ));
     }, std::forward_as_tuple(params...));
     ENetPacket* packet = enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE);
-    printf("%d\n", packet->dataLength);
     if (packet not_eq nullptr and packet->dataLength > 61) enet_peer_send(&p, 0, packet);
-    
 };
 
 void packet(ENetPeer& p, const std::string& str) 

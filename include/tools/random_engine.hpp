@@ -1,24 +1,17 @@
 
 namespace engine
 {
-    /* Simple LCP Random Engine API 1.0.2 made by LeeEndl */
     class simple
     {
         unsigned seed;
     public:
-        // @param seed advice using time(0) for the optimial outcome.
-        simple(unsigned seed) : seed(std::clamp<unsigned>(seed, 0, UINT_MAX)) {}
+        explicit simple(unsigned seed = static_cast<unsigned>(std::chrono::system_clock::now().time_since_epoch().count())) 
+            : seed(std::clamp(seed, 0u, std::numeric_limits<unsigned>::max())) {}
 
         unsigned operator()() 
         {
-            seed = 1664525 * seed + 1013904223;
-            return seed;
+            return seed = 1664525 * seed + 1013904223;
         }
     };
 }
-
-unsigned scope(engine::simple& seed, unsigned min, unsigned max) 
-{
-    unsigned range = max - min + 1;
-    return min + (seed() % range);
-}
+unsigned scope(engine::simple& seed, unsigned min, unsigned max) { return min + (seed() % (max - min + 1)); }

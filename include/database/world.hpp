@@ -51,22 +51,6 @@ public:
 };
 std::unordered_map<std::string, world> worlds{}; // @note remove in future commit...
 
-void OnRequestWorldSelectMenu(ENetEvent event) 
-{
-    auto section = [](const auto& range, const auto& color) 
-    {
-        std::string result;
-        for (const auto& name : range)
-            if (not name.empty()) /* some may be stored empty but still an object. e.g. std::array */
-                result += std::format("\nadd_floater|{0}|0|0.5|{1}", name, color);
-        return result;
-    };
-    gt_packet(*event.peer, false, "OnRequestWorldSelectMenu", std::format(
-        "add_filter|\nadd_heading|Top Worlds<ROW2>|{0}\nadd_heading|My Worlds<CR>|{1}\nadd_heading|Recently Visited Worlds<CR>|{2}\n",
-        "\nadd_floater|wotd_world|\u013B WOTD|0|0.5|3529161471", section(getpeer->locked_worlds, "2147418367"), section(getpeer->recent_worlds, "3417414143")).c_str(), 0);
-    gt_packet(*event.peer, false, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
-}
-
 void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
 {
     size_t size = data.size();

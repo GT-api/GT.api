@@ -1,7 +1,7 @@
 
 void join_request(ENetEvent event, const std::string& header) 
 {
-    if (not create_rt(event, 2, 500ms)) 
+    if (not create_rt(event, 2, 900ms)) 
     {
         gt_packet(*event.peer, false, "OnFailedToEnterWorld");
         return;
@@ -34,11 +34,14 @@ void join_request(ENetEvent event, const std::string& header)
         w->blocks = std::move(blocks);
         w->name = big_name; // init
     }
-    {std::vector<std::byte> data(85 + w->name.length() + (8 * w->blocks.size()) + 500/*TODO*/, std::byte{0x00});
+    {size_t visual = 0;
+    for (const auto& block : w->blocks)
+        if (block.fg == 6) visual += 8; // @note main door bubble visuals
+    std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + visual + 12/*initial drop*/, std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
-    unsigned char len = w->name.length(); /* Growtopia limits world name length hence 255 is plenty of space */
+    unsigned char len = static_cast<unsigned char>(w->name.length());
     data[66] = std::byte{len};
     for (size_t i = 0; i < static_cast<int>(len); ++i)
         data[68 + i] = static_cast<std::byte>(w->name[i]);
@@ -53,15 +56,15 @@ void join_request(ENetEvent event, const std::string& header)
         auto [fg, bg, hits] = block;
         *reinterpret_cast<short*>(data.data() + pos) = fg;
         *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
-        if (fg == 6) /* TODO all doors, and custom bubbles (not only EXIT) */
+        if (fg == 6)
         {
             getpeer->pos.front() = (i % x) * 32;
             getpeer->pos.back() = (i / x) * 32;
             getpeer->rest_pos = getpeer->pos; // @note static repsawn position
             data[pos + 8] = std::byte{0x1};
             *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
-            for (size_t i = 0; i < 4; ++i)
-                data[pos + 11 + i] = static_cast<std::byte>("EXIT"[i]);
+            for (size_t ii = 0; ii < 4; ++ii)
+                data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
             pos += 8;
         }
         pos += 8;

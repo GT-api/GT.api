@@ -2,7 +2,6 @@
 void quit_to_exit(ENetEvent event, const std::string& header) 
 {
     if (getpeer->ongoing_world.empty()) return; // as stated on below comment. this must be false if we wanna create/read a ratelimit.
-        if (not create_rt(event, 2, 500ms)) return; // stand-alone to the arguement above. OMG sorry if this is complex- basically this is a twin ratelimit to enter and/or leaving a world.
     worlds[getpeer->recent_worlds.back()].visitors--;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
@@ -14,8 +13,8 @@ void quit_to_exit(ENetEvent event, const std::string& header)
     });
     if (worlds[getpeer->recent_worlds.back()].visitors <= 0)
         worlds.erase(getpeer->recent_worlds.back());
-    OnRequestWorldSelectMenu(event);
     getpeer->post_enter.unlock();
     getpeer->ongoing_world.clear();
     getpeer->netid = -1; // this will fix any packets being sent outside of world
+    OnRequestWorldSelectMenu(event);
 }

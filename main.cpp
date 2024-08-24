@@ -11,6 +11,7 @@
 #include "include\tools\random_engine.hpp" // @note optimized random number generator
 
 #include "include\on\on"
+#include "include\commands\commands"
 #include "include\tools\string_view.hpp" // @note read '|' in strings & check if string uses standard char(s)
 #include "include\action\actions"
 #include "include\state\states"

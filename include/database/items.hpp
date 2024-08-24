@@ -15,8 +15,8 @@ class item
     char type{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
 }; 
-#include <unordered_map>
-std::unordered_map<int, item> items;
+#include <map>
+std::map<int, item> items;
 
 #include <vector>
 std::vector<std::byte> im_data(60, std::byte{0x00});
@@ -37,7 +37,6 @@ void cache_items()
     int pos{60}, count{0};
     pos += sizeof(short); // @note items.dat version.
     shift_pos(im_data, pos, count);
-    items.reserve(count);
     for (int i = 0; i < count; ++i) 
     {
         item im{};
@@ -92,7 +91,7 @@ void cache_items()
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;
         pos += 8;
-        if (not im.id % 2) 
+        if (im.id % 2 not_eq 0) 
         {
             std::string small_name = im.raw_name; /* waste of memory to store a lowercase version on the stack so we localize it. */
             std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });

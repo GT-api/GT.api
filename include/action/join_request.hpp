@@ -34,10 +34,7 @@ void join_request(ENetEvent event, const std::string& header)
         w->blocks = std::move(blocks);
         w->name = big_name; // init
     }
-    {size_t visual = 0;
-    for (const auto& block : w->blocks)
-        if (block.fg == 6) visual += 8; // @note main door bubble visuals
-    std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + visual + 12/*initial drop*/, std::byte{0x00});
+    {std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + 12/*initial drop*/, std::byte{0x00});
     data[0] = std::byte{0x4};
     data[4] = std::byte{0x4};
     data[16] = std::byte{0x8};
@@ -61,6 +58,7 @@ void join_request(ENetEvent event, const std::string& header)
             getpeer->pos.front() = (i % x) * 32;
             getpeer->pos.back() = (i / x) * 32;
             getpeer->rest_pos = getpeer->pos; // @note static repsawn position
+            data.resize(data.size() + 8);
             data[pos + 8] = std::byte{0x1};
             *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
             for (size_t ii = 0; ii < 4; ++ii)

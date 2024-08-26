@@ -28,4 +28,28 @@ void dialog_return(ENetEvent event, const std::string& header)
             inventory_visuals(*event.peer);
         }
     }
+    else if (dialog_name == "find" and pipes[0] == "name")
+    {
+        const std::string& name = pipes[1];
+        std::string result{};
+        short i = 0;
+        result += "\nadd_text_input|name|Search: ||26|"; // @todo find am appropriate max length
+        for (const auto& im : items) 
+        {
+            if (im.first % 2 not_eq 0) continue; // @todo add filter to include/exclude seeds.
+            std::string small_name = im.second.raw_name;
+            std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });
+            if (small_name.contains(name)) 
+            {
+                if (i >= 8) result += "\nadd_button_with_icon||END_ROW|noflags|0||", i = 0; // @todo 8 is the max in growtopia dialogs.
+                result += std::format("\nadd_button_with_icon|find_{0}||staticBlueFrame,no_padding_x,enabled|{0}||", im.first).c_str();
+                ++i;
+            }
+        }
+        result += "\nadd_button_with_icon||END_ROW|noflags|0||"; // @note if it ends up less then 8 it will be on the same row as Cancel & Comfirm...
+
+        gt_packet(*event.peer, false, "OnDialogRequest", std::format(R"(set_default_color|`o{}
+add_spacer|small|
+end_dialog|find|Cancel|Comfirm|)", result).c_str());
+    }
 }

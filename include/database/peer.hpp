@@ -26,6 +26,12 @@ public:
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
     std::vector<slot> slots{{18, 1}, {32, 1}}; /* an array of each slot. storing id, count */
+    void emplace(slot s) 
+    {
+        if (auto it = std::find_if(slots.begin(), slots.end(), [&](const auto& found) { return found.id == s.id; }); it not_eq slots.end()) 
+            it->count = std::clamp(it->count + s.count, 0, 200); // @note keeps the count within 200.
+        else slots.emplace_back(std::move(s)); // @note no such item in inventory, so we create a new entry.
+    }
 
     std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
     std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */

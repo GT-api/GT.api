@@ -30,7 +30,7 @@ void dialog_return(ENetEvent event, const std::string& header)
     }
     else if (dialog_name == "find" and pipes[0] == "buttonClicked" and pipes[1].starts_with("searchableItemListButton"))
     {
-        getpeer->slots.emplace_back(stoi(readch(pipes[1], '_')[1]), 200);
+        getpeer->emplace({static_cast<short>(stoi(readch(pipes[1], '_')[1])), 200});
         inventory_visuals(*event.peer);
     }
 }

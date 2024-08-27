@@ -11,8 +11,8 @@ class item
     public:
     unsigned short id{}; /* item identity */
     std::string raw_name{}; /* the exact name of the item including uppercases */
-    short hits{};
-    char type{};
+    short hits{}; // @todo make it unsigned.
+    unsigned short type{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
 }; 
 #include <map>
@@ -40,9 +40,9 @@ void cache_items()
     for (int i = 0; i < count; ++i) 
     {
         item im{};
-        shift_pos(im_data, pos, im.id); pos += 2; // @note downsize im.id to 2 bit
+        shift_pos(im_data, pos, im.id); pos += 2; // @note downsize im.id to 2 bit rather then a 4 bit
         pos += 2;
-        shift_pos(im_data, pos, im.type);
+        shift_pos(im_data, pos, im.type); pos -= 1; // @note upsize im.type to 2 bit rather then a 1 bit
         pos += 1;
         short len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short);

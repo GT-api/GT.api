@@ -1,6 +1,10 @@
 
 void find(ENetEvent& event, const std::string& text)
 {
-    /* @note use less memory than housing it as a string and/or formatted string (std::format)- I know it is ugly but this is the best choice. */
-    gt_packet(*event.peer, false, "OnDialogRequest", "set_default_color|`o\nadd_text_input|name|Search: ||26|\nadd_spacer|small|\nend_dialog|find|Close|Comfirm|");
+    gt_packet(*event.peer, false, "OnDialogRequest", 
+    "set_default_color|`o\n"
+    "add_text_input|n|Search: ||26|\n"
+    "add_searchable_item_list||sourceType:allItems;listType:iconWithCustomLabel;resultLimit:30|n|\n"
+    "add_quick_exit|\n" // X in the top right corner
+    "end_dialog|find|||");
 }

@@ -6,7 +6,7 @@ void join_request(ENetEvent event, const std::string& header)
         gt_packet(*event.peer, false, "OnFailedToEnterWorld");
         return;
     }
-    std::string big_name{readpipe(std::string{header})[3]};
+    std::string big_name{readch(std::string{header}, '|')[3]};
     if (not alpha(big_name) or big_name.empty())
     {
         gt_packet(*event.peer, false, "OnConsoleMessage", "Sorry, spaces and special characters are not allowed in world or door names.  Try again.");

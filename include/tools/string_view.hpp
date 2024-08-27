@@ -1,14 +1,14 @@
 
-/* 
-@param str the whole content
-@brief reads a string and seperates the pipes '|' and stores those pieces of info into a vector.
-@return std::vector<std::string> of all the seperations of the pipes '|' e.g. Name|myName -> readpipe[1] = myName
+/*
+ @param str the whole string
+ @param c the char to search for and split
+ @return std::vector<std::string> storing each split off from c found in the str.
 */
-std::vector<std::string> readpipe(const std::string& str) 
+std::vector<std::string> readch(const std::string& str, const char& c) 
 {
     std::vector<std::string> separations;
-    separations.reserve(std::count(str.begin(), str.end(), '|') + 1); 
-    for (auto&& part : str | std::views::split('|'))
+    separations.reserve(std::count(str.begin(), str.end(), c) + 1); 
+    for (auto&& part : str | std::views::split(c))
         separations.emplace_back(std::string(std::ranges::begin(part), std::ranges::end(part)));
     return separations;
 }

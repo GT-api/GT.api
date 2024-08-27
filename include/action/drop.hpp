@@ -1,6 +1,6 @@
 void drop(ENetEvent event, const std::string& header)
 {
-    std::string id{readpipe(std::string{header})[4]};
+    std::string id{readch(std::string{header}, '|')[4]};
     for (const auto& slot : getpeer->slots)
         if (slot.id == stoi(id)) {
             gt_packet(*event.peer, false, "OnDialogRequest", 

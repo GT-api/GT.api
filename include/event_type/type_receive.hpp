@@ -9,7 +9,7 @@ void type_receive(ENetEvent event)
         {
             std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
             std::ranges::replace(header, '\n', '|');
-            std::vector<std::string> pipes = readpipe(header);
+            std::vector<std::string> pipes = readch(header, '|');
             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
             if (auto i = action_pool.find(action); i not_eq action_pool.end())
                 jt_handler.enqueue(3, [=, &header] { i->second(event, header); });

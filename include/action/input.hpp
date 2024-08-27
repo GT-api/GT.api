@@ -2,7 +2,7 @@
 void input(ENetEvent event, const std::string& header)
 {
     if (not create_rt(event, 1, 400ms)) return;
-    std::string text{readpipe(std::string{header})[4]};
+    std::string text{readch(std::string{header}, '|')[4]};
     getpeer->messages.push_back(steady_clock::now());
     if (getpeer->messages.size() > 5) getpeer->messages.pop_front();
     if (getpeer->messages.size() == 5 and std::chrono::duration_cast<seconds>(steady_clock::now() - getpeer->messages.front()).count() < 6)

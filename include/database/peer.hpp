@@ -26,6 +26,7 @@ public:
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
     std::vector<slot> slots{{18, 1}, {32, 1}}; /* an array of each slot. storing id, count */
+    /* set slot::count to nagative value if you want to remove an amount. */
     void emplace(slot s) 
     {
         if (auto it = std::find_if(slots.begin(), slots.end(), [&](const auto& found) { return found.id == s.id; }); it not_eq slots.end()) 

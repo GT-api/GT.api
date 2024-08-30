@@ -53,22 +53,33 @@ void join_request(ENetEvent event, const std::string& header)
         auto [fg, bg, hits] = block;
         *reinterpret_cast<short*>(data.data() + pos) = fg;
         *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
-        if (fg == 6)
+        if (fg == 6) // @todo all door labels & signs.
         {
             getpeer->pos.front() = (i % x) * 32;
             getpeer->pos.back() = (i / x) * 32;
             getpeer->rest_pos = getpeer->pos; // @note static repsawn position
-            data.resize(data.size() + 8);
+            data.resize(data.size() + 7);
             data[pos + 8] = std::byte{0x1};
             *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
             for (size_t ii = 0; ii < 4; ++ii)
                 data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
-            pos += 8;
+            pos += 8; // @todo what is the missing 1 bit?
+        }
+        else if (fg == 242) // @todo all locks
+        {
+            data.resize(data.size() + 15);
+            data[pos + 8] = std::byte{0x3};
+            data[pos + 9] = std::byte{0x1};
+            *reinterpret_cast<int*>(data.data() + (pos + 10)) = 1; // @note owner user ID
+            data[pos + 14] = std::byte{0x1}; // @note number of admins
+            *reinterpret_cast<int*>(data.data() + (pos + 18)) = -100; // @note default world bpm
+            *reinterpret_cast<int*>(data.data() + (pos + 22)) = 1; // @note list of admins
+            pos += 15;
         }
         pos += 8;
         ++i;
     }
-    enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));} // @note delete data
+    enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));} // @note delete data:
 
     for (const auto& [uid, id, count, position] : w->ifloats)
     {

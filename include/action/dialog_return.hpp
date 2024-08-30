@@ -18,15 +18,10 @@ void dialog_return(ENetEvent event, const std::string& header)
     }
     else if (dialog_name == "drop_item" and pipes[0] == "itemID" and pipes[3] == "count")
     {
-        const short id = stoi(pipes[1]), count = stoi(pipes[4]);
-        auto slot = std::find_if(getpeer->slots.begin(), getpeer->slots.end(), 
-            [&](const auto& slot) { return slot.id == id and slot.count >= count; });
-        if (slot not_eq getpeer->slots.end()) 
-        {
-            slot->count -= count;
-            drop_visuals(event, id, count);
-            inventory_visuals(*event.peer);
-        }
+        const short id = stoi(pipes[1]); // @note comfirm they have the item without extra iteration.
+        const short count = stoi(pipes[4]);
+        getpeer->emplace(slot{id, count});
+        drop_visuals(event, id, count);
     }
     else if (dialog_name == "find" and pipes[0] == "buttonClicked" and pipes[1].starts_with("searchableItemListButton"))
     {

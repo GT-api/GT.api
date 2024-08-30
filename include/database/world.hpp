@@ -27,7 +27,15 @@ public:
         if (file.is_open()) 
         {
             nlohmann::json j;
-            file >> j;
+            try 
+            {
+                file >> j;
+            } 
+            catch (const nlohmann::json::parse_error& e) 
+            {
+                printf("%s", e.what());
+                return *this;
+            }
             this->name = name;
             for (const auto& i : j["bs"]) blocks.emplace_back(block{i["f"], i["b"]});
             for (const auto& i : j["fs"]) ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2>{i["p"][0], i["p"][1]}});

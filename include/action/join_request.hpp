@@ -51,12 +51,12 @@ void join_request(ENetEvent event, const std::string& header)
                 getpeer->pos.front() = (i % x) * 32;
                 getpeer->pos.back() = (i / x) * 32;
                 getpeer->rest_pos = getpeer->pos; // @note static repsawn position
-                data.resize(data.size() + 7);
+                data.resize(data.size() + 8);
                 data[pos + 8] = std::byte{0x1};
                 *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
                 for (size_t ii = 0; ii < 4; ++ii)
                     data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
-                pos += 8; // @todo what is the missing 1 bit?
+                pos += 8;
             }
             else if (fg == 242) // @todo all locks
             {
@@ -67,7 +67,7 @@ void join_request(ENetEvent event, const std::string& header)
                 data[pos + 14] = std::byte{0x1}; // @note number of admins
                 *reinterpret_cast<int*>(data.data() + (pos + 18)) = -100; // @note default world bpm
                 *reinterpret_cast<int*>(data.data() + (pos + 22)) = 1; // @note list of admins
-                pos += 15;
+                pos += 14;
             }
             pos += 8;
             ++i;

@@ -4,7 +4,7 @@ std::unordered_map<std::string, std::function<void(ENetEvent&, const std::string
 {
     {"help", [](ENetEvent& event, const std::string& text) 
     {
-        packet(*event.peer, "action|log\nmsg|>> Commands: /find `w{name}`o /wave /dance /love /sleep /facepalm /fp /smh /yes /no /omg /idk /shrug /furious /rolleyes /foldarms /stubborn /fold /dab /sassy /dance2 /march /grumpy /shy");
+        packet(*event.peer, "action|log\nmsg|>> Commands: /find /wave /dance /love /sleep /facepalm /fp /smh /yes /no /omg /idk /shrug /furious /rolleyes /foldarms /stubborn /fold /dab /sassy /dance2 /march /grumpy /shy");
     }},
     {"wave", &Action}, {"dance", &Action}, {"love", &Action}, {"sleep", &Action}, {"facepalm", &Action}, {"fp", &Action}, {"smh", &Action}, {"yes", &Action}, 
     {"no", &Action}, {"omg", &Action}, {"idk", &Action}, {"shrug", &Action}, {"furious", &Action}, {"rolleyes", &Action}, {"foldarms", &Action}, {"fa", &Action}, 

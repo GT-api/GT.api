@@ -20,8 +20,10 @@ void dialog_return(ENetEvent event, const std::string& header)
     {
         const short id = stoi(pipes[1]); // @note comfirm they have the item without extra iteration.
         const short count = stoi(pipes[4]);
-        getpeer->emplace(slot{id, count});
-        drop_visuals(event, id, count);
+        getpeer->emplace(slot{id, static_cast<short>(count * -1)}); // @note take away
+        inventory_visuals(*event.peer);
+        float x_nabor = (getpeer->facing_left ? getpeer->pos[0] - 1 : getpeer->pos[0] + 1); // @note get the tile next to peer. so like O|
+        drop_visuals(event, {id, count}, {x_nabor, getpeer->pos[1]});
     }
     else if (dialog_name == "find" and pipes[0] == "buttonClicked" and pipes[1].starts_with("searchableItemListButton"))
     {

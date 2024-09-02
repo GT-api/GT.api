@@ -95,12 +95,10 @@ void block_punched(ENetEvent& event, state s, int block1D)
 	state_visuals(event, s);
 }
 
-void drop_visuals(ENetEvent& event, short id, short count) 
+void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::array<float, 2>& pos) 
 {
     std::vector<ifloat>& ifloats{worlds[getpeer->recent_worlds.back()].ifloats};
-    float x_nabor = (getpeer->facing_left ? getpeer->pos[0] - 1 : getpeer->pos[0] + 1); // @note get the x naboring tile of peer's position. Oー
-    std::array<float, 2> nabor_pos = {x_nabor, getpeer->pos[1]}; // @note getpeer->pos but [0] is the naboring tile. O|
-    ifloat it = ifloats.emplace_back(ifloat{static_cast<int>(ifloats.size()), id, count, nabor_pos}); // @note a iterator ahead of time
+    ifloat it = ifloats.emplace_back(ifloat{static_cast<int>(ifloats.size()), im[0], im[1], pos}); // @note a iterator ahead of time
     std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
     *reinterpret_cast<int*>(compress.data() + 8) = it.uid;
     *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(it.count);

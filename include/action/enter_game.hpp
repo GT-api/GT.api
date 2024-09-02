@@ -6,7 +6,5 @@ void enter_game(ENetEvent event, const std::string& header)
         getpeer->user_id = peers().size(); // @todo logic issue
         packet(*event.peer, std::format("action|log\nmsg|Welcome back, `w`w{}````.", getpeer->nickname = "guest").c_str());
         OnRequestWorldSelectMenu(event);
-        getpeer->slots.emplace_back(2, 200);
-        getpeer->slots.emplace_back(14, 200);
     });
 }

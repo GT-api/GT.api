@@ -14,4 +14,7 @@ namespace engine
         }
     };
 }
-unsigned scope(engine::simple& seed, unsigned min, unsigned max) { return min + (seed() % (max - min + 1)); }
+
+float scope(engine::simple& seed, std::array<float, 2> range) { return range[0] + static_cast<float>(seed()) / static_cast<float>(std::numeric_limits<unsigned>::max()) * (range[1] - range[0]); }
+
+unsigned scope(engine::simple& seed, std::array<unsigned, 2> range) { return range[0] + (seed() % (range[1] - range[0] + 1)); }

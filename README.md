@@ -18,8 +18,10 @@
 - Press <img src="https://www.servis-repas.cz/user/categories/orig/windows-11-icon.png" width="20" height="20"></img> and type 'cmd' and input: `setx PATH "%PATH%;C:\msys64\ucrt64\bin"`
 - Open VSC in `GT.api-main` folder, then press `Ctrl + Shift + B` to start compiling.
 
-Make sure your hosts file in `C:/Windows/System32/drivers/etc/` is set to the following:
-```
-127.0.0.1 www.growtopia1.com
-127.0.0.1 www.growtopia2.com
-```
+***
+> [!NOTE]
+> Make sure your hosts file in `C:/Windows/System32/drivers/etc/` is set to the following:
+> ```
+> 127.0.0.1 www.growtopia1.com
+> 127.0.0.1 www.growtopia2.com
+> ```

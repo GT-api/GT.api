@@ -7,10 +7,10 @@ void punch(ENetEvent event, state state)
     if (state.id == 18) // @note punching a block
     {
         if (b.bg == 0 and b.fg == 0) return;
-        if (b.fg == 8 or b.fg == 6) 
+        if (b.fg == 8 or b.fg == 6) // @todo sudden crash. this does not happen everytime??
         {
             gt_packet(*event.peer, false, "OnTalkBubble", getpeer->netid, b.fg == 8 ? 
-                "It's too strong to break." : "(stand over and punch to use)");
+                "It's too strong to break." : "(stand over and punch to use)", 0, 1);
             return;
         }
         block_punched(event, state, block1D); // TODO- referance it?

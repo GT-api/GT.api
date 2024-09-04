@@ -1,5 +1,5 @@
 
-jtpool jt_handler{}; // @note handle tasks (a pool of jthreads)
+std::vector<std::thread> threads;
 
 void type_receive(ENetEvent event) 
 {
@@ -12,7 +12,7 @@ void type_receive(ENetEvent event)
             std::vector<std::string> pipes = readch(header, '|');
             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
             if (auto i = action_pool.find(action); i not_eq action_pool.end())
-                jt_handler.enqueue(3, [=, &header] { i->second(event, header); });
+                threads.emplace_back([=, &header] { i->second(event, header); }).join();
             break;
         }
         case 4: 
@@ -27,7 +27,7 @@ void type_receive(ENetEvent event)
                     size < static_cast<std::size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;} // @note deletes size
                 state = get_state(packet);} // @note deletes packet
             if (auto i = state_pool.find(state.type); i not_eq state_pool.end())
-                jt_handler.enqueue(3, [i, event, state = std::move(state)] mutable { i->second(event, state); });
+                threads.emplace_back([i, event, state = std::move(state)] mutable { i->second(event, state); }).detach();
             break;
         }
     }

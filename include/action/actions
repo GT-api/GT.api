@@ -5,6 +5,7 @@
 #include "drop.hpp"
 #include "growid.hpp"
 #include "respawn.hpp"
+#include "friends.hpp"
 #include "dialog_return.hpp"
 #include "quit_to_exit.hpp"
 #include "quit.hpp"
@@ -19,6 +20,7 @@ std::unordered_map<std::string, std::function<void(ENetEvent, const std::string&
     {"action|drop", std::bind(&drop, std::placeholders::_1, std::placeholders::_2)},
     {"action|growid", std::bind(&growid, std::placeholders::_1, std::placeholders::_2, "")},
     {"action|respawn", std::bind(&respawn, std::placeholders::_1, std::placeholders::_2)},
+    {"action|friends", std::bind(&friends, std::placeholders::_1, std::placeholders::_2)},
     {"action|dialog_return", std::bind(&dialog_return, std::placeholders::_1, std::placeholders::_2)},
     {"action|quit_to_exit", std::bind(&quit_to_exit, std::placeholders::_1, std::placeholders::_2)},
     {"action|quit", std::bind(&quit, std::placeholders::_1, std::placeholders::_2)},

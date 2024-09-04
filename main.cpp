@@ -15,7 +15,6 @@
 #include "include\tools\string_view.hpp" // @note read '|' in strings & check if string uses standard char(s)
 #include "include\action\actions"
 #include "include\state\states"
-#include "include\network\jtpool.hpp"
 #include "include\event_type\event_type"
 
 void basic_https(const std::string& s_ip, u_short s_port, u_short https_port); // -> import https.o
@@ -32,9 +31,9 @@ int main()
         std::ifstream file("items.dat", std::ios::binary bitor std::ios::ate);
         std::streamsize size = file.tellg(); // @note size of ios::ate (end of file). this is called before seekg (ios::beg (beginning of file)).
         im_data.resize(im_data.size() + size);
-        *reinterpret_cast<std::array<unsigned char, 56>*>(im_data.data()) = {0x4, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0xFF, 0xFF, 0xFF, 0xFF, 0x0, 0x0, 0x0, 0x0, 0x8};
-        *reinterpret_cast<std::streamsize*>(im_data.data() + 56) = size;
-        file.seekg(0, std::ios::beg).read(reinterpret_cast<char*>(im_data.data() + 60), size);
+        *reinterpret_cast<std::array<unsigned char, 56>*>(&im_data[0]) = {0x4, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0xFF, 0xFF, 0xFF, 0xFF, 0x0, 0x0, 0x0, 0x0, 0x8};
+        *reinterpret_cast<std::streamsize*>(&im_data[56]) = size;
+        file.seekg(0, std::ios::beg).read(reinterpret_cast<char*>(&im_data[60]), size);
     } // @note delete & close file
     cache_items();
 
@@ -42,6 +41,6 @@ int main()
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
             if (auto i = event_pool.find(event.type); i not_eq event_pool.end())
-                jt_handler.enqueue(3, [=] { i->second(event); });
+                threads.emplace_back([=] { i->second(event); }).detach();
     return 0;
 }

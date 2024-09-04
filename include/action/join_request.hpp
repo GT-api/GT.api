@@ -34,18 +34,18 @@ void join_request(ENetEvent event, const std::string& header)
         unsigned char len = static_cast<unsigned char>(w->name.length());
         data[66] = std::byte{len};
         for (unsigned char i = 0; i < len; ++i)
-            *reinterpret_cast<char*>(data.data() + 68 + i) = w->name[i];
+            *reinterpret_cast<char*>(&data[68 + i]) = w->name[i];
         std::size_t y = w->blocks.size() / 100, x = w->blocks.size() / y;
-        *reinterpret_cast<std::size_t*>(data.data() + 68 + len) = x;
-        *reinterpret_cast<std::size_t*>(data.data() + 72 + len) = y;
-        *reinterpret_cast<unsigned short*>(data.data() + 76 + len) = static_cast<unsigned short>(w->blocks.size());
+        *reinterpret_cast<std::size_t*>(&data[68 + len]) = x;
+        *reinterpret_cast<std::size_t*>(&data[72 + len]) = y;
+        *reinterpret_cast<unsigned short*>(&data[76 + len]) = static_cast<unsigned short>(w->blocks.size());
         int pos = 85 + len;
         short i = 0;
         for (const auto& block : w->blocks)
         {
             auto [fg, bg, hits] = block;
-            *reinterpret_cast<short*>(data.data() + pos) = fg;
-            *reinterpret_cast<short*>(data.data() + (pos + 2)) = bg;
+            *reinterpret_cast<short*>(&data[pos]) = fg;
+            *reinterpret_cast<short*>(&data[pos + 2]) = bg;
             if (fg == 6) // @todo all door labels & signs.
             {
                 getpeer->pos.front() = (i % x) * 32;
@@ -53,7 +53,7 @@ void join_request(ENetEvent event, const std::string& header)
                 getpeer->rest_pos = getpeer->pos; // @note static repsawn position
                 data.resize(data.size() + 8);
                 data[pos + 8] = std::byte{0x1};
-                *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
+                *reinterpret_cast<short*>(&data[pos + 9]) = 4;
                 for (int ii = 0; ii < 4; ++ii)
                     data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
                 pos += 8;
@@ -63,10 +63,10 @@ void join_request(ENetEvent event, const std::string& header)
                 data.resize(data.size() + 15);
                 data[pos + 8] = std::byte{0x3};
                 data[pos + 9] = std::byte{0x1};
-                *reinterpret_cast<int*>(data.data() + (pos + 10)) = 1; // @note owner user ID
+                *reinterpret_cast<int*>(&data[pos + 10]) = 1; // @note owner user ID
                 data[pos + 14] = std::byte{0x1}; // @note number of admins
-                *reinterpret_cast<int*>(data.data() + (pos + 18)) = -100; // @note default world bpm
-                *reinterpret_cast<int*>(data.data() + (pos + 22)) = 1; // @note list of admins
+                *reinterpret_cast<int*>(&data[pos + 18]) = -100; // @note default world bpm
+                *reinterpret_cast<int*>(&data[pos + 22]) = 1; // @note list of admins
                 pos += 14;
             }
             pos += 8;
@@ -77,8 +77,8 @@ void join_request(ENetEvent event, const std::string& header)
         for (const auto& [uid, id, count, position] : w->ifloats)
         {
             std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = id, .pos = {position[0] * 32, position[1] * 32}});
-            *reinterpret_cast<int*>(compress.data() + 8) = uid + 1; // @todo
-            *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(count);
+            *reinterpret_cast<int*>(&compress[8]) = uid + 1; // @todo
+            *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(count);
             send_data(*event.peer, compress);
         }
         if (std::find(getpeer->recent_worlds.begin(), getpeer->recent_worlds.end(), w->name) == getpeer->recent_worlds.end()) 

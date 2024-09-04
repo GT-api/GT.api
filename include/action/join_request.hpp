@@ -54,7 +54,7 @@ void join_request(ENetEvent event, const std::string& header)
                 data.resize(data.size() + 8);
                 data[pos + 8] = std::byte{0x1};
                 *reinterpret_cast<short*>(data.data() + (pos + 9)) = 4;
-                for (size_t ii = 0; ii < 4; ++ii)
+                for (int ii = 0; ii < 4; ++ii)
                     data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
                 pos += 8;
             }

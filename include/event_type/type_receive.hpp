@@ -19,12 +19,12 @@ void type_receive(ENetEvent event)
         {
             state state{}; // @note deleted at break
             {std::vector<std::byte> packet(event.packet->dataLength - 4);
-                {size_t size = packet.size();
+                {std::size_t size = packet.size();
                 if ((size + 4) >= 60)
-                    for (size_t i = 0; i < size; ++i)
+                    for (std::size_t i = 0; i < size; ++i)
                         packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
                 if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and 
-                    size < static_cast<size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;} // @note deletes size
+                    size < static_cast<std::size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;} // @note deletes size
                 state = get_state(packet);} // @note deletes packet
             if (auto i = state_pool.find(state.type); i not_eq state_pool.end())
                 jt_handler.enqueue(3, [i, event, state = std::move(state)] mutable { i->second(event, state); });

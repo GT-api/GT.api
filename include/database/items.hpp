@@ -24,7 +24,7 @@ std::vector<std::byte> im_data(60, std::byte{0x00});
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 
 {
-    for (size_t i = 0; i < sizeof(T); ++i) 
+    for (std::size_t i = 0; i < sizeof(T); ++i) 
         reinterpret_cast<std::byte*>(&value)[i] = data[pos + i];
     pos += sizeof(T);
 }

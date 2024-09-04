@@ -53,7 +53,7 @@ public:
 @return false if ratelimited
 */
 template<typename length_T>
-bool create_rt(ENetEvent& event, size_t pos, length_T length) 
+bool create_rt(ENetEvent& event, std::size_t pos, length_T length) 
 {
     if (std::chrono::duration_cast<length_T>(std::chrono::steady_clock::now() - getpeer->rate_limit[pos]) <= length) return false;
     getpeer->rate_limit[pos] = std::chrono::steady_clock::now();
@@ -75,44 +75,40 @@ class state {
     public:
 	int type{};
     int netid{};
+    // @todo unknown data
     int peer_state{};
-    int id{};
-    std::array<float, 2> pos{}; /* position */
-    std::array<float, 2> speed{}; /* speed */
-    std::array<int, 2> punch{}; /* punch pos (not range, but world pos) */
+    // @todo unknown data
+    int id{}; // @note peer's active hand, so 18 (fist) = punching, 32 (wrench) interacting, ect...
+    std::array<float, 2> pos{}; // @note position {x, y}
+    std::array<float, 2> speed{}; // @note player movement effect (gravity, speed, ect) {x, y}
+    std::array<int, 2> punch{}; // @note punching/placing position {x, y}
 };
 
 state get_state(const std::vector<std::byte>& packet) {
-    auto s = std::make_unique<state>();
-    s->type = *reinterpret_cast<const int*>(packet.data());
-    s->netid = *reinterpret_cast<const int*>(packet.data() + 4);
-    s->peer_state = *reinterpret_cast<const int*>(packet.data() + 12);
-    /* unknown data */
-    s->id = *reinterpret_cast<const int*>(packet.data() + 20);
-    s->pos[0] = *reinterpret_cast<const float*>(packet.data() + 24);
-    s->pos[1] = *reinterpret_cast<const float*>(packet.data() + 28);
-    s->speed[0] = *reinterpret_cast<const float*>(packet.data() + 32);
-    s->speed[1] = *reinterpret_cast<const float*>(packet.data() + 36);
-    s->punch[0] = *reinterpret_cast<const int*>(packet.data() + 44);
-    s->punch[1] = *reinterpret_cast<const int*>(packet.data() + 48);
-    return *s;
+    return state{
+        .type = std::bit_cast<int*>(packet.data())[0],
+        .netid = std::bit_cast<int*>(packet.data())[1],
+        .peer_state = std::bit_cast<int*>(packet.data())[3],
+        .id = std::bit_cast<int*>(packet.data())[5],
+        .pos = {std::bit_cast<float*>(packet.data())[6], std::bit_cast<float*>(packet.data())[7]},
+        .speed = {std::bit_cast<float*>(packet.data())[8], std::bit_cast<float*>(packet.data())[9]},
+        .punch = {std::bit_cast<int*>(packet.data())[11], std::bit_cast<int*>(packet.data())[12]}
+    };
 }
 
 /* put it back into it's original form */
-std::vector<std::byte> compress_state(const state& s)
-{
+std::vector<std::byte> compress_state(const state& s) {
     std::vector<std::byte> data(56, std::byte{0x00});
-    *reinterpret_cast<int*>(data.data()) = s.type;
-    *reinterpret_cast<int*>(data.data() + 4) = s.netid;
-    *reinterpret_cast<int*>(data.data() + 12) = s.peer_state;
-    /* unknown data */
-    *reinterpret_cast<int*>(data.data() + 20) = s.id;
-    *reinterpret_cast<float*>(data.data() + 24) = s.pos[0];
-    *reinterpret_cast<float*>(data.data() + 28) = s.pos[1];
-    *reinterpret_cast<float*>(data.data() + 32) = s.speed[0];
-    *reinterpret_cast<float*>(data.data() + 36) = s.speed[1];
-    *reinterpret_cast<int*>(data.data() + 44) = s.punch[0];
-    *reinterpret_cast<int*>(data.data() + 48) = s.punch[1];
+    std::bit_cast<int*>(data.data())[0] = s.type;
+    std::bit_cast<int*>(data.data())[1] = s.netid;
+    std::bit_cast<int*>(data.data())[3] = s.peer_state;
+    std::bit_cast<int*>(data.data())[5] = s.id;
+    std::bit_cast<float*>(data.data())[6] = s.pos[0];
+    std::bit_cast<float*>(data.data())[7] = s.pos[1];
+    std::bit_cast<float*>(data.data())[8] = s.speed[0];
+    std::bit_cast<float*>(data.data())[9] = s.speed[1];
+    std::bit_cast<int*>(data.data())[11] = s.punch[0];
+    std::bit_cast<int*>(data.data())[12] = s.punch[1];
     return data;
 }
 

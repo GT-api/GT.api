@@ -14,7 +14,7 @@ class jtpool {
     std::atomic_bool stop{false};
 public:
     jtpool() {
-        for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i) 
+        for (unsigned int i = 0; i < std::thread::hardware_concurrency(); ++i) 
         {
             workers.emplace_back([this] 
             {

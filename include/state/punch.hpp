@@ -17,11 +17,11 @@ void punch(ENetEvent event, state state)
         if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) b.fg = 0;
         else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
         else return;
-        engine::simple seed{};
-        if (scope(seed, std::array<unsigned, 2>{1, 4}) == 2) // @note the idea is 1 in 4 chance a gem will drop. "2" being the random lucky value within 1-4 (I like using the middle number)
-            drop_visuals(event, {112, 1}, 
-            {static_cast<float>(state.punch[0]) + scope(seed, std::array<float, 2>{0.08, 0.6}), static_cast<float>(state.punch[1]) + scope(seed, std::array<float, 2>{0.08, 0.6})});
-        // @todo add real growtopia "farmable" or just seed/block chances.
+        engine::simple random;
+        if (random.uint32({0, 4}) == 1) 
+            drop_visuals(event, {112, 1}, // @todo get real gt gem amount for each item.
+            {static_cast<float>(state.punch[0]) + random.float32({0.08, 0.6}), static_cast<float>(state.punch[1]) + random.float32({0.08, 0.6})});
+        // @todo add real gt "farmable" or just seed/block chances.
     }
     else // @note placing a block
     {

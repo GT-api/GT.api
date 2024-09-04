@@ -9,7 +9,7 @@ class block
 class ifloat 
 {
     public:
-    int uid{0};
+    std::size_t uid{0};
     short id{0};
     short count{0};
     std::array<float, 2> pos;
@@ -98,7 +98,7 @@ void block_punched(ENetEvent& event, state s, int block1D)
 void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::array<float, 2>& pos) 
 {
     std::vector<ifloat>& ifloats{worlds[getpeer->recent_worlds.back()].ifloats};
-    ifloat it = ifloats.emplace_back(ifloat{static_cast<int>(ifloats.size()), im[0], im[1], pos}); // @note a iterator ahead of time
+    ifloat it = ifloats.emplace_back(ifloat{ifloats.size(), im[0], im[1], pos}); // @note a iterator ahead of time
     std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
     *reinterpret_cast<int*>(compress.data() + 8) = it.uid;
     *reinterpret_cast<float*>(compress.data() + 16) = static_cast<float>(it.count);

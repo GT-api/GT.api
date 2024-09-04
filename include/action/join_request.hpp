@@ -11,35 +11,35 @@ void join_request(ENetEvent event, const std::string& header)
         if (w->name.empty()) 
         {
             engine::simple random;
-            auto main_door = scope(random, std::array<unsigned, 2>{2, 100 * 60 / 100 - 4});
+            const unsigned main_door = random.uint32({2, 100 * 60 / 100 - 4});
             std::vector<block> blocks(100 * 60, block{0, 0});
-            for (auto& b : blocks) 
+            std::ranges::transform(blocks, blocks.begin(), [&](auto& b) 
             {
                 auto i = &b - &blocks[0];
                 if (i >= 3700) 
                     b.bg = 14, // cave background
-                    b.fg = (i >= 3800 and i < 5000 /* lava level */ and not scope(random, std::array<unsigned, 2>{0, 38})) ? 10 : 
-                        (i > 5000 and i < 5400 /* bedrock level */ and scope(random, std::array<unsigned, 2>{0, 7}) < 3) ? 4 : 
+                    b.fg = (i >= 3800 and i < 5000 /* lava level */ and not random.uint32({0, 38})) ? 10 : 
+                        (i > 5000 and i < 5400 /* bedrock level */ and random.uint32({0, 7}) < 3) ? 4 : 
                         (i >= 5400) ? 8 : 2;
                 if (i == 3600 + main_door) b.fg = 6; // main door
                 if (i == 3700 + main_door) b.fg = 8; // bedrock below the main door
-            }
+                return b;
+            });
             w->blocks = std::move(blocks);
             w->name = big_name; // init
         }
         {std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + 12/*initial drop*/, std::byte{0x00});
-        data[0] = std::byte{0x4};
-        data[4] = std::byte{0x4};
+        data[0] = data[4] = std::byte{0x4};
         data[16] = std::byte{0x8};
         unsigned char len = static_cast<unsigned char>(w->name.length());
         data[66] = std::byte{len};
-        for (size_t i = 0; i < static_cast<int>(len); ++i)
-            data[68 + i] = static_cast<std::byte>(w->name[i]);
-        short y = w->blocks.size() / 100, x = w->blocks.size() / y;
-        data[68 + static_cast<int>(len)] = static_cast<std::byte>(x);
-        data[72 + static_cast<int>(len)] = static_cast<std::byte>(y);
+        for (unsigned char i = 0; i < len; ++i)
+            *reinterpret_cast<char*>(data.data() + 68 + i) = w->name[i];
+        std::size_t y = w->blocks.size() / 100, x = w->blocks.size() / y;
+        *reinterpret_cast<std::size_t*>(data.data() + 68 + len) = x;
+        *reinterpret_cast<std::size_t*>(data.data() + 72 + len) = y;
         *reinterpret_cast<unsigned short*>(data.data() + 76 + len) = static_cast<unsigned short>(w->blocks.size());
-        int pos = 85 + static_cast<int>(len);
+        int pos = 85 + len;
         short i = 0;
         for (const auto& block : w->blocks)
         {

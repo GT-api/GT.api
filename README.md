@@ -2,7 +2,7 @@
 
 [![](https://github.com/GT-api/GT.api/actions/workflows/msys2.yml/badge.svg)](https://github.com/GT-api/GT.api/actions/workflows/msys2.yml)
 [![](https://app.codacy.com/project/badge/Grade/96ff25f75aa24cd38d694a09140839c9)](https://app.codacy.com/gh/LeeEndl/GT.api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![](https://dcbadge.limes.pink/api/server/AQxDjbDt?style=flat)](https://discord.gg/AQxDjbDt)
+[![](https://dcbadge.limes.pink/api/server/zzWHgzaF7J?style=flat)](https://discord.gg/zzWHgzaF7J)
 </div>
 
 ***

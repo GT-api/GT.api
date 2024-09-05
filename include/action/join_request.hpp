@@ -11,7 +11,7 @@ void join_request(ENetEvent event, const std::string& header)
         if (w->name.empty()) 
         {
             engine::simple random;
-            const unsigned main_door = random.uint32({2, 100 * 60 / 100 - 4});
+            const unsigned main_door = random.uint32({2U, 100U * 60U / 56U});
             std::vector<block> blocks(100 * 60, block{0, 0});
             std::ranges::transform(blocks, blocks.begin(), [&](auto& b) 
             {

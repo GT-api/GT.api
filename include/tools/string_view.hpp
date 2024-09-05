@@ -8,7 +8,7 @@ std::vector<std::string> readch(const std::string& str, const char& c)
 {
     std::vector<std::string> separations;
     separations.reserve(std::count(str.begin(), str.end(), c) + 1); 
-    for (auto&& part : str | std::views::split(c))
+    for (auto&& part : str bitor std::views::split(c))
         separations.emplace_back(std::string(std::ranges::begin(part), std::ranges::end(part)));
     return separations;
 }

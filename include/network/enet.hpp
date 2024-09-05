@@ -225,6 +225,8 @@ static const struct in6_addr enet_v6_localhost = {{{ 0x00, 0x00, 0x00, 0x00, 0x0
 #define ENET_HOST_BROADCAST 0xFFFFFFFFU
 #define ENET_PORT_ANY       0
 
+#include <bitset>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -982,7 +984,7 @@ extern "C" {
     ENET_API void        enet_packet_set_free_callback(ENetPacket *, void *);
 
     ENET_API ENetPacket * enet_packet_create_offset(const void *, size_t, size_t, enet_uint32);
-    ENET_API enet_uint32  enet_crc32(const ENetBuffer *, size_t);
+    ENET_API constexpr enet_uint32  enet_crc32(const ENetBuffer *, size_t);
 
     ENET_API ENetHost * enet_host_create(ENetAddress, size_t, size_t);
     ENET_API void       enet_host_destroy(ENetHost *);
@@ -1471,53 +1473,48 @@ extern "C" {
         enet_free(packet);
     }
 
-    static int initializedCRC32 = 0;
-    static enet_uint32 crcTable[256];
+    static bool initializedCRC32 = false;
+    static std::array<enet_uint32, 256> crcTable;
 
-    static enet_uint32 reflect_crc(int val, int bits) {
-        int result = 0, bit;
+    constexpr enet_uint32 reflect_crc(enet_uint32 val, int bits) 
+    {
+        std::bitset<32> bs_val(val);
+        enet_uint32 result = 0;
 
-        for (bit = 0; bit < bits; bit++) {
-            if (val & 1) { result |= 1 << (bits - 1 - bit); }
-            val >>= 1;
-        }
+        for (enet_uint32 bit = 0; bit < bits; ++bit) 
+            if (bs_val[bit]) result |= 1 << (bits - 1 - bit);
 
         return result;
     }
 
-    static void initialize_crc32(void) {
-        int byte;
+    static void initialize_crc32() 
+    {
+        for (enet_uint32 byte = 0; byte < 256; ++byte) 
+        {
+            uint32_t crc = reflect_crc(byte, 8) << 24;
 
-        for (byte = 0; byte < 256; ++byte) {
-            enet_uint32 crc = reflect_crc(byte, 8) << 24;
-            int offset;
-
-            for (offset = 0; offset < 8; ++offset) {
-                if (crc & 0x80000000) {
-                    crc = (crc << 1) ^ 0x04c11db7;
-                } else {
-                    crc <<= 1;
-                }
-            }
+            for (int offset = 0; offset < 8; ++offset) 
+                crc = (crc bitand 0x80000000) ? (crc << 1) ^ 0x04C11DB7 : crc << 1;
 
             crcTable[byte] = reflect_crc(crc, 32);
         }
 
-        initializedCRC32 = 1;
+        initializedCRC32 = true;
     }
 
-    enet_uint32 enet_crc32(const ENetBuffer *buffers, size_t bufferCount) {
+    constexpr enet_uint32 enet_crc32(const ENetBuffer *buffers, size_t bufferCount) 
+    {
         enet_uint32 crc = 0xFFFFFFFF;
 
-        if (!initializedCRC32) { initialize_crc32(); }
+        if (not initializedCRC32) initialize_crc32();
 
-        while (bufferCount-- > 0) {
-            const enet_uint8 *data = (const enet_uint8 *)buffers->data;
-            const enet_uint8 *dataEnd = &data[buffers->dataLength];
+        while (bufferCount-- > 0) 
+        {
+            const enet_uint8* data = static_cast<const enet_uint8*>(buffers->data);
+            const enet_uint8* dataEnd = &data[buffers->dataLength];
 
-            while (data < dataEnd) {
-                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
-            }
+            while (data < dataEnd) 
+                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
 
             ++buffers;
         }
@@ -1573,11 +1570,13 @@ extern "C" {
     }
 
     static int enet_protocol_dispatch_incoming_commands(ENetHost *host, ENetEvent *event) {
-        while (!enet_list_empty(&host->dispatchQueue)) {
-            ENetPeer *peer = (ENetPeer *) enet_list_remove(enet_list_begin(&host->dispatchQueue));
+        while (not enet_list_empty(&host->dispatchQueue)) 
+        {
+            ENetPeer* peer = (ENetPeer *) enet_list_remove(enet_list_begin(&host->dispatchQueue));
             peer->needsDispatch = 0;
 
-            switch (peer->state) {
+            switch (peer->state) 
+            {
                 case ENET_PEER_STATE_CONNECTION_PENDING:
                 case ENET_PEER_STATE_CONNECTION_SUCCEEDED:
                     enet_protocol_change_state(host, peer, ENET_PEER_STATE_CONNECTED);
@@ -1600,25 +1599,20 @@ extern "C" {
                     return 1;
 
                 case ENET_PEER_STATE_CONNECTED:
-                    if (enet_list_empty(&peer->dispatchedCommands)) {
-                        continue;
-                    }
+                    if (enet_list_empty(&peer->dispatchedCommands)) continue;
 
                     event->packet = enet_peer_receive(peer, &event->channelID);
-                    if (event->packet == NULL) {
-                        continue;
-                    }
+                    if (event->packet == NULL) continue;
 
                     event->type = ENET_EVENT_TYPE_RECEIVE;
                     event->peer = peer;
 
-                    if (!enet_list_empty(&peer->dispatchedCommands)) {
+                    if (not enet_list_empty(&peer->dispatchedCommands)) 
+                    {
                         peer->needsDispatch = 1;
                         enet_list_insert(enet_list_end(&host->dispatchQueue), &peer->dispatchList);
                     }
-
                     return 1;
-
                 default:
                     break;
             }
@@ -3268,15 +3262,18 @@ extern "C" {
      *  @remarks enet_host_service should be called fairly regularly for adequate performance
      *  @ingroup host
      */
-    int enet_host_service(ENetHost *host, ENetEvent *event, enet_uint32 timeout) {
+    int enet_host_service(ENetHost *host, ENetEvent *event, enet_uint32 timeout) 
+    {
         enet_uint32 waitCondition;
 
-        if (event != NULL) {
+        if (event not_eq __null) 
+        {
             event->type   = ENET_EVENT_TYPE_NONE;
-            event->peer   = NULL;
-            event->packet = NULL;
+            event->peer   = __null;
+            event->packet = __null;
 
-            switch (enet_protocol_dispatch_incoming_commands(host, event)) {
+            switch (enet_protocol_dispatch_incoming_commands(host, event)) 
+            {
                 case 1:
                     return 1;
 
@@ -3295,12 +3292,13 @@ extern "C" {
         host->serviceTime = enet_time_get();
         timeout += host->serviceTime;
 
-        do {
-            if (ENET_TIME_DIFFERENCE(host->serviceTime, host->bandwidthThrottleEpoch) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL) {
+        do 
+        {
+            if (ENET_TIME_DIFFERENCE(host->serviceTime, host->bandwidthThrottleEpoch) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL)
                 enet_host_bandwidth_throttle(host);
-            }
 
-            switch (enet_protocol_send_outgoing_commands(host, event, 1)) {
+            switch (enet_protocol_send_outgoing_commands(host, event, 1)) 
+            {
                 case 1:
                     return 1;
 
@@ -3315,7 +3313,8 @@ extern "C" {
                     break;
             }
 
-            switch (enet_protocol_receive_incoming_commands(host, event)) {
+            switch (enet_protocol_receive_incoming_commands(host, event)) 
+            {
                 case 1:
                     return 1;
 
@@ -3330,7 +3329,8 @@ extern "C" {
                     break;
             }
 
-            switch (enet_protocol_send_outgoing_commands(host, event, 1)) {
+            switch (enet_protocol_send_outgoing_commands(host, event, 1)) 
+            {
                 case 1:
                     return 1;
 
@@ -3345,8 +3345,10 @@ extern "C" {
                     break;
             }
 
-            if (event != NULL) {
-                switch (enet_protocol_dispatch_incoming_commands(host, event)) {
+            if (event not_eq __null) 
+            {
+                switch (enet_protocol_dispatch_incoming_commands(host, event)) 
+                {
                     case 1:
                         return 1;
 
@@ -3362,25 +3364,24 @@ extern "C" {
                 }
             }
 
-            if (ENET_TIME_GREATER_EQUAL(host->serviceTime, timeout)) {
+            if (ENET_TIME_GREATER_EQUAL(host->serviceTime, timeout))
                 return 0;
-            }
 
-            do {
+            do 
+            {
                 host->serviceTime = enet_time_get();
 
-                if (ENET_TIME_GREATER_EQUAL(host->serviceTime, timeout)) {
+                if (ENET_TIME_GREATER_EQUAL(host->serviceTime, timeout))
                     return 0;
-                }
 
-                waitCondition = ENET_SOCKET_WAIT_RECEIVE | ENET_SOCKET_WAIT_INTERRUPT;
-                if (enet_socket_wait(host->socket, &waitCondition, ENET_TIME_DIFFERENCE(timeout, host->serviceTime)) != 0) {
+                waitCondition = ENET_SOCKET_WAIT_RECEIVE bitor ENET_SOCKET_WAIT_INTERRUPT;
+                if (enet_socket_wait(host->socket, &waitCondition, ENET_TIME_DIFFERENCE(timeout, host->serviceTime)) not_eq 0)
                     return -1;
-                }
-            } while (waitCondition & ENET_SOCKET_WAIT_INTERRUPT);
+            } 
+            while (waitCondition bitand ENET_SOCKET_WAIT_INTERRUPT);
 
             host->serviceTime = enet_time_get();
-        } while (waitCondition & ENET_SOCKET_WAIT_RECEIVE);
+        } while (waitCondition bitand ENET_SOCKET_WAIT_RECEIVE);
 
         return 0;
     } /* enet_host_service */
@@ -4427,39 +4428,37 @@ extern "C" {
      *  at any given time.
      */
     ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit) {
-        ENetHost *host;
-        ENetPeer *currentPeer;
+        ENetHost* host;
+        ENetPeer* currentPeer;
 
-        if (peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID) {
-            return NULL;
-        }
+        if (peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID)
+            return __null;
 
-        host = (ENetHost *) enet_malloc(sizeof(ENetHost));
-        if (host == NULL) { return NULL; }
+        host = static_cast<ENetHost*>(enet_malloc(sizeof(ENetHost)));
+        if (host == __null) return __null;
         memset(host, 0, sizeof(ENetHost));
 
-        host->peers = (ENetPeer *) enet_malloc(peerCount * sizeof(ENetPeer));
-        if (host->peers == NULL) {
+        host->peers = static_cast<ENetPeer*>(enet_malloc(peerCount * sizeof(ENetPeer)));
+        if (host->peers == __null) 
+        {
             enet_free(host);
-            return NULL;
+            return __null;
         }
 
         memset(host->peers, 0, peerCount * sizeof(ENetPeer));
 
         host->socket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
-        if (host->socket != ENET_SOCKET_NULL) {
+        if (host->socket not_eq ENET_SOCKET_NULL) 
             enet_socket_set_option (host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
-        }
 
-        if (host->socket == ENET_SOCKET_NULL || (&address != NULL && enet_socket_bind(host->socket, &address) < 0)) {
-            if (host->socket != ENET_SOCKET_NULL) {
+        if (host->socket == ENET_SOCKET_NULL or (&address not_eq __null and enet_socket_bind(host->socket, &address) < 0)) {
+            if (host->socket not_eq ENET_SOCKET_NULL) 
                 enet_socket_destroy(host->socket);
-            }
 
             enet_free(host->peers);
             enet_free(host);
 
-            return NULL;
+            return __null;
         }
 
         enet_socket_set_option(host->socket, ENET_SOCKOPT_NONBLOCK, 1);
@@ -4468,17 +4467,15 @@ extern "C" {
         enet_socket_set_option(host->socket, ENET_SOCKOPT_SNDBUF, ENET_HOST_SEND_BUFFER_SIZE);
         enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
 
-        if (&address != NULL && enet_socket_get_address(host->socket, &host->address) < 0) {
+        if (&address not_eq __null && enet_socket_get_address(host->socket, &host->address) < 0)
             host->address = address;
-        }
 
-        if (!channelLimit || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT) {
+        if (not channelLimit or channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT)
             channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT;
-        }
 
-        host->randomSeed                    = (enet_uint32) ((uintptr_t) host % UINT32_MAX);
+        host->randomSeed                    = static_cast<enet_uint32>((uintptr_t) host % UINT32_MAX);
         host->randomSeed                    += enet_host_random_seed();
-        host->randomSeed                    = (host->randomSeed << 16) | (host->randomSeed >> 16);
+        host->randomSeed                    = (host->randomSeed << 16) bitor (host->randomSeed >> 16);
         host->channelLimit                  = channelLimit;
         host->incomingBandwidth             = 0;
         host->outgoingBandwidth             = 0;
@@ -4510,7 +4507,8 @@ extern "C" {
 
         enet_list_clear(&host->dispatchQueue);
 
-        for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
+        for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) 
+        {
             currentPeer->host = host;
             currentPeer->incomingPeerID    = currentPeer - host->peers;
             currentPeer->outgoingSessionID = currentPeer->incomingSessionID = 0xFF;
@@ -4989,7 +4987,8 @@ extern "C" {
         }
     #endif
 
-    enet_uint32 enet_time_get() {
+    enet_uint32 enet_time_get() 
+    {
         // TODO enet uses 32 bit timestamps. We should modify it to use
         // 64 bit timestamps, but this is not trivial since we'd end up
         // changing half the structs in enet. For now, retain 32 bits, but
@@ -5021,7 +5020,8 @@ extern "C" {
         // implies a memory barrier. So we know that whatever thread calls this,
         // it correctly sees the start_time_ns as 0 initially.
         uint64_t offset_ns = ENET_ATOMIC_READ(&start_time_ns);
-        if (offset_ns == 0) {
+        if (offset_ns == 0) 
+        {
             // We still need to CAS, since two different threads can get here
             // at the same time.
             //
@@ -5035,7 +5035,7 @@ extern "C" {
         }
 
         uint64_t result_in_ns = current_time_ns - offset_ns;
-        return (enet_uint32)(result_in_ns / ns_in_ms);
+        return static_cast<enet_uint32>(result_in_ns / ns_in_ms);
     }
 
     void enet_inaddr_map4to6(struct in_addr in, struct in6_addr *out)

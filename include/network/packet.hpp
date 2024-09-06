@@ -11,7 +11,7 @@ void gt_packet(ENetPeer& p, bool netid, T... params) {
 	std::vector<std::byte> data(61, std::byte(0x00));
         for (std::size_t i = 0; i < 5 * sizeof(int); ++i) 
             data[std::size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
-                = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? getp->netid : -1, 8, 0}[i / sizeof(int)])[i % sizeof(int)];
+                = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? _peer[&p]->netid : -1, 8, 0}[i / sizeof(int)])[i % sizeof(int)];
     std::size_t size = data.size();
     std::byte index;
     std::apply([&](auto const&... param) 

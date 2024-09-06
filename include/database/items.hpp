@@ -31,9 +31,14 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
 
 #include <algorithm>
 #include <ranges>
+#include <chrono>
+using namespace std::chrono;
+
+#include "macros.hpp"
 
 void cache_items() 
 {
+    time_start
     int pos{60}, count{0};
     pos += sizeof(short); // @note items.dat version.
     shift_pos(im_data, pos, count);
@@ -91,13 +96,13 @@ void cache_items()
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;
         pos += 8;
-        if (im.id % 2 not_eq 0) 
+        if (im.id % 2 == 0) 
         {
-            std::string small_name = im.raw_name; /* waste of memory to store a lowercase version on the stack so we localize it. */
-            std::ranges::transform(small_name, small_name.begin(), [](char c) { return std::tolower(c); });
-            if (small_name.contains("ancestral"))
-                im.cloth_type = clothing::ances;
+            if (std::string lower = im.raw_name | std::ranges::views::transform(
+                [&](char c) { return std::tolower(c); }) bitor std::ranges::to<std::string>(); lower.contains("ancestral"))
+                    im.cloth_type = clothing::ances;
         }
         items.emplace(i, im);
     }
+    time_end("void cache_items()")
 }

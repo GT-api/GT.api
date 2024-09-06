@@ -4,7 +4,7 @@ std::once_flag hash_init{};
 
 void logging_in(ENetEvent event, const std::string& header)
 {
-    std::call_once(getpeer->logging_in, [&]() 
+    std::call_once(_peer[event.peer]->logging_in, [&]() 
     {
         std::vector<std::string> pipes = readch(header, '|');
         std::call_once(hash_init, [=]()

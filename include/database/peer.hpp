@@ -7,15 +7,15 @@ class slot {
 
 #include <mutex> /* std::once_flag */
 #include <deque> /* std::deque */
-#include <chrono>
-using namespace std::chrono;
+
+#include <unordered_map>
 
 class peer {
 public:
     std::once_flag logging_in{}; /* without this, GT will keep pushing peer into the server. */
     std::once_flag entered_game{}; /* only enter game once. this fixes many problems and to-be problems by exploiters */
+    std::once_flag welcome_message{}; // @note the inital "welcome back" message. due to latest growtopia the server requires this.
     std::mutex post_enter{}; /* things that must be done when peer is in world, this value is reset once they leave. */
-    char ipv6[INET6_ADDRSTRLEN]; // modern-day IP for security. e.g. 2001:0db8:85a3:0000:0000:8a2e:0370:7334 -> https://en.wikipedia.org/wiki/IPv6_address
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
@@ -33,20 +33,15 @@ public:
             it->count = std::clamp(it->count + s.count, 0, 200); // @note keeps the count within 200.
         else slots.emplace_back(std::move(s)); // @note no such item in inventory, so we create a new entry.
     }
-
-    std::vector<std::string> locked_worlds{}; /* this will only show worlds that is locked by a WORLD lock. not small/medium/big lock. */
-    std::array<std::string, 5> recent_worlds{}; /* recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest */
-    std::string ongoing_world{}; /* the world the peer is inside. */
-
+    std::array<std::string, 5> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
+    const char* ongoing_world{}; // @note the world the peer is inside.
+    
     std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
 
     const char* nickname{}; // @note peer's displayed name. this is only used in packets hence it is a C-type container
-    std::string country{}; // @note country initials e.g. us, id, jp, uk
 };
-
-#define getpeer static_cast<peer*>(event.peer->data)
-#define getp static_cast<peer*>(p.data)
+std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
 
 /* 
 @param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. 
@@ -55,8 +50,8 @@ public:
 template<typename length_T>
 bool create_rt(ENetEvent& event, std::size_t pos, length_T length) 
 {
-    if (std::chrono::duration_cast<length_T>(std::chrono::steady_clock::now() - getpeer->rate_limit[pos]) <= length) return false;
-    getpeer->rate_limit[pos] = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<length_T>(std::chrono::steady_clock::now() - _peer[event.peer]->rate_limit[pos]) <= length) return false;
+    _peer[event.peer]->rate_limit[pos] = std::chrono::steady_clock::now();
     return true;
 }
 
@@ -114,14 +109,14 @@ std::vector<std::byte> compress_state(const state& s) {
 
 void inventory_visuals(ENetPeer& p)
 {
-	int size = getp->slots.size();
+	int size = _peer[&p]->slots.size();
     std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte(0x0));
     *reinterpret_cast<std::array<int, 5>*>(&data[0]) = {0x4, 0x9, -1, 0x0, 0x8};
     *reinterpret_cast<unsigned long*>(&data[62]) = _byteswap_ulong(size); // @note 66....
-    *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(getp->slot_size); // @note 62....
+    *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(_peer[&p]->slot_size); // @note 62....
     for (int i = 0; i < size; ++i)
         *reinterpret_cast<int*>(&data[(i * sizeof(int)) + 66]) = 
-            ((static_cast<int>(getp->slots.at(i).id) bitor (static_cast<int>(getp->slots.at(i).count) << 16) bitand 0x00FFFFFF));
+            ((static_cast<int>(_peer[&p]->slots.at(i).id) bitor (static_cast<int>(_peer[&p]->slots.at(i).count) << 16) bitand 0x00FFFFFF));
             
 	enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

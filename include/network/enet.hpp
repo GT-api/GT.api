@@ -226,6 +226,7 @@ static const struct in6_addr enet_v6_localhost = {{{ 0x00, 0x00, 0x00, 0x00, 0x0
 #define ENET_PORT_ANY       0
 
 #include <bitset>
+#include <atomic>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1502,7 +1503,7 @@ extern "C" {
         initializedCRC32 = true;
     }
 
-    constexpr enet_uint32 enet_crc32(const ENetBuffer *buffers, size_t bufferCount) 
+    constexpr enet_uint32 enet_crc32(const ENetBuffer* buffers, size_t bufferCount) 
     {
         enet_uint32 crc = 0xFFFFFFFF;
 
@@ -1513,12 +1514,20 @@ extern "C" {
             const enet_uint8* data = static_cast<const enet_uint8*>(buffers->data);
             const enet_uint8* dataEnd = &data[buffers->dataLength];
 
+            _mm_prefetch(reinterpret_cast<const char*>(data), _MM_HINT_T0);
+
+            while (data + 4 <= dataEnd) {
+                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
+            }
+
             while (data < dataEnd) 
                 crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
 
             ++buffers;
         }
-
         return ENET_HOST_TO_NET_32(~crc);
     }
 
@@ -3264,6 +3273,7 @@ extern "C" {
      */
     int enet_host_service(ENetHost *host, ENetEvent *event, enet_uint32 timeout) 
     {
+        time_start
         enet_uint32 waitCondition;
 
         if (event not_eq __null) 
@@ -3274,7 +3284,7 @@ extern "C" {
 
             switch (enet_protocol_dispatch_incoming_commands(host, event)) 
             {
-                case 1:
+                case 1: 
                     return 1;
 
                 case -1:
@@ -3299,7 +3309,7 @@ extern "C" {
 
             switch (enet_protocol_send_outgoing_commands(host, event, 1)) 
             {
-                case 1:
+                case 1: 
                     return 1;
 
                 case -1:
@@ -3331,7 +3341,7 @@ extern "C" {
 
             switch (enet_protocol_send_outgoing_commands(host, event, 1)) 
             {
-                case 1:
+                case 1: 
                     return 1;
 
                 case -1:
@@ -3382,7 +3392,6 @@ extern "C" {
 
             host->serviceTime = enet_time_get();
         } while (waitCondition bitand ENET_SOCKET_WAIT_RECEIVE);
-
         return 0;
     } /* enet_host_service */
 
@@ -4427,7 +4436,9 @@ extern "C" {
      *  the window size of a connection which limits the amount of reliable packets that may be in transit
      *  at any given time.
      */
-    ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit) {
+    ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit) 
+    {
+        time_start
         ENetHost* host;
         ENetPeer* currentPeer;
 
@@ -4524,6 +4535,7 @@ extern "C" {
             enet_peer_reset(currentPeer);
         }
 
+        time_end("ENetHost* enet_host_create()")
         return host;
     } /* enet_host_create */
 
@@ -4989,53 +5001,20 @@ extern "C" {
 
     enet_uint32 enet_time_get() 
     {
-        // TODO enet uses 32 bit timestamps. We should modify it to use
-        // 64 bit timestamps, but this is not trivial since we'd end up
-        // changing half the structs in enet. For now, retain 32 bits, but
-        // use an offset so we don't run out of bits. Basically, the first
-        // call of enet_time_get() will always return 1, and follow-up calls
-        // indicate elapsed time since the first call.
-        //
-        // Note that we don't want to return 0 from the first call, in case
-        // some part of enet uses 0 as a special value (meaning time not set
-        // for example).
-        static uint64_t start_time_ns = 0;
+        static std::atomic<uint64_t> m_nano{0};
+        system_clock::rep nano = duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
 
-        struct timespec ts;
-    #if defined(CLOCK_MONOTONIC_RAW)
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-    #else
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-    #endif
-
-        static const uint64_t ns_in_s = 1000 * 1000 * 1000;
-        static const uint64_t ns_in_ms = 1000 * 1000;
-        uint64_t current_time_ns = ts.tv_nsec + (uint64_t)ts.tv_sec * ns_in_s;
-
-        // Most of the time we just want to atomically read the start time. We
-        // could just use a single CAS instruction instead of this if, but it
-        // would be slower in the average case.
-        //
-        // Note that statics are auto-initialized to zero, and starting a thread
-        // implies a memory barrier. So we know that whatever thread calls this,
-        // it correctly sees the start_time_ns as 0 initially.
-        uint64_t offset_ns = ENET_ATOMIC_READ(&start_time_ns);
+        uint64_t offset_ns = m_nano.load(std::memory_order_acquire);
         if (offset_ns == 0) 
         {
-            // We still need to CAS, since two different threads can get here
-            // at the same time.
-            //
-            // We assume that current_time_ns is > 1ms.
-            //
-            // Set the value of the start_time_ns, such that the first timestamp
-            // is at 1ms. This ensures 0 remains a special value.
-            uint64_t want_value = current_time_ns - 1 * ns_in_ms;
-            uint64_t old_value = ENET_ATOMIC_CAS(&start_time_ns, 0, want_value);
-            offset_ns = old_value == 0 ? want_value : old_value;
+            uint64_t milli = nano - 1'000'000;
+            uintptr_t zero = 0;
+            if (m_nano.compare_exchange_strong(zero, milli, std::memory_order_release, std::memory_order_relaxed))
+                offset_ns = milli;
+            else 
+                offset_ns = zero;
         }
-
-        uint64_t result_in_ns = current_time_ns - offset_ns;
-        return static_cast<enet_uint32>(result_in_ns / ns_in_ms);
+        return static_cast<enet_uint32>((nano - offset_ns) / 1'000'000);
     }
 
     void enet_inaddr_map4to6(struct in_addr in, struct in6_addr *out)
@@ -5724,20 +5703,22 @@ extern "C" {
 
     #ifdef _WIN32
 
-    int enet_initialize(void) {
+    int enet_initialize() 
+    {
+        time_start
         WORD versionRequested = MAKEWORD(1, 1);
         WSADATA wsaData;
 
-        if (WSAStartup(versionRequested, &wsaData)) {
-            return -1;
-        }
+        if (WSAStartup(versionRequested, &wsaData)) return -1;
 
-        if (LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1) {
+        if (LOBYTE(wsaData.wVersion) not_eq 1 or HIBYTE(wsaData.wVersion) not_eq 1) 
+        {
             WSACleanup();
             return -1;
         }
 
         timeBeginPeriod(1);
+        time_end("int enet_initialize()")
         return 0;
     }
 

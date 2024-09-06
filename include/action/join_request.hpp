@@ -11,7 +11,7 @@ void join_request(ENetEvent event, const std::string& header)
         if (w->name.empty()) 
         {
             engine::simple random;
-            const unsigned main_door = random.uint32({2U, 100U * 60U / 56U});
+            const unsigned main_door = random.uint32({2U, 100U * 60U / 100U - 4U});
             std::vector<block> blocks(100 * 60, block{0, 0});
             std::ranges::transform(blocks, blocks.begin(), [&](auto& b) 
             {
@@ -48,9 +48,9 @@ void join_request(ENetEvent event, const std::string& header)
             *reinterpret_cast<short*>(&data[pos + 2]) = bg;
             if (fg == 6) // @todo all door labels & signs.
             {
-                getpeer->pos.front() = (i % x) * 32;
-                getpeer->pos.back() = (i / x) * 32;
-                getpeer->rest_pos = getpeer->pos; // @note static repsawn position
+                _peer[event.peer]->pos.front() = (i % x) * 32;
+                _peer[event.peer]->pos.back() = (i / x) * 32;
+                _peer[event.peer]->rest_pos = _peer[event.peer]->pos; // @note static repsawn position
                 data.resize(data.size() + 8);
                 data[pos + 8] = std::byte{0x1};
                 *reinterpret_cast<short*>(&data[pos + 9]) = 4;
@@ -81,33 +81,32 @@ void join_request(ENetEvent event, const std::string& header)
             *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(count);
             send_data(*event.peer, compress);
         }
-        if (std::find(getpeer->recent_worlds.begin(), getpeer->recent_worlds.end(), w->name) == getpeer->recent_worlds.end()) 
+        if (std::find(_peer[event.peer]->recent_worlds.begin(), _peer[event.peer]->recent_worlds.end(), w->name) == _peer[event.peer]->recent_worlds.end()) 
         {
-            std::rotate(getpeer->recent_worlds.begin(), getpeer->recent_worlds.begin() + 1, getpeer->recent_worlds.end());
-            getpeer->recent_worlds.back() = w->name;
+            std::rotate(_peer[event.peer]->recent_worlds.begin(), _peer[event.peer]->recent_worlds.begin() + 1, _peer[event.peer]->recent_worlds.end());
+            _peer[event.peer]->recent_worlds.back() = w->name;
         }
-        getpeer->ongoing_world = w->name;
+        _peer[event.peer]->ongoing_world = w->name.c_str();
         EmoticonDataChanged(event);
-        getpeer->netid = ++w->visitors;
+        _peer[event.peer]->netid = ++w->visitors;
         gt_packet(*event.peer, false, "OnSpawn", std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
-            getpeer->netid, getpeer->user_id, static_cast<int>(getpeer->pos[0]), static_cast<int>(getpeer->pos[1]), getpeer->nickname, getpeer->country).c_str());
+            _peer[event.peer]->netid, _peer[event.peer]->user_id, static_cast<int>(_peer[event.peer]->pos[0]), static_cast<int>(_peer[event.peer]->pos[1]), _peer[event.peer]->nickname, "jp").c_str());
         peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
         {
-            if (not getp->recent_worlds.empty() and not getpeer->recent_worlds.empty() and getp->recent_worlds.back() == getpeer->recent_worlds.back() and getp->user_id not_eq getpeer->user_id)
+            if (not _peer[&p]->recent_worlds.empty() and not _peer[event.peer]->recent_worlds.empty() and _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back() and _peer[&p]->user_id not_eq _peer[event.peer]->user_id)
             {
                 gt_packet(p, false, "OnSpawn", std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
-                    getp->netid, getp->user_id, static_cast<int>(getp->pos.front()), static_cast<int>(getp->pos.back()), getp->nickname, getp->country).c_str());
+                    _peer[&p]->netid, _peer[&p]->user_id, static_cast<int>(_peer[&p]->pos.front()), static_cast<int>(_peer[&p]->pos.back()), _peer[&p]->nickname, "jp").c_str());
                 gt_packet(p, false, "OnConsoleMessage", std::format("`5<`w{}`` entered, `w{}`` others here>``", 
-                    getpeer->nickname, w->visitors).c_str());
-                gt_packet(p, false, " OnTalkBubble", getpeer->netid, std::format("`5<`w{}`` entered, `w{}`` others here>``", 
-                    getpeer->nickname, w->visitors).c_str());
+                    _peer[event.peer]->nickname, w->visitors).c_str());
+                gt_packet(p, false, " OnTalkBubble", _peer[event.peer]->netid, std::format("`5<`w{}`` entered, `w{}`` others here>``", 
+                    _peer[event.peer]->nickname, w->visitors).c_str());
             }
         });
         gt_packet(*event.peer, false, "OnConsoleMessage", std::format("World `w{}`` entered.  There are `w{}`` other people here, `w{}`` online.",
             w->name, w->visitors - 1, peers().size()).c_str());
         inventory_visuals(*event.peer);
-        if (worlds.find(w->name) == worlds.end())
-            worlds.emplace(w->name, *w);
+        worlds.emplace(w->name, *w);
     }
     catch (const std::exception& exc)
     {

@@ -1,9 +1,9 @@
 
 void enter_game(ENetEvent event, const std::string& header) 
 {
-    std::call_once(getpeer->entered_game, [&]() 
+    std::call_once(_peer[event.peer]->entered_game, [&]() 
     {
-        getpeer->user_id = peers().size(); // @todo logic issue
+        _peer[event.peer]->user_id = peers().size(); // @todo logic issue
         OnRequestWorldSelectMenu(event);
     });
 }

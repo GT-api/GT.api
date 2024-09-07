@@ -22,7 +22,10 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main() 
 {
-    enet_initialize();
+    {
+        ENetCallbacks callbacks{.malloc = &malloc, .free = &free, .no_memory = []() {printf("enet memory overflow");}}; // @note capture message on no_memory
+        enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
+    }
     server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);

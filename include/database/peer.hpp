@@ -34,7 +34,7 @@ public:
         else slots.emplace_back(std::move(s)); // @note no such item in inventory, so we create a new entry.
     }
     std::array<std::string, 5> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
-    const char* ongoing_world{}; // @note the world the peer is inside.
+    bool lobby{true}; // @note checks if peer is in EXIT or 'lobby'
     
     std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */

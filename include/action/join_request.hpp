@@ -83,10 +83,10 @@ void join_request(ENetEvent event, const std::string& header)
         }
         if (std::find(_peer[event.peer]->recent_worlds.begin(), _peer[event.peer]->recent_worlds.end(), w->name) == _peer[event.peer]->recent_worlds.end()) 
         {
-            std::rotate(_peer[event.peer]->recent_worlds.begin(), _peer[event.peer]->recent_worlds.begin() + 1, _peer[event.peer]->recent_worlds.end());
+            std::ranges::rotate(_peer[event.peer]->recent_worlds, _peer[event.peer]->recent_worlds.begin() + 1);
             _peer[event.peer]->recent_worlds.back() = w->name;
         }
-        _peer[event.peer]->ongoing_world = w->name.c_str();
+        _peer[event.peer]->lobby = false;
         EmoticonDataChanged(event);
         _peer[event.peer]->netid = ++w->visitors;
         gt_packet(*event.peer, false, "OnSpawn", std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",

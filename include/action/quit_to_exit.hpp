@@ -1,7 +1,7 @@
 
 void quit_to_exit(ENetEvent event, const std::string& header) 
 {
-    if (_peer[event.peer]->ongoing_world == nullptr or _peer[event.peer]->ongoing_world[0] == '\0') return;
+    if (_peer[event.peer]->lobby == true) return;
     --worlds[_peer[event.peer]->recent_worlds.back()].visitors;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
@@ -14,7 +14,7 @@ void quit_to_exit(ENetEvent event, const std::string& header)
     if (worlds[_peer[event.peer]->recent_worlds.back()].visitors <= 0)
         worlds.erase(_peer[event.peer]->recent_worlds.back());
     _peer[event.peer]->post_enter.unlock();
-    _peer[event.peer]->ongoing_world = "";
+    _peer[event.peer]->lobby = true;
     _peer[event.peer]->netid = -1; // this will fix any packets being sent outside of world
     OnRequestWorldSelectMenu(event);
 }

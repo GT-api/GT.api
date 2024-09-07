@@ -73,11 +73,14 @@ void gt_packet(ENetPeer& p, bool netid, T... params) {
     if (packet not_eq nullptr and packet->dataLength > 61) enet_peer_send(&p, 0, packet);
 };
 
-void packet(ENetPeer& p, const std::string& str) 
+void action(ENetPeer& p, const std::string& action, const std::string& str) 
 {
-    std::vector<std::byte> data(4 + str.length(), std::byte{0x0});
+    const std::string& _action = "action|" + action + "\n";
+    std::vector<std::byte> data(4 + _action.length() + str.length(), std::byte{0x0});
     data[0] = static_cast<std::byte>(0x3);
+    for (std::size_t i = 0; i < _action.length(); ++i) 
+        data[4 + i] = static_cast<std::byte>(_action[i]);
     for (std::size_t i = 0; i < str.length(); ++i) 
-        data[4 + i] = static_cast<std::byte>(str[i]);
+        data[4 + _action.length() + i] = static_cast<std::byte>(str[i]);
     enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

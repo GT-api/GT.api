@@ -17,10 +17,10 @@ void input(ENetEvent event, const std::string& header)
         "`6>>`4Spam detected! ``Please wait a bit before typing anything else.  Please note, any form of bot/macro/auto-paste will get all your accounts banned, so don't do it!");
     else if (text.starts_with('/')) 
     {
-        packet(*event.peer, std::format("action|log\nmsg| `6{}``", text).c_str());
+        action(*event.peer, "log", std::format("msg| `6{}``", text).c_str());
         if (cmd_pool.contains(text.substr(1, text.length())))
             (static_cast<void>(std::async(std::launch::async, cmd_pool[text.substr(1, text.length())], std::ref(event), std::move(text.substr(1, text.length())))));
-        else packet(*event.peer, "action|log\nmsg|`4Unknown command.``  Enter `$/?`` for a list of valid commands.");
+        else action(*event.peer, "log", "msg|`4Unknown command.``  Enter `$/?`` for a list of valid commands.");
     }
     else if (text.back() == ' ' and text.length() > 1) text.pop_back(); // @note trim back spaces. "test "
     else if (text.front() == ' ' and text.length() > 1) text = text.substr(1, text.length() - 1); // @note trim front spacing. " test"

@@ -10,7 +10,7 @@ jobs:
         msystem: UCRT64
         update: true
         install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-curl mingw-w64-ucrt-x86_64-jsoncpp
-    - uses: actions/cache@v4.1.1
+    - uses: actions/cache@v4.1.2
       with:
         path: |
           C:\msys64\var\cache\pacman\pkg

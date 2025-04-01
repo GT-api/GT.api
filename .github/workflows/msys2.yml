@@ -19,7 +19,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-msys2-
     - run: |
-        g++ -std=c++2b -Og -g main.cpp -I.\\include\\ .\\include\\compress.o .\\include\\https.o .\\include\\anti-vpn.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -lcrypto -ljsoncpp -ftime-report
+        g++ -std=c++2b -Og -g main.cpp -I.\\include\\ .\\include\\compress.o .\\include\\https.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -lcrypto -ljsoncpp -ftime-report
       shell: msys2 {0}
     - run: timeout 10 ./main.exe
       shell: msys2 {0}

@@ -19,7 +19,6 @@
                 "-I.\\include\\",
                 ".\\include\\compress.o",
                 ".\\include\\https.o",
-                ".\\include\\anti-vpn.o",
                 "-lws2_32",
                 "-lwinmm",
                 "-lpthread",

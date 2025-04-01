@@ -1,6 +1,4 @@
 
-bool ip_is_real(const std::string& ip, const std::string& token); // -> import anti-vpn.o
-
 void type_connect(ENetEvent event) 
 {
     enet_peer_send(event.peer, 0, enet_packet_create(

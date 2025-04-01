@@ -87,15 +87,20 @@ void cache_items()
         pos += sizeof(short) + len;
         pos += 80;
         len = *(reinterpret_cast<short*>(&im_data[pos]));
-        pos += sizeof(short) + len;
-        pos += 13;
-        pos += 8;
+        pos += sizeof(short) + len; // version 11
+        pos += 13; // version 12
+        pos += 8; // version 13, 14
+
+        /* version 15 */
         pos += 25;
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;
+        
         len = *(reinterpret_cast<short*>(&im_data[pos]));
-        pos += sizeof(short) + len;
-        pos += 8;
+        pos += sizeof(short) + len; // version 16
+        pos += 8; // version 17, 18
+        pos += 9; // version 19
+        pos += 2; // version 21
         if (im.id % 2 == 0) 
         {
             if (std::string lower = im.raw_name | std::ranges::views::transform(

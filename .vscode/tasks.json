@@ -12,15 +12,11 @@
                 "-I.\\include\\",
                 "main.cpp",
                 ".\\include\\compress.o",
-                ".\\include\\https.o",
-                "-o main.exe",
+                "-o",
+                "main.exe",
                 "-lws2_32",
                 "-lwinmm",
-                "-lpthread",
-                "-lcurl",
-                "-lssl",
-                "-lcrypto",
-                "-ljsoncpp"
+                "-lpthread"
             ],
             "group": {
                 "kind": "build",

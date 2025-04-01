@@ -17,7 +17,6 @@
 #include "include\state\states"
 #include "include\event_type\event_type"
 
-void basic_https(const std::string& s_ip, u_short s_port, u_short https_port); // -> import https.o
 int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o -- Open Source: https://github.com/lsalzman/enet/blob/master/compress.c
 
 int main() 
@@ -29,7 +28,6 @@ int main()
     server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT);
         server->checksum = enet_crc32;
         enet_host_compress_with_range_coder(server);
-    std::thread(&basic_https, "127.0.0.1", server->address.port, 443).detach();
     {
         std::ifstream file("items.dat", std::ios::binary bitor std::ios::ate);
         std::streamsize size = file.tellg(); // @note size of ios::ate (end of file). this is called before seekg (ios::beg (beginning of file)).

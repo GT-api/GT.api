@@ -7,7 +7,9 @@
                 respectfully void* entires will not be accepted. e.g. classes, ptr, void
 */
 template<typename... T>
-void gt_packet(ENetPeer& p, bool netid, T... params) {
+void gt_packet(ENetPeer& p, bool netid, T... params) 
+{
+    time_start
 	std::vector<std::byte> data(61, std::byte(0x00));
         for (std::size_t i = 0; i < 5 * sizeof(int); ++i) 
             data[std::size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
@@ -70,7 +72,11 @@ void gt_packet(ENetPeer& p, bool netid, T... params) {
     ));
     }, std::forward_as_tuple(params...));
     ENetPacket* packet = enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE);
-    if (packet not_eq nullptr and packet->dataLength > 61) enet_peer_send(&p, 0, packet);
+    if (packet not_eq nullptr and packet->dataLength > 61) 
+    {
+        enet_peer_send(&p, 0, packet);
+        time_end(std::get<0>(std::tuple<T...>(params...)));
+    }
 };
 
 void action(ENetPeer& p, const std::string& action, const std::string& str) 

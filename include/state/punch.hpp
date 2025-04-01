@@ -27,7 +27,11 @@ void punch(ENetEvent event, state state)
     {
         if (state.punch[0] not_eq static_cast<int>(_peer[event.peer]->pos[0]) or state.punch[1] not_eq static_cast<int>(_peer[event.peer]->pos[1]))
             (items[state.id].type == 18) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
-        else return; 
+        else return;
+        _peer[event.peer]->emplace({
+            static_cast<short>(state.id),
+            -1 // @note remove that item the peer just placed.
+        });
     }
     auto w = std::make_unique<world>(worlds[_peer[event.peer]->recent_worlds.back()]);
     state_visuals(event, std::move(state)); // finished.

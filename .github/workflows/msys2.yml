@@ -5,19 +5,11 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4.2.2
-    - uses: msys2/setup-msys2@v2.24.1
+    - uses: msys2/setup-msys2@v2.27.0
       with:
         msystem: UCRT64
         update: true
         install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-curl mingw-w64-ucrt-x86_64-jsoncpp
-    - uses: actions/cache@v4.1.2
-      with:
-        path: |
-          C:\msys64\var\cache\pacman\pkg
-          C:\msys64\var\lib\pacman\sync
-        key: ${{ runner.os }}-msys2-${{ hashFiles('**/pacman.conf') }}
-        restore-keys: |
-          ${{ runner.os }}-msys2-
     - run: |
         g++ -std=c++2b -Og -g main.cpp -I.\\include\\ .\\include\\compress.o .\\include\\https.o -o main.exe -lws2_32 -lwinmm -lpthread -lcurl -lssl -lcrypto -ljsoncpp -ftime-report
       shell: msys2 {0}

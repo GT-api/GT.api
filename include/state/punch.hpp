@@ -1,3 +1,4 @@
+#include <iostream> 
 
 void punch(ENetEvent event, state state) 
 {
@@ -7,10 +8,10 @@ void punch(ENetEvent event, state state)
     if (state.id == 18) // @note punching a block
     {
         if (b.bg == 0 and b.fg == 0) return;
-        if (b.fg == 8 or b.fg == 6) // @todo sudden crash. this does not happen everytime??
+        if (b.fg == 8 or b.fg == 6)
         {
-            gt_packet(*event.peer, false, "OnTalkBubble", _peer[event.peer]->netid, b.fg == 8 ? 
-                "It's too strong to break." : "(stand over and punch to use)", 0, 1);
+            gt_packet(*event.peer, false, "OnTalkBubble", (unsigned)_peer[event.peer]->netid, b.fg == 8 ? 
+                "It's too strong to break." : "(stand over and punch to use)");
             return;
         }
         block_punched(event, state, block1D); // TODO- referance it?

@@ -21,3 +21,31 @@ bool alpha(const std::string& str)
             return false;
     return true;
 }
+
+constexpr std::array<int, 256> createLookupTable() {
+    std::array<int, 256> table{};
+    table.fill(-1);
+    constexpr std::string_view base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    for (size_t i = 0; i < 64; ++i) {
+        table[static_cast<unsigned char>(base64_chars[i])] = static_cast<int>(i);
+    }
+    return table;
+}
+
+std::string base64Decode(std::string_view encoded) {
+    constexpr auto lookupTable = createLookupTable();
+    std::string decoded;
+    decoded.reserve(encoded.size() * 3 / 4);
+    
+    int val = 0, valb = -8;
+    for (char c : encoded) {
+        if (lookupTable[c] == -1) continue;
+        val = (val << 6) + lookupTable[c];
+        valb += 6;
+        if (valb >= 0) {
+            decoded.push_back(static_cast<char>((val >> valb) & 0xFF));
+            valb -= 8;
+        }
+    }
+    return decoded;
+}

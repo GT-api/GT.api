@@ -16,6 +16,7 @@ public:
     std::once_flag entered_game{}; /* only enter game once. this fixes many problems and to-be problems by exploiters */
     std::once_flag welcome_message{}; // @note the inital "welcome back" message. due to latest growtopia the server requires this.
     std::mutex post_enter{}; /* things that must be done when peer is in world, this value is reset once they leave. */
+    std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
@@ -38,8 +39,6 @@ public:
     
     std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
     std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
-
-    const char* nickname{}; // @note peer's displayed name. this is only used in packets hence it is a C-type container
 };
 std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
 

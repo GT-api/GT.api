@@ -29,6 +29,6 @@ void input(ENetEvent event, const std::string& header)
     {
         if (not _peer[&p]->recent_worlds.empty() and not _peer[event.peer]->recent_worlds.empty() and _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back())
             gt_packet(p, false, "OnTalkBubble", _peer[event.peer]->netid, std::format("CP:0_PL:0_OID:_player_chat={}", text).c_str()),
-            gt_packet(p, false, "OnConsoleMessage", std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{}``>`` `$`${}````", _peer[event.peer]->nickname, text).c_str());
+            gt_packet(p, false, "OnConsoleMessage", std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{}``>`` `$`${}````", _peer[event.peer]->ltoken[0], text).c_str());
     });
 }

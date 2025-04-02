@@ -13,9 +13,5 @@ void OnRequestWorldSelectMenu(ENetEvent event)
         "add_filter|\nadd_heading|Top Worlds<ROW2>|{}\nadd_heading|Recently Visited Worlds<CR>|{}\n",
         "\nadd_floater|wotd_world|\u013B WOTD|0|0.5|3529161471", section(_peer[event.peer]->recent_worlds, "3417414143")).c_str(), 0);
     std::this_thread::sleep_for(200ms);
-    std::call_once(_peer[event.peer]->welcome_message, [&]() 
-    { 
-        gt_packet(*event.peer, false, "OnConsoleMessage", std::format("Welcome back, `w`w{}````.", _peer[event.peer]->nickname = "guest").c_str()); 
-    });
     gt_packet(*event.peer, false, "OnConsoleMessage", std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str());
 }

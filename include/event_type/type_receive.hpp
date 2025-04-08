@@ -19,17 +19,21 @@ void type_receive(ENetEvent event)
         }
         case 4: 
         {
-            state state{}; // @note deleted at break
-            {std::vector<std::byte> packet{event.packet->dataLength - 4};
-                {std::size_t size = packet.size();
-                if ((size + 4) >= 60)
-                    for (std::size_t i = 0; i < size; ++i)
-                        packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
-                if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and 
-                    size < static_cast<std::size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;} // @note deletes size
-                state = get_state(packet);} // @note deletes packet
+            state state{};
+            {
+                std::vector<std::byte> packet{event.packet->dataLength - 4};
+                {
+                    std::size_t size = packet.size();
+                    if ((size + 4) >= 60)
+                        for (std::size_t i = 0; i < size; ++i)
+                            packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
+                    if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and 
+                        size < static_cast<std::size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;
+                } // @note deletes size
+                state = get_state(packet);
+            } // @note deletes packet
             if (auto i = state_pool.find(state.type); i not_eq state_pool.end())
-                i->second(event, state);
+                i->second(event, std::move(state));
             break;
         }
     }

@@ -17,6 +17,7 @@ public:
     std::once_flag welcome_message{}; // @note the inital "welcome back" message. due to latest growtopia the server requires this.
     std::mutex post_enter{}; /* things that must be done when peer is in world, this value is reset once they leave. */
     std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
+    std::array<float, 10> clothing{}; // @note peer's clothing
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
@@ -106,16 +107,16 @@ std::vector<std::byte> compress_state(const state& s) {
     return data;
 }
 
-void inventory_visuals(ENetPeer& p)
+void inventory_visuals(ENetEvent &event)
 {
-	int size = _peer[&p]->slots.size();
+	int size = _peer[event.peer]->slots.size();
     std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte(0x0));
     *reinterpret_cast<std::array<int, 5>*>(&data[0]) = {0x4, 0x9, -1, 0x0, 0x8};
     *reinterpret_cast<unsigned long*>(&data[62]) = _byteswap_ulong(size); // @note 66....
-    *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(_peer[&p]->slot_size); // @note 62....
+    *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(_peer[event.peer]->slot_size); // @note 62....
     for (int i = 0; i < size; ++i)
         *reinterpret_cast<int*>(&data[(i * sizeof(int)) + 66]) = 
-            ((static_cast<int>(_peer[&p]->slots.at(i).id) bitor (static_cast<int>(_peer[&p]->slots.at(i).count) << 16) bitand 0x00FFFFFF));
+            (static_cast<int>(_peer[event.peer]->slots.at(i).id) bitor (static_cast<int>(_peer[event.peer]->slots.at(i).count) << 16) bitand 0x00FFFFFF);
             
-	enet_peer_send(&p, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
+	enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

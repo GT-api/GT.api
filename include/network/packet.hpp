@@ -33,7 +33,7 @@ void gt_packet(ENetPeer& p, bool netid, T... params)
                 /* outcome should be the hexadecimal of param's array char(s). e.g. "hello" = 'h' -> 0x68 'e' -> 0x65 'l' -> 0x6C 'l' -> 0x6C 'o' -> 0x6F */
                 for (size_t/* C type size_t */ i = 0; i < std::strlen(param); ++i) 
                     t_data[size + 6 + i] = static_cast<std::byte>(param[i]); /* e.g. 'a' -> 0x61. 'z' = 0x7A */ // be educated: https://en.cppreference.com/w/cpp/language/ascii
-                size = size + 2 + std::strlen(param) + sizeof(int);
+                size += 2 + std::strlen(param) + sizeof(int);
                 data = std::move(t_data);
             }
             else if constexpr (std::is_signed_v<std::decay_t<decltype(param)>> or std::is_unsigned_v<std::decay_t<decltype(param)>>) 
@@ -46,7 +46,7 @@ void gt_packet(ENetPeer& p, bool netid, T... params)
                 /* outcome should be the hexadecimal of param value. e.g. 2147483647 -> 0x7FFFFFFF.  */
                 for (std::size_t i = 0; i < sizeof(param); ++i)
                     t_data[size + 2 + i] = reinterpret_cast<std::byte const*>(&param)[i];
-                size = size + 2 + sizeof(int);
+				size += 2 + sizeof(int);
                 data = std::move(t_data); /* e.g. data + 00 01 09 7F FF FF FF */ // -> appended, meaning t_data = data. (cause it already overwritten)
                 //                             so if we have 2 packets with same info it would be: data + 00 09 7F FF FF FF 01 09 7F FF FF FF 
                 //                             (NOTE: data's 61 bytes are state, NetID, delay, ect, and will always be the first inital bytes in a array)
@@ -58,11 +58,16 @@ void gt_packet(ENetPeer& p, bool netid, T... params)
                 for (std::size_t i = 0; i < size; ++i)
                     t_data[i] = data[i];
                 t_data[size] = index;
-                t_data[size + 1] = static_cast<std::byte>(0x1 + 0x2 * (param.size() - 1));
-                for (std::size_t i = 0; i < param.size(); ++i) 
+                t_data[size + 1] = 
+					(param.size() == 1) ? std::byte{0x1} :
+					(param.size() == 2) ? std::byte{0x3} :
+					(param.size() == 3) ? std::byte{0x4} :
+										  std::byte{0x0};
+				for (std::size_t i = 0; i < param.size(); ++i) 
                     for (std::size_t ii = 0; ii < sizeof(param[i]); ++ii)
                         t_data[size + 2 + sizeof(float) * i + ii] = reinterpret_cast<std::byte const*>(&param[i])[ii];
-                size = size + 2 + sizeof(float) * param.size();
+		
+                size += 2 + (sizeof(float) * param.size());
                 data = std::move(t_data);
             }
             index = static_cast<std::byte>(std::to_integer<int>(index) + 1);

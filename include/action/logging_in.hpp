@@ -1,4 +1,3 @@
-#include <iostream>
 
 void getLogin(std::string_view input, std::string& growId, std::string& pass) {
     if (auto pos = input.find("growId="); pos != std::string_view::npos) {

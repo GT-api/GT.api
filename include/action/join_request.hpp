@@ -105,7 +105,7 @@ void join_request(ENetEvent event, const std::string& header)
         });
         gt_packet(*event.peer, false, "OnConsoleMessage", std::format("World `w{}`` entered.  There are `w{}`` other people here, `w{}`` online.",
             w->name, w->visitors - 1, peers().size()).c_str());
-        inventory_visuals(*event.peer);
+        inventory_visuals(event);
         worlds.emplace(w->name, *w);
     }
     catch (const std::exception& exc)

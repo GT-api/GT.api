@@ -1,10 +1,11 @@
-
-enum clothing
-{ 
-    none, shirt, legs, feet, face, hand, back, head, charms,ances
-};
-
 #include <string> // @note std::string
+
+enum clothing : std::size_t {
+    hair, shirt, legs, 
+    feet, face, hand, 
+    back, head, charm, 
+    ances, none
+};
 
 class item 
 {
@@ -13,7 +14,7 @@ class item
     std::string raw_name{}; /* the exact name of the item including uppercases */
     short hits{}; // @todo make it unsigned.
     unsigned short type{};
-    unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
+    std::size_t cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
 }; 
 #include <map>
 std::map<int, item> items;
@@ -66,18 +67,18 @@ void cache_items()
             pos += sizeof(short) + len;
 
             pos += 14;
-
-            unsigned char raw_hits{};
-            shift_pos(im_data, pos, raw_hits);
-            im.hits = static_cast<short>(raw_hits);
-            if (im.hits not_eq 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
-            
+            {
+                unsigned char raw_hits{};
+                shift_pos(im_data, pos, raw_hits);
+                im.hits = static_cast<short>(raw_hits);
+                if (im.hits not_eq 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
+            }
             pos += sizeof(int);
-
-            unsigned char cloth_type{};
-            shift_pos(im_data, pos, cloth_type);
-            im.cloth_type = static_cast<unsigned short>(cloth_type);
-
+            {
+                unsigned char cloth_type{};
+                shift_pos(im_data, pos, cloth_type);
+                im.cloth_type = static_cast<std::size_t>(cloth_type);
+            }
             pos += 3;
 
             len = *(reinterpret_cast<short*>(&im_data[pos]));
@@ -109,7 +110,6 @@ void cache_items()
             pos += sizeof(short) + len;
 
             pos += sizeof(std::array<std::byte, 80>);
-            if (version < 11) throw std::runtime_error("GT.api does not support items.dat less than version 11.");
             if (version >= 11)
             {
                 pos += *(reinterpret_cast<short*>(&im_data[pos]));
@@ -143,7 +143,6 @@ void cache_items()
                 pos += sizeof(std::array<std::byte, 9>);
             if (version == 21)
                 pos += sizeof(short);
-            if (version > 21) throw std::runtime_error("GT.api does not support items.dat greater than version 21.");
             if (im.id % 2 == 0) 
             {
                 if (std::string lower = im.raw_name | std::ranges::views::transform(

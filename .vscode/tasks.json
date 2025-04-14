@@ -4,24 +4,18 @@
         {
             "label": "Build GT.api",
             "type": "shell",
-            "command": "g++",
-            "args": [
-                "-std=c++2b",
-                "-Og",
-                "-g",
-                "-I.\\include\\",
-                "main.cpp",
-                ".\\include\\compress.o",
-                "-o",
-                "main.exe",
-                "-lws2_32",
-                "-lwinmm",
-                "-lpthread"
-            ],
+            "command": "make",
+            "args": ["-j4"],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "Clean GT.api",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean"]
         }
     ]
 }

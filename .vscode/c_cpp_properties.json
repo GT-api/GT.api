@@ -7,20 +7,15 @@
                 "${workspaceFolder}\\include\\**"
             ],
             "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
+                "DEBUG_TIME" // remove if you do not want logging.
             ],
             "compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "compilerArgs": [
                 "-std=c++2b",
-                "-Og",
                 "-g",
                 "-I${workspaceFolder}\\include\\",
-                "${workspaceFolder}\\include\\compress.o",
-                "-lws2_32",
-                "-lwinmm",
-                "-lpthread"
+                "-MMD",
+                "-MP"
             ],
             "cStandard": "c23",
             "cppStandard": "c++23",

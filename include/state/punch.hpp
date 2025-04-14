@@ -1,7 +1,7 @@
 
 void punch(ENetEvent event, state state) 
 {
-    if (not create_rt(event, 0, 120ms)) return; // this will only affect hackers (or macro spammers)
+    if (not create_rt(event, 0, 120)) return; // this will only affect hackers (or macro spammers)
     short block1D = state.punch[1] * 100 + state.punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
     block& b = worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D];
     if (state.id == 18) // @note punching a block
@@ -25,10 +25,13 @@ void punch(ENetEvent event, state state)
     }
     else // @note placing a block
     {
-        if (state.punch[0] not_eq static_cast<int>(_peer[event.peer]->pos[0]) or state.punch[1] not_eq static_cast<int>(_peer[event.peer]->pos[1]))
+        // @note checks peer position and where the block is being placed (this fixes the bug with peer being stuck in block)
+        if (std::abs(static_cast<float>(state.punch[0]) - _peer[event.peer]->pos[0]) > 1.0f or 
+            std::abs(static_cast<float>(state.punch[1]) - _peer[event.peer]->pos[1]) > 1.0f)
+        {
             (items[state.id].type == 18) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
-        else return;
-        _peer[event.peer]->emplace({
+        } else return;
+        _peer[event.peer]->emplace(slot{
             static_cast<short>(state.id),
             -1 // @note remove that item the peer just placed.
         });

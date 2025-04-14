@@ -3,7 +3,7 @@ void join_request(ENetEvent event, const std::string& header)
 {
     try 
     {
-        if (not create_rt(event, 2, 900ms)) throw std::runtime_error("");
+        if (not create_rt(event, 2, 900)) throw std::runtime_error("");
         std::string big_name{readch(std::string{header}, '|')[3]};
         if (not alpha(big_name) or big_name.empty()) throw std::runtime_error("Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
         std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
@@ -76,8 +76,13 @@ void join_request(ENetEvent event, const std::string& header)
 
         for (const auto& [uid, id, count, position] : w->ifloats)
         {
-            std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = id, .pos = {position[0] * 32, position[1] * 32}});
-            *reinterpret_cast<int*>(&compress[8]) = uid + 1; // @todo
+            std::vector<std::byte> compress = compress_state({
+                .type = 14, 
+                .netid = -1, 
+                .id = id, 
+                .pos = {position[0] * 32, position[1] * 32}
+            });
+            *reinterpret_cast<int*>(&compress[8]) = uid;
             *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(count);
             send_data(*event.peer, compress);
         }

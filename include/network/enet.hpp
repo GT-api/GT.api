@@ -32,7 +32,7 @@
  * SOFTWARE.
  *
  */
-#define ENET_IMPLEMENTATION
+#pragma once
 #ifndef ENET_INCLUDE_H
 #define ENET_INCLUDE_H
 
@@ -41,6 +41,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include "macros.hpp"
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 3
@@ -985,7 +986,7 @@ extern "C" {
     ENET_API void        enet_packet_set_free_callback(ENetPacket *, void *);
 
     ENET_API ENetPacket * enet_packet_create_offset(const void *, size_t, size_t, enet_uint32);
-    ENET_API constexpr enet_uint32  enet_crc32(const ENetBuffer *, size_t);
+    ENET_API enet_uint32  enet_crc32(const ENetBuffer *, size_t);
 
     ENET_API ENetHost * enet_host_create(ENetAddress, size_t, size_t);
     ENET_API void       enet_host_destroy(ENetHost *);
@@ -1501,7 +1502,7 @@ extern "C" {
         initializedCRC32 = true;
     }
 
-    constexpr enet_uint32 enet_crc32(const ENetBuffer* buffers, size_t bufferCount) 
+    enet_uint32 enet_crc32(const ENetBuffer* buffers, size_t bufferCount) 
     {
         enet_uint32 crc = 0xFFFFFFFF;
 
@@ -3271,7 +3272,7 @@ extern "C" {
      */
     int enet_host_service(ENetHost *host, ENetEvent *event, enet_uint32 timeout) 
     {
-        time_start
+        TIME_START;
         enet_uint32 waitCondition;
 
         if (event not_eq __null) 
@@ -4438,7 +4439,7 @@ extern "C" {
      */
     ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit) 
     {
-        time_start
+        TIME_START;
         ENetHost* host;
         ENetPeer* currentPeer;
 
@@ -4535,7 +4536,7 @@ extern "C" {
             enet_peer_reset(currentPeer);
         }
 
-        time_end("ENetHost* enet_host_create()")
+        TIME_END("ENetHost* enet_host_create()");
         return host;
     } /* enet_host_create */
 
@@ -5002,7 +5003,7 @@ extern "C" {
     enet_uint32 enet_time_get() 
     {
         static std::atomic<uint64_t> m_nano{0};
-        system_clock::rep nano = duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+        std::chrono::system_clock::rep nano = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
         uint64_t offset_ns = m_nano.load(std::memory_order_acquire);
         if (offset_ns == 0) 
@@ -5705,7 +5706,7 @@ extern "C" {
 
     int enet_initialize() 
     {
-        time_start
+        TIME_START;
         WORD versionRequested = MAKEWORD(1, 1);
         WSADATA wsaData;
 
@@ -5718,7 +5719,7 @@ extern "C" {
         }
 
         timeBeginPeriod(1);
-        time_end("int enet_initialize()")
+        TIME_END("int enet_initialize()");
         return 0;
     }
 

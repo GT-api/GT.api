@@ -1,16 +1,12 @@
+#pragma once
+#include <chrono>
 
-#define debug_time // @note display how long tasks complete (beta)
-
-#ifdef debug_time
-#define time_start auto start = std::chrono::high_resolution_clock::now();
+#ifdef DEBUG_TIME
+    #define TIME_START auto start = std::chrono::high_resolution_clock::now()
+    #define TIME_END(str) \
+        auto end = std::chrono::high_resolution_clock::now(); \
+        printf("%s: %.2f ms\n", str, std::chrono::duration<double, std::milli>{end - start}.count())
 #else
-#define time_start
-#endif
-
-#ifdef debug_time
-#define time_end(exe) \
-    auto end = std::chrono::high_resolution_clock::now(); \
-    printf("%s: %.2f ms\n", exe, std::chrono::duration<double, std::milli>{end - start}.count());
-#else
-#define time_start(exe)
+    #define TIME_START
+    #define TIME_END(str)
 #endif

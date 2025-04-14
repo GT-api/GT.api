@@ -1,7 +1,7 @@
 
 void input(ENetEvent event, const std::string& header)
 {
-    if (not create_rt(event, 1, 400ms)) return;
+    if (not create_rt(event, 1, 400)) return;
     std::string text{readch(std::string{header}, '|')[4]};
     {
         auto not_isspace = [](char c){ return not std::isspace(static_cast<unsigned char>(c)); };

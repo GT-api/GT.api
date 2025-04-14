@@ -1,3 +1,4 @@
+
 void drop(ENetEvent event, const std::string& header)
 {
     std::string id{readch(std::string{header}, '|')[4]};

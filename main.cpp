@@ -1,7 +1,8 @@
 /*
-    GT.api (c) 2024
-    Project has open arms for contribution (friendly, no stress)
-    @author leeendl | Discord: leeendl
+    @copyright GT.api (c) 2024
+    @author leeendl | English Comments
+
+    Project has open arms for contribution!
 */
 #include "include\database\items.hpp" // @note items.dat reading
 #include "include\network\enet.hpp" // @note ENet supporting AF_INET6
@@ -19,7 +20,7 @@
 
 int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o -- Open Source: https://github.com/lsalzman/enet/blob/master/compress.c
 
-int main() 
+int main()
 {
     {
         ENetCallbacks callbacks{
@@ -29,9 +30,13 @@ int main()
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
     }
-    server = enet_host_create({.host = in6addr_any, .port = 17091}, ENET_PROTOCOL_MAXIMUM_PEER_ID, ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT);
-        server->checksum = enet_crc32;
-        enet_host_compress_with_range_coder(server);
+    server = enet_host_create({
+        .host = in6addr_any, 
+        .port = 17091}, 
+        ENET_PROTOCOL_MAXIMUM_PEER_ID, 2);
+
+    server->checksum = enet_crc32;
+    enet_host_compress_with_range_coder(server);
     {
         std::ifstream file("items.dat", std::ios::binary bitor std::ios::ate);
         if (not file.is_open()) {

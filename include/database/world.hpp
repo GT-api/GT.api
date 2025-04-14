@@ -1,11 +1,13 @@
 
+/* fg, bg, hits */
 class block 
 {
     public:
     short fg{0}, bg{0};
-    std::array<int, 2> hits{0, 0}; /* fg, bg */ // -> stack object
+    std::array<int, 2> hits{0, 0}; /* fg, bg */
 };
 
+/* uid, id, count, pos*/
 class ifloat 
 {
     public:
@@ -72,7 +74,7 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
         if (packet->dataLength + resize_forecast <= std::size_t{512})
             enet_packet_resize(packet, packet->dataLength + resize_forecast);
     }
-    enet_peer_send(&peer, 0, packet);
+    enet_peer_send(&peer, 1, packet);
 }
 
 void state_visuals(ENetEvent& event, state s) 
@@ -98,8 +100,13 @@ void block_punched(ENetEvent& event, state s, const int block1D)
 void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::array<float, 2>& pos) 
 {
     std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
-    ifloat it = ifloats.emplace_back(ifloat{ifloats.size(), im[0], im[1], pos}); // @note a iterator ahead of time
-    std::vector<std::byte> compress = compress_state({.type = 14, .netid = -1, .id = it.id, .pos = {it.pos[0] * 32, it.pos[1] * 32}});
+    ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
+    std::vector<std::byte> compress = compress_state({
+        .type = 14, 
+        .netid = -1, 
+        .id = it.id, 
+        .pos = {it.pos[0] * 32, it.pos[1] * 32}
+    });
     *reinterpret_cast<int*>(&compress[8]) = it.uid;
     *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 

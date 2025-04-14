@@ -1,70 +1,71 @@
+#pragma once
 
+#include "network\enet.hpp" // @note ENet supporting AF_INET6
+
+/* id, count */
 class slot {
-    public:
-    short id{0}; /* item id */
-    short count{0}; /* the total amount of that item in that slot */
+public:
+    short id{0};
+    short count{0}; // @note total amount of that item
 };
 
-#include <mutex> /* std::once_flag */
-#include <deque> /* std::deque */
+#include <mutex> // @note std::once_flag
+#include <deque>
 
 #include <unordered_map>
 
 class peer {
 public:
-    std::once_flag logging_in{}; /* without this, GT will keep pushing peer into the server. */
-    std::once_flag entered_game{}; /* only enter game once. this fixes many problems and to-be problems by exploiters */
-    std::once_flag welcome_message{}; // @note the inital "welcome back" message. due to latest growtopia the server requires this.
-    std::mutex post_enter{}; /* things that must be done when peer is in world, this value is reset once they leave. */
-    std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
-    std::array<float, 10> clothing{}; // @note peer's clothing
+    std::once_flag logging_in{};
+    std::once_flag entered_game{};
+    std::once_flag welcome_message{};
+    std::mutex post_enter{};
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
+    std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
+    std::array<float, 10> clothing{}; // @note peer's clothing
 
-    std::array<float, 2> pos{}; /* x, y */
-    std::array<float, 2> rest_pos{}; /* respawn position AKA main door: x, y */
-    bool facing_left{}; /* peer is directed towards the left direction */
+    std::array<float, 2> pos{}; // @note position {x, y}
+    std::array<float, 2> rest_pos{}; // @note respawn position {x, y}
+    bool facing_left{}; // @note peer is directed towards the left direction
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
     std::vector<slot> slots{{18, 1}, {32, 1}}; /* an array of each slot. storing id, count */
-    /* set slot::count to nagative value if you want to remove an amount. */
-    void emplace(slot s) 
+    /*
+    * @brief set slot::count to nagative value if you want to remove an amount. 
+    * @return the remaining amount if exeeds 200. e.g. emplace(slot{0, 201}) returns 1.
+    */
+    int emplace(slot s) 
     {
         if (auto it = std::find_if(slots.begin(), slots.end(), [&](const auto& found) { return found.id == s.id; }); it not_eq slots.end()) 
-            it->count = std::clamp(it->count + s.count, 0, 200); // @note keeps the count within 200.
+        {
+            int excess = std::max(0, (it->count + s.count) - 200);
+            it->count = std::min(it->count + s.count, 200);
+            return excess;
+        }
         else slots.emplace_back(std::move(s)); // @note no such item in inventory, so we create a new entry.
+        return 0;
     }
+
     std::array<std::string, 5> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
     bool lobby{true}; // @note checks if peer is in EXIT or 'lobby'
     
-    std::array<steady_clock::time_point, 3> rate_limit{}; /* rate limit objects. for memory optimial reasons please manually increase array size. */
-    std::deque<steady_clock::time_point> messages; /* last 5 que messages sent time, this is used to check for spamming */
+    std::array<steady_clock::time_point, 3> rate_limit{}; // @note rate limit objects
+    std::deque<steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming
 };
-std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
+extern std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
 
 /* 
-@param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. 
-@return false if ratelimited
+* @param pos please resize peer::rate_limit to fit the pos provided, understand the rules! if pos is 5, then size should be 6. 
+* @return false if ratelimited
 */
-template<typename length_T>
-bool create_rt(ENetEvent& event, std::size_t pos, length_T length) 
-{
-    if (std::chrono::duration_cast<length_T>(std::chrono::steady_clock::now() - _peer[event.peer]->rate_limit[pos]) <= length) return false;
-    _peer[event.peer]->rate_limit[pos] = std::chrono::steady_clock::now();
-    return true;
-}
+bool create_rt(ENetEvent& event, std::size_t pos, int64_t length);
 
 #include <functional> // @note std::function<>
-ENetHost* server;
+extern ENetHost* server;
 
-std::vector<ENetPeer> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){}) {
-    std::vector<ENetPeer> peers{};
-    for (ENetPeer& peer : std::ranges::subrange(server->peers, server->peers + server->peerCount)) 
-        if (peer.state == ENET_PEER_STATE_CONNECTED)
-            fun(peer), peers.emplace_back(peer);
-    return peers;
-}
+std::vector<ENetPeer> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){});
 
 class state {
     public:
@@ -79,44 +80,9 @@ class state {
     std::array<int, 2> punch{}; // @note punching/placing position {x, y}
 };
 
-state get_state(const std::vector<std::byte>& packet) {
-    return state{
-        .type = std::bit_cast<int*>(packet.data())[0],
-        .netid = std::bit_cast<int*>(packet.data())[1],
-        .peer_state = std::bit_cast<int*>(packet.data())[3],
-        .id = std::bit_cast<int*>(packet.data())[5],
-        .pos = {std::bit_cast<float*>(packet.data())[6], std::bit_cast<float*>(packet.data())[7]},
-        .speed = {std::bit_cast<float*>(packet.data())[8], std::bit_cast<float*>(packet.data())[9]},
-        .punch = {std::bit_cast<int*>(packet.data())[11], std::bit_cast<int*>(packet.data())[12]}
-    };
-}
+state get_state(const std::vector<std::byte>& packet);
 
 /* put it back into it's original form */
-std::vector<std::byte> compress_state(const state& s) {
-    std::vector<std::byte> data(56, std::byte{0x00});
-    std::bit_cast<int*>(data.data())[0] = s.type;
-    std::bit_cast<int*>(data.data())[1] = s.netid;
-    std::bit_cast<int*>(data.data())[3] = s.peer_state;
-    std::bit_cast<int*>(data.data())[5] = s.id;
-    std::bit_cast<float*>(data.data())[6] = s.pos[0];
-    std::bit_cast<float*>(data.data())[7] = s.pos[1];
-    std::bit_cast<float*>(data.data())[8] = s.speed[0];
-    std::bit_cast<float*>(data.data())[9] = s.speed[1];
-    std::bit_cast<int*>(data.data())[11] = s.punch[0];
-    std::bit_cast<int*>(data.data())[12] = s.punch[1];
-    return data;
-}
+std::vector<std::byte> compress_state(const state& s);
 
-void inventory_visuals(ENetEvent &event)
-{
-	int size = _peer[event.peer]->slots.size();
-    std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte(0x0));
-    *reinterpret_cast<std::array<int, 5>*>(&data[0]) = {0x4, 0x9, -1, 0x0, 0x8};
-    *reinterpret_cast<unsigned long*>(&data[62]) = _byteswap_ulong(size); // @note 66....
-    *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(_peer[event.peer]->slot_size); // @note 62....
-    for (int i = 0; i < size; ++i)
-        *reinterpret_cast<int*>(&data[(i * sizeof(int)) + 66]) = 
-            (static_cast<int>(_peer[event.peer]->slots.at(i).id) bitor (static_cast<int>(_peer[event.peer]->slots.at(i).count) << 16) bitand 0x00FFFFFF);
-            
-	enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
-}
+void inventory_visuals(ENetEvent &event);

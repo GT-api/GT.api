@@ -1,7 +1,7 @@
 
 void friends(ENetEvent event, const std::string& header) 
 {
-    gt_packet(*event.peer, false, "OnDialogRequest", 
+    gt_packet(*event.peer, false, {"OnDialogRequest", 
 "set_default_color|`o\n"
 "add_label_with_icon|big| `wSocial Portal`` |left|1366|\n"
 "add_spacer|small|\n"
@@ -11,5 +11,5 @@ void friends(ENetEvent event, const std::string& header)
 "add_button|showguild|`wCreate Guild``|noflags|0|0|\n"
 "add_button|trade_history|`wTrade History``|noflags|0|0|\n"
 "add_quick_exit|\n"
-"end_dialog|socialportal||Back|\n");
+"end_dialog|socialportal||Back|\n"});
 }

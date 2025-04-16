@@ -11,6 +11,8 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
     pos += sizeof(T);
 }
 
+#include <iostream>
+
 void cache_items() 
 {
     TIME_START;

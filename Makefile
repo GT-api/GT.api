@@ -1,23 +1,28 @@
 CXX = g++
 CXXFLAGS = -std=c++2b -g -Iinclude -MMD -MP -DDEBUG_TIME
 
-SOURCES = main.cpp include/database/items.cpp include/database/peer.cpp enet_impl.cpp
-OBJECTS = $(SOURCES:.cpp=.o) include/compress.o
-DEPS = $(DEPS_DIR)/$(OBJECTS:.o=.d)
+SOURCES := main.cpp enet_impl.cpp \
+	include/database/items.cpp include/database/peer.cpp include/database/world.cpp \
+	include/network/packet.cpp
+	
+OBJECTS := $(SOURCES:.cpp=.o)
+DEPS := $(OBJECTS:.o=.d)
 
-TARGET = main.exe
+TARGET := main.exe
 
-all: $(TARGET)
+all: .make $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@ -lws2_32 -lwinmm
+$(TARGET): $(OBJECTS) include/compress.o
+	$(CXX) $^ -o $@ -lws2_32 -lwinmm
 
-%.o: %.cpp
+.make :
+	@mkdir -p .make
+
+%.o: %.cpp | .make
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-	@mkdir -p DEPS
-	@mv $*.d DEPS/
+	@mv $*.d .make/
 
 -include $(DEPS)
 
 clean:
-	rm -rf $(OBJECTS) DEPS $(TARGET)
+	rm -rf $(OBJECTS) .make $(TARGET)

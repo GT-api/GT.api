@@ -3,7 +3,7 @@
 void growid(ENetEvent event, const std::string& header, std::string error = "")
 {
     std::this_thread::sleep_for(500ms); /* unknown reason, due to slow reponse I reduce to 500ms, it surprisingly worked!- real GT has to up there game xD  */
-    gt_packet(*event.peer, false, "OnDialogRequest", std::format(
+    gt_packet(*event.peer, false, {"OnDialogRequest", std::format(
 "text_scaling_string|Dirttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt|"
 "set_default_color|`o"
 "add_label_with_icon|big|`wGet a GrowID``|left|206|"
@@ -19,5 +19,5 @@ void growid(ENetEvent event, const std::string& header, std::string error = "")
 "add_text_input|email|Email||64|"
 "add_textbox|We will never ask you for your password or email, never share it with anyone!|left|"
 "end_dialog|growid_apply|Cancel|Get My GrowID!|", 
-    (error.empty() ? "" : error + "|left|\nadd_spacer|small|")).c_str());
+    (error.empty() ? "" : error + "|left|\nadd_spacer|small|")).c_str()});
 }

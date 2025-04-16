@@ -9,7 +9,6 @@
 #include "include\database\peer.hpp" // @note everything relating to the peer
 #include "include\network\packet.hpp" // @note back-end packet dealing (using ENet & basic C++ concepts)
 #include "include\database\world.hpp" // @note everything related to a world
-#include "include\tools\random_engine.hpp" // @note optimized random number generator
 
 #include "include\on\on"
 #include "include\commands\commands"
@@ -22,6 +21,7 @@ int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o
 
 int main()
 {
+    srand(time(0));
     {
         ENetCallbacks callbacks{
             .malloc = &malloc, 

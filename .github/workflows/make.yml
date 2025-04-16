@@ -1,0 +1,18 @@
+on: 
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4.2.2
+    - uses: msys2/setup-msys2@v2.27.0
+      with:
+        msystem: UCRT64
+        update: true
+        install: >-
+          mingw-w64-ucrt-x86_64-gcc 
+          make
+        
+    - run: make -j$(nproc)
+      shell: msys2 {0}

@@ -1,7 +1,7 @@
 #include "movement.hpp"
-#include "punch.hpp"
 #include "equip.hpp"
 #include "pickup.hpp"
+#include "punch.hpp"
 
 std::unordered_map<int, std::function<void(ENetEvent, state)>> state_pool
 {

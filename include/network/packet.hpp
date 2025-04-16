@@ -1,5 +1,4 @@
 #pragma once
-#include <cstring> // @note std::strlen() - TODO modernize c-style while respecting typename.
 #include <any>
 
 /*

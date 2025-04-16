@@ -10,13 +10,17 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
     std::size_t size = data.size();
     if (size < 14) return;
     auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
-    *reinterpret_cast<std::array<enet_uint8, 4>*>(packet->data) = {0x4};
+    if (packet == nullptr or packet->dataLength < (size + 4)) return;
+    *reinterpret_cast<std::array<enet_uint8, 4>*>(packet->data) = { 0x4 };
     memcpy(packet->data + 4, data.data(), size); // @note for safety reasons I will not reinterpret the values.
-    if (static_cast<int>(data[12]) bitand 0x8) // @note data[12] = peer_state in state class.
+    if (size >= 13 + sizeof(std::size_t)) 
     {
         std::size_t resize_forecast = *std::bit_cast<std::size_t*>(data.data() + 13); // @note we just wanna see if we can resize safely
-        if (packet->dataLength + resize_forecast <= std::size_t{512})
-            enet_packet_resize(packet, packet->dataLength + resize_forecast);
+        if (static_cast<int>(data[12]) bitand 0x8) // @note data[12] = peer_state in state class.
+        {
+            if (resize_forecast <= 512 and packet->dataLength + resize_forecast <= 512)
+                enet_packet_resize(packet, packet->dataLength + resize_forecast);
+        }
     }
     enet_peer_send(&peer, 1, packet);
 }

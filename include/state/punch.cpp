@@ -39,8 +39,7 @@ void punch(ENetEvent event, state state)
     else if (items[state.id].cloth_type not_eq clothing::none) return;
     else // @note placing a block
     {
-        // @todo check if peer is on the block placement.
-        (items[state.id].type == 18) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
+        (items[state.id].type == std::byte{18}) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
         _peer[event.peer]->emplace(slot{
             static_cast<short>(state.id),
             -1 // @note remove that item the peer just placed.

@@ -61,9 +61,9 @@ int main()
     ENetEvent event{};
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
-            if (auto i = event_pool.find(event.type); i not_eq event_pool.end())
+            if (const auto i = event_pool.find(event.type); i not_eq event_pool.end())
                 threads.emplace_back([=] { 
-                    srand(static_cast<unsigned int>(time(0)) ^ std::hash<std::thread::id>{}(std::this_thread::get_id()));
+                    srand(time(nullptr) ^ std::hash<std::thread::id>{}(std::this_thread::get_id()));
                     i->second(event); 
                 }).detach();
     return 0;

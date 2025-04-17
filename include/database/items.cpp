@@ -1,7 +1,7 @@
 #include "items.hpp"
 
-std::map<int, item> items; // Define the variable
-std::vector<std::byte> im_data(60, std::byte{0x00}); // Define the variable
+std::map<unsigned short, item> items;
+std::vector<std::byte> im_data(60, std::byte{0x00});
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 
@@ -18,14 +18,15 @@ void cache_items()
     short version{};
     shift_pos(im_data, pos, version);
     shift_pos(im_data, pos, count);
-    for (int i = 0; i < count; ++i) 
+    for (unsigned short i = 0; i < count; ++i) 
     {
         item im{};
         
         shift_pos(im_data, pos, im.id); pos += 2; // @note downsize im.id to 2 bit rather then a 4 bit
-        pos += 2;
+        pos += 1;
 
-        shift_pos(im_data, pos, im.type); pos -= 1; // @note upsize im.type to 2 bit rather then a 1 bit
+        shift_pos(im_data, pos, im.cat);
+        shift_pos(im_data, pos, im.type);
         pos += 1;
 
         short len = *(reinterpret_cast<short*>(&im_data[pos]));
@@ -47,9 +48,13 @@ void cache_items()
         }
         pos += sizeof(int);
         {
-            unsigned char cloth_type{};
-            shift_pos(im_data, pos, cloth_type);
-            im.cloth_type = static_cast<std::size_t>(cloth_type);
+            if (im.type == std::byte{20}) 
+            {
+                unsigned char cloth_type{};
+                shift_pos(im_data, pos, cloth_type);
+                im.cloth_type = static_cast<unsigned short>(cloth_type);
+            }
+            else pos += 1; // @note do nothing
         }
         pos += 3;
 

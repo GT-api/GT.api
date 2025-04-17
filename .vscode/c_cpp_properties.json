@@ -7,15 +7,17 @@
                 "${workspaceFolder}\\include\\**"
             ],
             "defines": [
-                "DEBUG_TIME" // remove if you do not want logging.
+                "DEBUG_TIME",
+                "ENET_IMPLEMENTATION" // @note for visual aid
             ],
-            "compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "compilerPath": "c:\\msys64\\ucrt64\\bin\\g++.exe",
             "compilerArgs": [
-                "-std=c++2b",
+                "-std=c++23",
                 "-g",
-                "-I${workspaceFolder}\\include\\",
+                "-Iinclude",
                 "-MMD",
-                "-MP"
+                "-MP",
+                "-DDEBUG_TIME"
             ],
             "cStandard": "c23",
             "cppStandard": "c++23",

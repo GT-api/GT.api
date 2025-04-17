@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++2b -g -Iinclude -MMD -MP -DDEBUG_TIME
+CXXFLAGS = -std=c++23 -g -Iinclude -MMD -MP -DDEBUG_TIME
 
 SOURCES := main.cpp enet_impl.cpp \
 	include/database/items.cpp \

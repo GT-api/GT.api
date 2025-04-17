@@ -36,6 +36,7 @@ void punch(ENetEvent event, state state)
             );
         }
     }
+    else if (items[state.id].cloth_type not_eq clothing::none) return;
     else // @note placing a block
     {
         // @todo check if peer is on the block placement.

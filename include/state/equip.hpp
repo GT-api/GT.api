@@ -2,7 +2,7 @@
 void equip(ENetEvent event, state state)
 {
     /* checks if item is clothing. */
-    if (items[state.id].cloth_type == clothing::none) {
+    if (items[state.id].cloth_type not_eq clothing::none) {
 
         /* checks if clothing is already equipped. if so unequip. else equip. */
         if (_peer[event.peer]->clothing[items[state.id].cloth_type] == state.id)

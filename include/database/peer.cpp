@@ -40,7 +40,7 @@ state get_state(const std::vector<std::byte>& packet) {
 }
 
 std::vector<std::byte> compress_state(const state& s) {
-    std::vector<std::byte> data(56, std::byte{0x00});
+    std::vector<std::byte> data(56, std::byte{ 00 });
     std::bit_cast<int*>(data.data())[0] = s.type;
     std::bit_cast<int*>(data.data())[1] = s.netid;
     std::bit_cast<int*>(data.data())[3] = s.peer_state;
@@ -57,10 +57,16 @@ std::vector<std::byte> compress_state(const state& s) {
 void inventory_visuals(ENetEvent &event)
 {
 	int size = _peer[event.peer]->slots.size();
-    std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte(0x0));
-    *reinterpret_cast<std::array<int, 5>*>(&data[0]) = {0x4, 0x9, -1, 0x0, 0x8};
-    *reinterpret_cast<unsigned long*>(&data[62]) = _byteswap_ulong(size); // @note 66....
+    std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte( 00 ));
+    data[0] = std::byte{ 04 };
+    data[4] = std::byte{ 0x9 };
+    data[8] = std::byte{ 0xFF };
+    data[9] = std::byte{ 0xFF };
+    data[10] = std::byte{ 0xFF };
+    data[11] = std::byte{ 0xFF };
+    data[16] = std::byte{ 0x08 };
     *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(_peer[event.peer]->slot_size); // @note 62....
+    *reinterpret_cast<unsigned long*>(&data[62]) = _byteswap_ulong(size); // @note 66....
     for (int i = 0; i < size; ++i)
         *reinterpret_cast<int*>(&data[(i * sizeof(int)) + 66]) = 
             (static_cast<int>(_peer[event.peer]->slots.at(i).id) bitor (static_cast<int>(_peer[event.peer]->slots.at(i).count) << 16) bitand 0x00FFFFFF);

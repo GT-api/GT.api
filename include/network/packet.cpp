@@ -5,11 +5,20 @@
 
 void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params) 
 {
-    std::vector<std::byte> data(61, std::byte(0x00));
-    for (std::size_t i = 0; i < 5 * sizeof(int); ++i) 
-        data[std::size_t{(i / sizeof(int)) < 2 ? (i / sizeof(int)) * sizeof(int) : (1 << ((i / sizeof(int)) + 1))} + i % sizeof(int)]
-            = reinterpret_cast<const std::byte*>(&std::array<int, 5>{4, 1, netid ? _peer[&p]->netid : -1, 8, 0}[i / sizeof(int)])[i % sizeof(int)];
-    
+    std::vector<std::byte> data(61, std::byte{ 00 });
+    data[0] = std::byte{ 04 };
+    data[4] = std::byte{ 01 };
+    if (not netid) {
+        data[8] = std::byte{ 0xFF };
+        data[9] = std::byte{ 0xFF };
+        data[10] = std::byte{ 0xFF };
+        data[11] = std::byte{ 0xFF };
+    }
+    else {
+        data[8] = static_cast<std::byte>(_peer[&p]->netid);
+    }
+    data[16] = std::byte{ 0x08 };
+    data[24] = std::byte{ 00 }; // @todo delay
     std::size_t size = data.size();
     std::byte index;
     for (const auto& param : params) {
@@ -19,10 +28,10 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
             for (std::size_t i = 0; i < size; ++i)
                 t_data[i] = data[i];
             t_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x00, "the console message" -> 0x1 */
-            t_data[size + 1] = std::byte{0x2};
+            t_data[size + 1] = std::byte{ 02 };
             t_data[size + 2] = static_cast<std::byte>(static_cast<std::uint16_t>(std::strlen(str)) & 0xFF);
-            t_data[size + 3] = static_cast<std::byte>((static_cast<std::uint16_t>(std::strlen(str)) >> 8) & 0xFF);
-            t_data[size + 4] = t_data[size + 5] = std::byte{0x00};
+            t_data[size + 3] = static_cast<std::byte>((static_cast<std::uint16_t>(std::strlen(str)) >> 0x08) & 0xFF);
+            t_data[size + 4] = t_data[size + 5] = std::byte{ 00 };
             /* outcome should be the hexadecimal of param's array char(s). e.g. "hello" = 'h' -> 0x68 'e' -> 0x65 'l' -> 0x6C 'l' -> 0x6C 'o' -> 0x6F */
             for (size_t i = 0; i < std::strlen(str); ++i)
                 t_data[size + 6 + i] = static_cast<std::byte>(str[i]); /* e.g. 'a' -> 0x61. 'z' = 0x7A */ // be educated: https://en.cppreference.com/w/cpp/language/ascii
@@ -37,7 +46,7 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
             for (std::size_t i = 0; i < size; ++i)
                 t_data[i] = data[i];
             t_data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 0x00, 43562/-43562 -> 0x1 */
-            t_data[size + 1] = (is_signed) ? std::byte{0x9} : std::byte{0x5}; 
+            t_data[size + 1] = (is_signed) ? std::byte{ 0x09 } : std::byte{ 05 }; 
             /* outcome should be the hexadecimal of param value. e.g. 2147483647 -> 0x7FFFFFFF.  */
             for (std::size_t i = 0; i < sizeof(value); ++i)
                 t_data[size + 2 + i] = reinterpret_cast<std::byte const*>(&value)[i];
@@ -54,10 +63,10 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
                 t_data[i] = data[i];
             t_data[size] = index;
             t_data[size + 1] = 
-                (vec.size() == 1) ? std::byte{0x1} :
-                (vec.size() == 2) ? std::byte{0x3} :
-                (vec.size() == 3) ? std::byte{0x4} :
-                                    std::byte{0x0};
+                (vec.size() == 1) ? std::byte{ 01 } :
+                (vec.size() == 2) ? std::byte{ 03 } :
+                (vec.size() == 3) ? std::byte{ 04 } :
+                                    std::byte{ 00 };
             for (std::size_t i = 0; i < vec.size(); ++i)
                 for (std::size_t ii = 0; ii < sizeof(vec[i]); ++ii)
                     t_data[size + 2 + sizeof(float) * i + ii] = reinterpret_cast<std::byte const*>(&vec[i])[ii];
@@ -79,8 +88,8 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
 void action(ENetPeer& p, const std::string& action, const std::string& str) 
 {
     const std::string& _action = "action|" + action + "\n";
-    std::vector<std::byte> data(4 + _action.length() + str.length(), std::byte{0x0});
-    data[0] = static_cast<std::byte>(0x3);
+    std::vector<std::byte> data(4 + _action.length() + str.length(), std::byte{ 00 });
+    data[0] = std::byte{ 03 };
     for (std::size_t i = 0; i < _action.length(); ++i) 
         data[4 + i] = static_cast<std::byte>(_action[i]);
     for (std::size_t i = 0; i < str.length(); ++i) 

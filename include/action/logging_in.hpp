@@ -24,7 +24,7 @@ void logging_in(ENetEvent event, const std::string& header)
             hash = std::ranges::fold_left(std::span(reinterpret_cast<unsigned int*>(&im_data[0]), im_data.size() / sizeof(unsigned int)), 
             0x55555555u, [](auto start, auto end){ return std::rotl(start, 5) + end; });
         });
-        gt_packet(*event.peer, true, {
+        gt_packet(*event.peer, false, {
             "OnSuperMainStartAcceptLogonHrdxs47254722215a", 
             hash, 
             "ubistatic-a.akamaihd.net",

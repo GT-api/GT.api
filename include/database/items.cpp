@@ -1,7 +1,7 @@
 #include "items.hpp"
 
 std::map<unsigned short, item> items;
-std::vector<std::byte> im_data(60, std::byte{0x00});
+std::vector<std::byte> im_data(60, std::byte{ 00 });
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 
@@ -48,7 +48,7 @@ void cache_items()
         }
         pos += sizeof(int);
         {
-            if (im.type == std::byte{20}) 
+            if (im.type == std::byte{ 20 }) 
             {
                 unsigned char cloth_type{};
                 shift_pos(im_data, pos, cloth_type);

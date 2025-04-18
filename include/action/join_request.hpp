@@ -28,11 +28,11 @@ void join_request(ENetEvent event, const std::string& header)
             w->blocks = std::move(blocks);
             w->name = big_name; // init
         }
-        {std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + 12/*initial drop*/, std::byte{0x00});
-        data[0] = data[4] = std::byte{0x4};
-        data[16] = std::byte{0x8};
+        {std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + 12/*initial drop*/, std::byte{ 00 });
+        data[0] = data[4] = std::byte{ 04 };
+        data[16] = std::byte{ 0x8 };
         unsigned char len = static_cast<unsigned char>(w->name.length());
-        data[66] = std::byte{len};
+        data[66] = static_cast<std::byte>(len);
         for (unsigned char i = 0; i < len; ++i)
             *reinterpret_cast<char*>(&data[68 + i]) = w->name[i];
         std::size_t y = w->blocks.size() / 100, x = w->blocks.size() / y;
@@ -52,7 +52,7 @@ void join_request(ENetEvent event, const std::string& header)
                 _peer[event.peer]->pos.back() = (i / x) * 32;
                 _peer[event.peer]->rest_pos = _peer[event.peer]->pos; // @note static repsawn position
                 data.resize(data.size() + 8);
-                data[pos + 8] = std::byte{0x1};
+                data[pos + 8] = std::byte{ 01 };
                 *reinterpret_cast<short*>(&data[pos + 9]) = 4;
                 for (int ii = 0; ii < 4; ++ii)
                     data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
@@ -61,10 +61,10 @@ void join_request(ENetEvent event, const std::string& header)
             else if (fg == 242) // @todo all locks
             {
                 data.resize(data.size() + 15);
-                data[pos + 8] = std::byte{0x3};
-                data[pos + 9] = std::byte{0x1};
+                data[pos + 8] = std::byte{ 03 };
+                data[pos + 9] = std::byte{ 01 };
                 *reinterpret_cast<int*>(&data[pos + 10]) = 1; // @note owner user ID
-                data[pos + 14] = std::byte{0x1}; // @note number of admins
+                data[pos + 14] = std::byte{ 01 }; // @note number of admins
                 *reinterpret_cast<int*>(&data[pos + 18]) = -100; // @note default world bpm
                 *reinterpret_cast<int*>(&data[pos + 22]) = 1; // @note list of admins
                 pos += 14;

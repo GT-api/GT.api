@@ -1,5 +1,5 @@
 /*
-    @copyright GT.api (c) 2024
+    @copyright gurotopia (c) 25-6-2024
     @author leeendl | English Comments
 
     Project has open arms for contribution!
@@ -28,11 +28,12 @@ int main()
             .no_memory = []() { printf("enet memory overflow"); }
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
-    }
+    } // @note delete callbacks
     server = enet_host_create({
         .host = in6addr_any, 
-        .port = 17091}, 
-        ENET_PROTOCOL_MAXIMUM_PEER_ID, 2);
+        .port = 17091
+    }, 
+    ENET_PROTOCOL_MAXIMUM_PEER_ID, 2);
 
     server->checksum = enet_crc32;
     enet_host_compress_with_range_coder(server);
@@ -44,18 +45,15 @@ int main()
         }
         std::streampos size = file.tellg(); // @note size of ios::ate (end of file). this is called before seekg (ios::beg (beginning of file)).
         im_data.resize(im_data.size() + size);
-        *reinterpret_cast<std::array<unsigned char, 20>*>(&im_data[0]) = {
-            0x4, 0x0, 0x0, 0x0, 
-            0x10, 0x0, 0x0, 0x0, 
-            0xFF, 0xFF, 0xFF, 0xFF, 
-            0x0, 0x0, 0x0, 0x0, 
-            0x8, 0x0, 0x0, 0x0
-        };
-        *reinterpret_cast<std::streampos*>(&im_data[20 + 36]) = size;
+        im_data[0] = std::byte{ 04};
+        im_data[4] = std::byte{ 16 };
+        im_data[8] = std::byte{ 0xFF };
+        im_data[16] = std::byte{ 0x08 };
+        *reinterpret_cast<std::streampos*>(&im_data[56]) = size;
         file
             .seekg(0, std::ios::beg) // @note  start from beginning of items.dat
             .read(reinterpret_cast<char*>(&im_data[60]), size);
-    } // @note delete & close file
+    } // @note delete file, size and closes file
     cache_items();
 
     ENetEvent event{};

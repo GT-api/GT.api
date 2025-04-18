@@ -6,7 +6,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2 # updated on Jan 16
-    - uses: msys2/setup-msys2@a5d2c5a565c520efa5f477391e4e3f87c2e08f46 # updated on Apr 14
+    - uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0 
       with:
         msystem: UCRT64
         update: true

@@ -25,7 +25,7 @@ void punch(ENetEvent event, state state)
         if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) b.fg = 0;
         else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
         else return;
-        if (rand() % 4 == 0)
+        if (rand() % 7 == 0)
         {
             drop_visuals(event, 
                 {112, 1/* @todo get real gt gem amount for each item. */},

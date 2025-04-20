@@ -1,5 +1,7 @@
 <div align="center">
 
+**グロートピア** *(Gurotopia)* : Lightweight & Maintained GTPS written in C/C++
+
 [![](https://github.com/GT-api/GT.api/actions/workflows/make.yml/badge.svg?branch=main&event=push)](https://github.com/GT-api/GT.api/actions/workflows/make.yml)
 [![](https://app.codacy.com/project/badge/Grade/fa8603d6ec2b4485b8e24817ef23ca21)](https://app.codacy.com/gh/gurotopia/gurotopia/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![](https://dcbadge.limes.pink/api/server/zzWHgzaF7J?style=flat)](https://discord.gg/zzWHgzaF7J)

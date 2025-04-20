@@ -1,16 +1,4 @@
 
-void getLogin(std::string_view input, std::string& growId, std::string& pass) {
-    if (auto pos = input.find("growId="); pos != std::string_view::npos) {
-        pos += 7;
-        growId.assign(input.substr(pos, input.find('&', pos) - pos));
-    }
-
-    if (auto pos = input.find("password="); pos != std::string_view::npos) {
-        pos += 9;
-        pass.assign(input.substr(pos));
-    }
-}
-
 unsigned hash{};
 std::once_flag hash_init{};
 
@@ -35,14 +23,16 @@ void logging_in(ENetEvent event, const std::string& header)
         if (pipes[2] == "ltoken")
         {
             std::string decoded = base64Decode(pipes[3]);
-            if (auto pos = decoded.find("growId="); pos != std::string::npos) {
-                pos += 7;
-                size_t endPos = decoded.find('&', pos);
-                _peer[event.peer]->ltoken[0] = strdup(decoded.substr(pos, endPos - pos).c_str());
+            if (auto pos = decoded.find("growId="); pos not_eq std::string::npos) 
+            {
+                pos += 7; // @note size of "growId="
+                std::size_t ampersand = decoded.find('&', pos);
+                _peer[event.peer]->ltoken[0] = strdup(decoded.substr(pos, ampersand - pos).c_str());
             }
-            
-            if (auto pos = decoded.find("password="); pos != std::string::npos) {
-                pos += 9;
+
+            if (auto pos = decoded.find("password="); pos not_eq std::string::npos) 
+            {
+                pos += 9; // @note size of "password="
                 _peer[event.peer]->ltoken[1] = strdup(decoded.substr(pos).c_str());
             }
         }

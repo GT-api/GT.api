@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string> // @note std::string
+#include <string>
 #include <map>
 #include <vector>
 #include <algorithm>

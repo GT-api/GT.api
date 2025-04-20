@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "items.hpp"
 
 std::map<unsigned short, item> items;
@@ -11,14 +12,14 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
     pos += sizeof(T);
 }
 
-void cache_items() 
+void cache_items()
 {
-    TIME_START;
     int pos{60}, count{};
     short version{};
     shift_pos(im_data, pos, version);
     shift_pos(im_data, pos, count);
-    for (unsigned short i = 0; i < count; ++i) 
+    static constexpr std::string_view token{"PBG892FXX982ABC*"};
+    for (unsigned short i = 0; i < count; ++i)
     {
         item im{};
         
@@ -33,7 +34,7 @@ void cache_items()
         pos += sizeof(short);
         im.raw_name.resize(len);
         for (short i = 0; i < len; ++i) 
-            im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(std::string_view{"PBG892FXX982ABC*"}[(i + im.id) % std::string_view{"PBG892FXX982ABC*"}.length()])), 
+            im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(token[(i + im.id) % token.length()])), 
             ++pos;
 
         len = *(reinterpret_cast<short*>(&im_data[pos]));
@@ -128,5 +129,5 @@ void cache_items()
         }
         items.emplace(i, im);
     }
-    TIME_END("void cache_items()");
+    printf("cached %d items.\n", count);
 }

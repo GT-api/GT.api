@@ -11,8 +11,9 @@ public:
 
 #include <mutex> // @note std::once_flag
 #include <deque>
-
+#include <array>
 #include <unordered_map>
+#include <chrono>
 
 class peer {
 public:
@@ -51,8 +52,8 @@ public:
     std::array<std::string, 5> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
     bool lobby{true}; // @note checks if peer is in EXIT or 'lobby'
     
-    std::array<steady_clock::time_point, 3> rate_limit{}; // @note rate limit objects
-    std::deque<steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming
+    std::array<std::chrono::steady_clock::time_point, 3> rate_limit{}; // @note rate limit objects
+    std::deque<std::chrono::steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming
 };
 extern std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
 
@@ -62,7 +63,7 @@ extern std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
 */
 bool create_rt(ENetEvent& event, std::size_t pos, int64_t length);
 
-#include <functional> // @note std::function<>
+#include <bits/std_function.h> // @note std::function<>
 extern ENetHost* server;
 
 std::vector<ENetPeer> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){});

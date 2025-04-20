@@ -6,6 +6,7 @@
 */
 #include "include\database\items.hpp" // @note items.dat reading
 #include "include\network\enet.hpp" // @note ENet supporting AF_INET6
+#include "include\network\compress.hpp" // @note isalzman's compressor
 #include "include\database\peer.hpp" // @note everything relating to the peer
 #include "include\network\packet.hpp" // @note back-end packet dealing (using ENet & basic C++ concepts)
 #include "include\database\world.hpp" // @note everything related to a world
@@ -17,8 +18,6 @@
 #include "include\state\states"
 #include "include\event_type\event_type"
 
-int enet_host_compress_with_range_coder(ENetHost* host); // -> import compress.o -- Open Source: https://github.com/lsalzman/enet/blob/master/compress.c
-
 int main()
 {
     {
@@ -28,6 +27,7 @@ int main()
             .no_memory = []() { printf("enet memory overflow"); }
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
+        printf("ENet initialize success! (using ENet v%d.%d.%d)\n", ENET_VERSION_MAJOR, ENET_VERSION_MINOR, ENET_VERSION_PATCH);
     } // @note delete callbacks
     server = enet_host_create({
         .host = in6addr_any, 
@@ -43,11 +43,11 @@ int main()
             printf("failed to open items.dat");
             getchar();
         }
-        std::streampos size = file.tellg(); // @note size of ios::ate (end of file). this is called before seekg (ios::beg (beginning of file)).
+        std::streampos size = file.tellg();
         im_data.resize(im_data.size() + size);
         im_data[0] = std::byte{ 04};
         im_data[4] = std::byte{ 16 };
-        im_data[8] = std::byte{ 0xFF };
+        im_data[8] = std::byte{ 0xff };
         im_data[16] = std::byte{ 0x08 };
         *reinterpret_cast<std::streampos*>(&im_data[56]) = size;
         file

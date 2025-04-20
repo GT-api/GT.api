@@ -1,7 +1,6 @@
+#include "pch.hpp"
 #include "items.hpp"
 #include "peer.hpp"
-
-#include <ranges> // @note std::ranges::subrange
 
 std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
 
@@ -60,10 +59,10 @@ void inventory_visuals(ENetEvent &event)
     std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte( 00 ));
     data[0] = std::byte{ 04 };
     data[4] = std::byte{ 0x9 };
-    data[8] = std::byte{ 0xFF };
-    data[9] = std::byte{ 0xFF };
-    data[10] = std::byte{ 0xFF };
-    data[11] = std::byte{ 0xFF };
+    data[8] = std::byte{ 0xff };
+    data[9] = std::byte{ 0xff };
+    data[10] = std::byte{ 0xff };
+    data[11] = std::byte{ 0xff };
     data[16] = std::byte{ 0x08 };
     *reinterpret_cast<unsigned long*>(&data[58]) = _byteswap_ulong(_peer[event.peer]->slot_size); // @note 62....
     *reinterpret_cast<unsigned long*>(&data[62]) = _byteswap_ulong(size); // @note 66....

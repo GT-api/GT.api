@@ -41,7 +41,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
-#include "macros.hpp"
+#include <chrono>
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 3
@@ -3272,7 +3272,6 @@ extern "C" {
      */
     int enet_host_service(ENetHost *host, ENetEvent *event, enet_uint32 timeout) 
     {
-        TIME_START;
         enet_uint32 waitCondition;
 
         if (event not_eq __null) 
@@ -4439,7 +4438,6 @@ extern "C" {
      */
     ENetHost * enet_host_create(ENetAddress address, size_t peerCount, size_t channelLimit) 
     {
-        TIME_START;
         ENetHost* host;
         ENetPeer* currentPeer;
 
@@ -4535,8 +4533,6 @@ extern "C" {
 
             enet_peer_reset(currentPeer);
         }
-
-        TIME_END("ENetHost* enet_host_create()");
         return host;
     } /* enet_host_create */
 
@@ -5706,7 +5702,6 @@ extern "C" {
 
     int enet_initialize() 
     {
-        TIME_START;
         WORD versionRequested = MAKEWORD(1, 1);
         WSADATA wsaData;
 
@@ -5717,9 +5712,7 @@ extern "C" {
             WSACleanup();
             return -1;
         }
-
         timeBeginPeriod(1);
-        TIME_END("int enet_initialize()");
         return 0;
     }
 

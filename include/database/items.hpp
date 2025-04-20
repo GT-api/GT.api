@@ -1,5 +1,4 @@
 #pragma once
-#include <string> // @note std::string
 
 enum clothing : unsigned short {
     hair, shirt, legs, 
@@ -7,6 +6,9 @@ enum clothing : unsigned short {
     back, head, charm, 
     ances, none
 };
+
+#include <string>
+#include <cstddef>
 
 class item 
 {
@@ -26,12 +28,5 @@ extern std::vector<std::byte> im_data;
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value);
-
-#include <algorithm>
-#include <ranges>
-#include <chrono>
-using namespace std::chrono;
-
-#include "macros.hpp"
 
 void cache_items();

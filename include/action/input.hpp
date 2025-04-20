@@ -10,9 +10,9 @@ void input(ENetEvent event, const std::string& header)
         if (text.empty() or start >= end) return;
         text = std::string{start, end};
     }
-    _peer[event.peer]->messages.push_back(steady_clock::now());
+    _peer[event.peer]->messages.push_back(std::chrono::steady_clock::now());
     if (_peer[event.peer]->messages.size() > 5) _peer[event.peer]->messages.pop_front();
-    if (_peer[event.peer]->messages.size() == 5 and std::chrono::duration_cast<seconds>(steady_clock::now() - _peer[event.peer]->messages.front()).count() < 6)
+    if (_peer[event.peer]->messages.size() == 5 and std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - _peer[event.peer]->messages.front()).count() < 6)
         gt_packet(*event.peer, false, {
             "OnConsoleMessage", 
             "`6>>`4Spam detected! ``Please wait a bit before typing anything else.  "  

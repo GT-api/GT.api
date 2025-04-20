@@ -43,7 +43,7 @@ std::string base64Decode(std::string_view encoded) {
         val = (val << 6) + lookupTable[c];
         valb += 6;
         if (valb >= 0) {
-            decoded.push_back(static_cast<char>((val >> valb) & 0xFF));
+            decoded.push_back(static_cast<char>((val >> valb) & 0xff));
             valb -= 8;
         }
     }

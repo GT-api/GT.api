@@ -15,7 +15,6 @@ void OnRequestWorldSelectMenu(ENetEvent event)
         "\nadd_floater|wotd_world|\u013B WOTD|0|0.5|3529161471", section(_peer[event.peer]->recent_worlds, "3417414143")).c_str(), 
         0
     });
-    std::this_thread::sleep_for(200ms);
     gt_packet(*event.peer, false, {
         "OnConsoleMessage", 
         std::format("Where would you like to go? (`w{}`` online)", peers().size()).c_str()

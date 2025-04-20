@@ -29,7 +29,8 @@ void join_request(ENetEvent event, const std::string& header)
             w->name = big_name; // init
         }
         {std::vector<std::byte> data(85 + w->name.length() + 5/*unknown*/ + (8 * w->blocks.size()) + 12/*initial drop*/, std::byte{ 00 });
-        data[0] = data[4] = std::byte{ 04 };
+        data[0] = std::byte{ 04 };
+        data[4] = std::byte{ 04 };
         data[16] = std::byte{ 0x8 };
         unsigned char len = static_cast<unsigned char>(w->name.length());
         data[66] = static_cast<std::byte>(len);

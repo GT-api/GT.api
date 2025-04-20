@@ -3,18 +3,16 @@
 #include "database/world.hpp"
 #include "packet.hpp"
 
-
-
 void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params) 
 {
     std::vector<std::byte> data(61, std::byte{ 00 });
     data[0] = std::byte{ 04 };
     data[4] = std::byte{ 01 };
     if (not netid) {
-        data[8] = std::byte{ 0xFF };
-        data[9] = std::byte{ 0xFF };
-        data[10] = std::byte{ 0xFF };
-        data[11] = std::byte{ 0xFF };
+        data[8] = std::byte{ 0xff };
+        data[9] = std::byte{ 0xff };
+        data[10] = std::byte{ 0xff };
+        data[11] = std::byte{ 0xff };
     }
     else {
         data[8] = static_cast<std::byte>(_peer[&p]->netid);
@@ -31,8 +29,8 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
             data.resize(size + 2 + str.length() + sizeof(int));
             data[size] = index; /* element counter. e.g. "OnConsoleMessage" -> 00, "the console message" -> 01 */
             data[size + 1] = std::byte{ 02 };
-            data[size + 2] = static_cast<std::byte>(str.length() & 0xFF);
-            data[size + 3] = static_cast<std::byte>(( str.length() >> 8 ) & 0xFF);
+            data[size + 2] = static_cast<std::byte>(str.length() & 0xff);
+            data[size + 3] = static_cast<std::byte>(( str.length() >> 8 ) & 0xff);
             /* outcome should be the hexadecimal of param's array char(s). e.g. "hello" = 'h' -> 0x68 'e' -> 0x65 'l' -> 0x6C 'l' -> 0x6C 'o' -> 0x6F */
             for (size_t i = 0; i < str.length(); ++i)
                 data[size + 6 + i] = static_cast<std::byte>(str[i]); /* e.g. 'a' -> 0x61. 'z' = 0x7A */ // be educated: https://en.cppreference.com/w/cpp/language/ascii

@@ -39,12 +39,26 @@ void punch(ENetEvent event, state state)
     else if (items[state.id].cloth_type not_eq clothing::none) return;
     else // @note placing a block
     {
+        switch (state.id) 
+        {
+            case 0xf2: // @note World Lock
+            {
+                // @note checks if world is owned by someone already.
+                if (worlds[_peer[event.peer]->recent_worlds.back()].owner == 00)
+                {
+                    worlds[_peer[event.peer]->recent_worlds.back()].owner = _peer[event.peer]->user_id;
+                    // @todo update visuals...
+                }
+                else return;
+
+                break;
+            }
+        }
         (items[state.id].type == std::byte{ 18 }) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
         _peer[event.peer]->emplace(slot{
             static_cast<short>(state.id),
             -1 // @note remove that item the peer just placed.
         });
     }
-    auto w = std::make_unique<world>(worlds[_peer[event.peer]->recent_worlds.back()]);
     state_visuals(event, std::move(state)); // finished.
 }

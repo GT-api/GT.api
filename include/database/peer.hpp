@@ -23,7 +23,7 @@ public:
     std::mutex post_enter{};
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
-    unsigned user_id{}; /* peer's user_id is server identity. -> 5 CONNECTED peers in server, a new peer CONNECTS this value would be '6' (WONT CHANGE-> 1 person leaves, it's still 6.) */
+    int user_id{}; // @note unqiue user id.
     std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
     std::array<float, 10> clothing{}; // @note peer's clothing
 

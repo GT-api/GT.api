@@ -17,8 +17,9 @@ void quit_to_exit(ENetEvent event, const std::string& header)
             });
         }
     });
-    if (worlds[_peer[event.peer]->recent_worlds.back()].visitors <= 0)
+    if (worlds[_peer[event.peer]->recent_worlds.back()].visitors <= 0) {
         worlds.erase(_peer[event.peer]->recent_worlds.back());
+    }
     _peer[event.peer]->post_enter.unlock();
     _peer[event.peer]->lobby = true;
     _peer[event.peer]->netid = -1; // this will fix any packets being sent outside of world

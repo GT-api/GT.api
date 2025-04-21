@@ -7,6 +7,13 @@
 
 #include "tools/string_view.hpp"
 
+constexpr std::array<std::byte, 4> EXIT{
+    std::byte{ 0x45 },
+    std::byte{ 0x58 },
+    std::byte{ 0x49 },
+    std::byte{ 0x54 }
+};
+
 void join_request(ENetEvent event, const std::string& header) 
 {
     try 
@@ -54,32 +61,34 @@ void join_request(ENetEvent event, const std::string& header)
             for (const auto& block : w->blocks)
             {
                 auto [fg, bg, hits] = block;
-                *reinterpret_cast<short*>(&data[pos]) = fg;
-                *reinterpret_cast<short*>(&data[pos + 2]) = bg;
-                if (fg == 6) // @todo all door labels & signs.
+                *reinterpret_cast<short*>(&data[pos]) = fg; pos += 2;
+                *reinterpret_cast<short*>(&data[pos]) = bg; pos += 2;
+                pos += 2; // @todo
+                pos += 2; // @todo
+                if (fg == 06) // @note Main Door
                 {
                     _peer[event.peer]->pos.front() = (i % x) * 32;
                     _peer[event.peer]->pos.back() = (i / x) * 32;
                     _peer[event.peer]->rest_pos = _peer[event.peer]->pos; // @note static repsawn position
                     data.resize(data.size() + 8);
-                    data[pos + 8] = std::byte{ 01 };
-                    *reinterpret_cast<short*>(&data[pos + 9]) = 4;
-                    for (int ii = 0; ii < 4; ++ii)
-                        data[pos + 11 + ii] = static_cast<std::byte>("EXIT"[ii]);
-                    pos += 8;
+                    data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
+                    *reinterpret_cast<short*>(&data[pos]) = 4; pos += sizeof(short); // @note length of "EXIT"
+                    *reinterpret_cast<std::array<std::byte, 4>*>(&data[pos]) = EXIT; pos += sizeof(std::array<std::byte, 4>);
+                    data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note idk what this is... null terminator maybe?
                 }
-                else if (fg == 242) // @todo all locks
+                else if (fg == 0xf2) // @note World Lock
                 {
-                    data.resize(data.size() + 15);
-                    data[pos + 8] = std::byte{ 03 };
-                    data[pos + 9] = std::byte{ 01 };
-                    *reinterpret_cast<int*>(&data[pos + 10]) = 1; // @note owner user ID
-                    data[pos + 14] = std::byte{ 01 }; // @note number of admins
-                    *reinterpret_cast<int*>(&data[pos + 18]) = -100; // @note default world bpm
-                    *reinterpret_cast<int*>(&data[pos + 22]) = 1; // @note list of admins
-                    pos += 14;
+                    data.resize(data.size() + 14 + (w->admin.size() * 4));
+                    data[pos] = std::byte{ 03 }; pos += sizeof(std::byte);
+                    *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
+                    data[pos] = std::byte{ static_cast<std::byte>(w->admin.size() + 1/*owner*/) }; pos += sizeof(std::byte);
+                    *reinterpret_cast<int*>(&data[pos]) = -100; pos += sizeof(int); // @note default world bpm
+                    *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
+                    for (const int& user_id : w->admin) 
+                    {
+                        *reinterpret_cast<int*>(&data[pos]) = user_id; pos += sizeof(int);
+                    }
                 }
-                pos += 8;
                 ++i;
             }
             enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
@@ -105,6 +114,7 @@ void join_request(ENetEvent event, const std::string& header)
         _peer[event.peer]->lobby = false;
         EmoticonDataChanged(event);
         _peer[event.peer]->netid = ++w->visitors;
+
         gt_packet(*event.peer, false, {
             "OnSpawn", 
             std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
@@ -136,7 +146,6 @@ void join_request(ENetEvent event, const std::string& header)
     }
     catch (const std::exception& exc)
     {
-        printf("catch error during join request: %s\n", exc.what());
         if (not std::string{exc.what()}.empty()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
         gt_packet(*event.peer, false, { "OnFailedToEnterWorld" });
     }

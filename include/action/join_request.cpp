@@ -80,14 +80,12 @@ void join_request(ENetEvent event, const std::string& header)
                 {
                     data.resize(data.size() + 14 + (w->admin.size() * 4));
                     data[pos] = std::byte{ 03 }; pos += sizeof(std::byte);
+                    data[pos] = std::byte{ 00 }; pos += sizeof(std::byte);
                     *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
-                    data[pos] = std::byte{ static_cast<std::byte>(w->admin.size() + 1/*owner*/) }; pos += sizeof(std::byte);
-                    *reinterpret_cast<int*>(&data[pos]) = -100; pos += sizeof(int); // @note default world bpm
-                    *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
+                    *reinterpret_cast<int*>(&data[pos]) = w->admin.size(); pos += sizeof(int);
+                    *reinterpret_cast<int*>(&data[pos]) = 1; // @note 01 00 00 00
                     for (const int& user_id : w->admin) 
-                    {
                         *reinterpret_cast<int*>(&data[pos]) = user_id; pos += sizeof(int);
-                    }
                 }
                 ++i;
             }

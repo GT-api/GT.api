@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "database/items.hpp"
 #include "database/peer.hpp"
 #include "database/world.hpp"
 #include "network/packet.hpp"
@@ -76,14 +77,14 @@ void join_request(ENetEvent event, const std::string& header)
                     *reinterpret_cast<std::array<std::byte, 4>*>(&data[pos]) = EXIT; pos += sizeof(std::array<std::byte, 4>);
                     data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note idk what this is... null terminator maybe?
                 }
-                else if (fg == 0xf2) // @note World Lock
+                else if (items[fg].type == std::byte{type::LOCK})
                 {
                     data.resize(data.size() + 14 + (w->admin.size() * 4));
-                    data[pos] = std::byte{ 03 }; pos += sizeof(std::byte);
+                    data[pos] = std::byte{ type::LOCK }; pos += sizeof(std::byte);
                     data[pos] = std::byte{ 00 }; pos += sizeof(std::byte);
                     *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
                     *reinterpret_cast<int*>(&data[pos]) = w->admin.size(); pos += sizeof(int);
-                    *reinterpret_cast<int*>(&data[pos]) = -100; pos += sizeof(int); // @note 9c ff ff ff
+                    *reinterpret_cast<unsigned*>(&data[pos]) = -100; pos += sizeof(unsigned); // @note 9c ff ff ff
                     for (const int& user_id : w->admin) 
                         *reinterpret_cast<int*>(&data[pos]) = user_id; pos += sizeof(int);
                 }

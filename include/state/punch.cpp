@@ -6,7 +6,7 @@
 
 void punch(ENetEvent event, state state) 
 {
-    if (not create_rt(event, 0, 120)) return; // this will only affect hackers (or macro spammers)
+    if (state.id == 32/*wrench*/ or not create_rt(event, 0, 120)) return;
     short block1D = state.punch[1] * 100 + state.punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
     block& b = worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D];
     if (state.id == 18) // @note punching a block
@@ -39,19 +39,16 @@ void punch(ENetEvent event, state state)
     else if (items[state.id].cloth_type not_eq clothing::none) return;
     else // @note placing a block
     {
-        switch (state.id) 
+        if (items[state.id].type == std::byte{type::LOCK}) 
         {
-            case 0xf2: // @note World Lock
+            // @note checks if world is owned by someone already.
+            if (worlds[_peer[event.peer]->recent_worlds.back()].owner == 00)
             {
-                // @note checks if world is owned by someone already.
-                if (worlds[_peer[event.peer]->recent_worlds.back()].owner == 00)
-                {
-                    worlds[_peer[event.peer]->recent_worlds.back()].owner = _peer[event.peer]->user_id;
-                    // @todo update visuals...
-                }
-                else return;
-
-                break;
+                worlds[_peer[event.peer]->recent_worlds.back()].owner = _peer[event.peer]->user_id;
+                // @todo update visuals...
+            }
+            else {
+                return;
             }
         }
         (items[state.id].type == std::byte{ 18 }) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.

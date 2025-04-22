@@ -7,6 +7,10 @@ enum clothing : unsigned short {
     ances, none
 };
 
+enum type : unsigned char {
+    LOCK = 03
+};
+
 #include <string>
 #include <cstddef>
 

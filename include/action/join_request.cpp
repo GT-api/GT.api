@@ -83,7 +83,7 @@ void join_request(ENetEvent event, const std::string& header)
                     data[pos] = std::byte{ 00 }; pos += sizeof(std::byte);
                     *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
                     *reinterpret_cast<int*>(&data[pos]) = w->admin.size(); pos += sizeof(int);
-                    *reinterpret_cast<int*>(&data[pos]) = 1; // @note 01 00 00 00
+                    *reinterpret_cast<int*>(&data[pos]) = -100; pos += sizeof(int); // @note 9c ff ff ff
                     for (const int& user_id : w->admin) 
                         *reinterpret_cast<int*>(&data[pos]) = user_id; pos += sizeof(int);
                 }

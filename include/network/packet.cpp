@@ -9,10 +9,7 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
     data[0] = std::byte{ 04 };
     data[4] = std::byte{ 01 };
     if (not netid) {
-        data[8] = std::byte{ 0xff };
-        data[9] = std::byte{ 0xff };
-        data[10] = std::byte{ 0xff };
-        data[11] = std::byte{ 0xff };
+        *reinterpret_cast<int*>(&data[8]) = -1;
     }
     else {
         data[8] = static_cast<std::byte>(_peer[&p]->netid);

@@ -42,20 +42,21 @@ void cache_items()
 
         pos += 14;
         {
-            unsigned char raw_hits{};
+            std::byte raw_hits{};
             shift_pos(im_data, pos, raw_hits);
-            im.hits = static_cast<short>(raw_hits);
+            im.hits = std::to_integer<short>(raw_hits);
             if (im.hits not_eq 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
         }
         pos += sizeof(int);
         {
-            if (im.type == std::byte{ 20 }) 
+            if (im.type == std::byte {type::CLOTHING}) 
             {
-                unsigned char cloth_type{};
+                std::byte cloth_type{};
                 shift_pos(im_data, pos, cloth_type);
-                im.cloth_type = static_cast<unsigned short>(cloth_type);
+                im.cloth_type = std::to_integer<unsigned short>(cloth_type);
             }
-            else pos += 1; // @note do nothing
+            else pos += 1; // @note assign nothing
+            if (im.type == std::byte{type::AURA}) im.cloth_type = clothing::ances;
         }
         pos += 3;
 
@@ -121,12 +122,7 @@ void cache_items()
             pos += sizeof(std::array<std::byte, 9>);
         if (version == 21)
             pos += sizeof(short);
-        if (im.id % 2 == 0) 
-        {
-            if (std::string lower = im.raw_name | std::ranges::views::transform(
-                [&](char c) { return std::tolower(c); }) bitor std::ranges::to<std::string>(); lower.contains("ancestral"))
-                    im.cloth_type = clothing::ances;
-        }
+        
         items.emplace(i, im);
     }
     printf("cached %d items.\n", count);

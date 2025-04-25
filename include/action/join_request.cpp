@@ -8,6 +8,8 @@
 
 #include "tools/string_view.hpp"
 
+#include <iostream>
+
 constexpr std::array<std::byte, 4> EXIT{
     std::byte{ 0x45 },
     std::byte{ 0x58 },
@@ -59,34 +61,40 @@ void join_request(ENetEvent event, const std::string& header)
             *reinterpret_cast<unsigned short*>(&data[76 + len]) = static_cast<unsigned short>(w->blocks.size());
             int pos = 85 + len;
             short i = 0;
-            for (const auto& block : w->blocks)
+            for (const auto& [fg, bg, hits] : w->blocks)
             {
-                auto [fg, bg, hits] = block;
                 *reinterpret_cast<short*>(&data[pos]) = fg; pos += 2;
                 *reinterpret_cast<short*>(&data[pos]) = bg; pos += 2;
                 pos += 2; // @todo
-                pos += 2; // @todo
-                if (fg == 06) // @note Main Door
+                pos += 2; // @todo (water = 00 04)
+                switch (items[fg].type)
                 {
-                    _peer[event.peer]->pos.front() = (i % x) * 32;
-                    _peer[event.peer]->pos.back() = (i / x) * 32;
-                    _peer[event.peer]->rest_pos = _peer[event.peer]->pos; // @note static repsawn position
-                    data.resize(data.size() + 8);
-                    data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
-                    *reinterpret_cast<short*>(&data[pos]) = 4; pos += sizeof(short); // @note length of "EXIT"
-                    *reinterpret_cast<std::array<std::byte, 4>*>(&data[pos]) = EXIT; pos += sizeof(std::array<std::byte, 4>);
-                    data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note idk what this is... null terminator maybe?
-                }
-                else if (items[fg].type == std::byte{type::LOCK})
-                {
-                    data.resize(data.size() + 14 + (w->admin.size() * 4));
-                    data[pos] = std::byte{ type::LOCK }; pos += sizeof(std::byte);
-                    data[pos] = std::byte{ 00 }; pos += sizeof(std::byte);
-                    *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
-                    *reinterpret_cast<int*>(&data[pos]) = w->admin.size(); pos += sizeof(int);
-                    *reinterpret_cast<unsigned*>(&data[pos]) = -100; pos += sizeof(unsigned); // @note 9c ff ff ff
-                    for (const int& user_id : w->admin) 
-                        *reinterpret_cast<int*>(&data[pos]) = user_id; pos += sizeof(int);
+                    case std::byte{ type::LOCK }: 
+                    {
+                        size_t admins = std::ranges::count_if(w->admin, std::identity{});
+                        data.resize(data.size() + 14 + ((admins + 1) * 4));
+                        data[pos] = std::byte{ 03 }; pos += sizeof(std::byte);
+                        data[pos] = std::byte{ 00 }; pos += sizeof(std::byte);
+                        *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
+                        *reinterpret_cast<int*>(&data[pos]) = admins + 1; pos += sizeof(int);
+                        *reinterpret_cast<int*>(&data[pos]) = -100; pos += sizeof(int);
+                        /* @todo admin list */
+
+                        break;
+                    }
+                    case std::byte{ type::MAIN_DOOR }: 
+                    {
+                        _peer[event.peer]->pos.front() = (i % x) * 32;
+                        _peer[event.peer]->pos.back() = (i / x) * 32;
+                        _peer[event.peer]->rest_pos = _peer[event.peer]->pos; // @note static repsawn position
+                        data.resize(data.size() + 8);
+                        data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
+                        *reinterpret_cast<short*>(&data[pos]) = 4; pos += sizeof(short); // @note length of "EXIT"
+                        *reinterpret_cast<std::array<std::byte, 4>*>(&data[pos]) = EXIT; pos += sizeof(std::array<std::byte, 4>);
+                        data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
+                        
+                        break;
+                    }
                 }
                 ++i;
             }

@@ -17,7 +17,7 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
     if (size >= 13 + sizeof(std::size_t)) 
     {
         std::size_t resize_forecast = *std::bit_cast<std::size_t*>(data.data() + 13); // @note we just wanna see if we can resize safely
-        if (static_cast<int>(data[12]) bitand 0x8) // @note data[12] = peer_state in state class.
+        if (std::to_integer<unsigned char>(data[12]) bitand 0x8) // @note data[12] = peer_state in state class.
         {
             if (resize_forecast <= 512 and packet->dataLength + resize_forecast <= 512)
                 enet_packet_resize(packet, packet->dataLength + resize_forecast);

@@ -12,12 +12,21 @@ void punch(ENetEvent event, state state)
     if (state.id == 18) // @note punching a block
     {
         if (b.bg == 0 and b.fg == 0) return;
-        if (b.fg == 8 or b.fg == 6)
+        if (items[b.fg].type == std::byte{type::STRONG}) 
         {
             gt_packet(*event.peer, false, {
                 "OnTalkBubble", 
-                _peer[event.peer]->netid, 
-                (b.fg == 8) ? "It's too strong to break." : "(stand over and punch to use)"
+                unsigned{1}, 
+                "It's too strong to break."
+            });
+            return;
+        }
+        if (items[b.fg].type == std::byte{type::MAIN_DOOR}) 
+        {
+            gt_packet(*event.peer, false, {
+                "OnTalkBubble", 
+                unsigned{1}, 
+                "(stand over and punch to use)"
             });
             return;
         }
@@ -48,10 +57,15 @@ void punch(ENetEvent event, state state)
                 // @todo update visuals...
             }
             else {
+                gt_packet(*event.peer, false, {
+                    "OnTalkBubble", 
+                    unsigned{1},
+                    "Only one `$World Lock`` can be placed in a world, you'd have to remove the other one first."
+                });
                 return;
             }
         }
-        (items[state.id].type == std::byte{ 18 }) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
+        (items[state.id].type == std::byte{type::BACKGROUND}) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
         _peer[event.peer]->emplace(slot{
             static_cast<short>(state.id),
             -1 // @note remove that item the peer just placed.

@@ -8,8 +8,6 @@
 
 #include "tools/string_view.hpp"
 
-#include <iostream>
-
 constexpr std::array<std::byte, 4> EXIT{
     std::byte{ 0x45 },
     std::byte{ 0x58 },
@@ -61,7 +59,7 @@ void join_request(ENetEvent event, const std::string& header)
             *reinterpret_cast<unsigned short*>(&data[76 + len]) = static_cast<unsigned short>(w->blocks.size());
             int pos = 85 + len;
             short i = 0;
-            for (const auto& [fg, bg, hits] : w->blocks)
+            for (const auto& [fg, bg, hits, title] : w->blocks)
             {
                 *reinterpret_cast<short*>(&data[pos]) = fg; pos += 2;
                 *reinterpret_cast<short*>(&data[pos]) = bg; pos += 2;
@@ -69,10 +67,14 @@ void join_request(ENetEvent event, const std::string& header)
                 pos += 2; // @todo (water = 00 04)
                 switch (items[fg].type)
                 {
+                    case std::byte{ type::FOREGROUND }: 
+                    case std::byte{ type::BACKGROUND }:
+                        break;
+
                     case std::byte{ type::LOCK }: 
                     {
                         size_t admins = std::ranges::count_if(w->admin, std::identity{});
-                        data.resize(data.size() + 14 + ((admins + 1) * 4));
+                        data.resize(data.size() + 14 + ((admins) * 4));
                         data[pos] = std::byte{ 03 }; pos += sizeof(std::byte);
                         data[pos] = std::byte{ 00 }; pos += sizeof(std::byte);
                         *reinterpret_cast<int*>(&data[pos]) = w->owner; pos += sizeof(int);
@@ -95,6 +97,24 @@ void join_request(ENetEvent event, const std::string& header)
                         
                         break;
                     }
+                    case std::byte{ type::DOOR }: case std::byte{ type::SIGN }:
+                    {
+                        short len{ static_cast<short>(std::strlen(title)) };
+                        data.resize(data.size() + 4 + len);
+                        data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
+                        *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
+                        if (title not_eq nullptr and len > 0) 
+                        {
+                            *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
+                            for (short ii = 0; ii < len; ++ii)
+                                data[pos] = static_cast<std::byte>(title[ii]), pos += sizeof(std::byte);
+                        }
+                        else data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
+                        break;
+                    }
+                    default:
+                        data.resize(data.size() + 16); // @todo
+                        break;
                 }
                 ++i;
             }

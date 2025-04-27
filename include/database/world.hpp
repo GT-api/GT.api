@@ -6,6 +6,7 @@ class block
     public:
     short fg{0}, bg{0};
     std::array<int, 2> hits{0, 0}; /* fg, bg */
+    const char* title{""}; // @note sign/door title
 };
 
 /* uid, id, count, pos*/
@@ -58,7 +59,7 @@ public:
         {
             nlohmann::json j;
             j["owner"] = owner;
-            for (const auto& [fg, bg, hits] : blocks) j["bs"].push_back({{"f", fg}, {"b", bg}});
+            for (const auto& [fg, bg, hits, title] : blocks) j["bs"].push_back({{"f", fg}, {"b", bg}});
             for (const auto& [uid, id, count, pos] : ifloats) j["fs"].push_back({{"u", uid}, {"i", id}, {"c", count}, {"p", pos}});
             std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
         }

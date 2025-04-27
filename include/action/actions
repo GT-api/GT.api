@@ -3,7 +3,6 @@
 #include "enter_game.hpp"
 #include "input.hpp"
 #include "drop.hpp"
-#include "growid.hpp"
 #include "respawn.hpp"
 #include "friends.hpp"
 #include "dialog_return.hpp"
@@ -18,7 +17,6 @@ std::unordered_map<std::string, std::function<void(ENetEvent, const std::string&
     {"action|enter_game", std::bind(&enter_game, std::placeholders::_1, std::placeholders::_2)},
     {"action|input", std::bind(&input, std::placeholders::_1, std::placeholders::_2)},
     {"action|drop", std::bind(&drop, std::placeholders::_1, std::placeholders::_2)},
-    {"action|growid", std::bind(&growid, std::placeholders::_1, std::placeholders::_2, "")},
     {"action|respawn", std::bind(&respawn, std::placeholders::_1, std::placeholders::_2)},
     {"action|respawn_spike", std::bind(&respawn, std::placeholders::_1, std::placeholders::_2)},
     {"action|friends", std::bind(&friends, std::placeholders::_1, std::placeholders::_2)},

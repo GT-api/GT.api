@@ -6,7 +6,7 @@
 
 void punch(ENetEvent event, state state) 
 {
-    if (state.id == 32/*wrench*/ or not create_rt(event, 0, 120)) return;
+    if (not create_rt(event, 0, 120)) return;
     short block1D = state.punch[1] * 100 + state.punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
     block& b = worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D];
     if (state.id == 18) // @note punching a block
@@ -46,6 +46,29 @@ void punch(ENetEvent event, state state)
         }
     }
     else if (items[state.id].cloth_type not_eq clothing::none) return;
+    else if (state.id == 32) 
+    {
+        if (items[b.fg].type == std::byte{type::DOOR}) 
+        {
+            gt_packet(*event.peer, false, {
+                "OnDialogRequest",
+                std::format("set_default_color|`o\n"
+                "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
+                "add_text_input|door_name|Label|{}|100|\n"
+                "add_popup_name|DoorEdit|\n"
+                "add_text_input|door_target|Destination||24|\n"
+                "add_smalltext|Enter a Destination in this format: `2WORLDNAME:ID``|left|\n"
+                "add_smalltext|Leave `2WORLDNAME`` blank (:ID) to go to the door with `2ID`` in the `2Current World``.|left|\n"
+                "add_text_input|door_id|ID||11|\n"
+                "add_smalltext|Set a unique `2ID`` to target this door as a Destination from another!|left|\n"
+                "add_checkbox|checkbox_locked|Is open to public|1\n"
+                "embed_data|tilex|5\n"
+                "embed_data|tiley|23\n"
+                "end_dialog|door_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.title).c_str()
+            });
+        }
+        return; // @note wrench passes state_visuals() else blocks glitchs to wrench visuals...
+    }
     else // @note placing a block
     {
         if (items[state.id].type == std::byte{type::LOCK}) 

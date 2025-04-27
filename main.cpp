@@ -46,7 +46,7 @@ int main()
         std::streampos size = file.tellg();
         im_data.resize(im_data.size() + size);
         im_data[0] = std::byte{ 04};
-        im_data[4] = std::byte{ 16 };
+        im_data[4] = std::byte{ 0x10 };
         *reinterpret_cast<int*>(&im_data[8]) = -1; // @note ff ff ff ff
         im_data[16] = std::byte{ 0x08 };
         *reinterpret_cast<std::streampos*>(&im_data[56]) = size;

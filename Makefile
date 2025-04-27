@@ -12,6 +12,7 @@ SOURCES := main.cpp \
 	include/state/pickup.cpp \
 	include/state/movement.cpp \
 	include/state/equip.cpp \
+	include/action/logging_in.cpp \
 	include/action/join_request.cpp \
 	include/on/EmoticonDataChanged.cpp
 	

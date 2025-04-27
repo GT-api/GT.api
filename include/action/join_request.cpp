@@ -97,7 +97,7 @@ void join_request(ENetEvent event, const std::string& header)
                         
                         break;
                     }
-                    case std::byte{ type::DOOR }: case std::byte{ type::SIGN }:
+                    case std::byte{ type::DOOR }:
                     {
                         short len{ static_cast<short>(label.length()) };
                         data.resize(data.size() + 4 + len);
@@ -107,6 +107,18 @@ void join_request(ENetEvent event, const std::string& header)
                             for (short ii = 0; ii < len; ++ii)
                                 data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
                         data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
+                        break;
+                    }
+                    case std::byte{ type::SIGN }:
+                    {
+                        short len{ static_cast<short>(label.length()) };
+                        data.resize(data.size() + 7 + len);
+                        data[pos] = std::byte{ 02 }; pos += sizeof(std::byte);
+                        *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
+                        if (not label.empty())
+                            for (short ii = 0; ii < len; ++ii)
+                                data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
+                        *reinterpret_cast<int*>(&data[pos]) = -1; pos += sizeof(int);
                         break;
                     }
                     default:

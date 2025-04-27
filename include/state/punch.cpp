@@ -50,7 +50,6 @@ void punch(ENetEvent event, state state)
     {
         if (items[b.fg].type == std::byte{type::DOOR}) 
         {
-            printf("punch x: %d, punch y: %d", state.punch[0], state.punch[1]);
             gt_packet(*event.peer, false, {
                 "OnDialogRequest",
                 std::format("set_default_color|`o\n"
@@ -66,6 +65,20 @@ void punch(ENetEvent event, state state)
                 "embed_data|tilex|{}\n"
                 "embed_data|tiley|{}\n"
                 "end_dialog|door_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
+            });
+        }
+        else if (items[b.fg].type == std::byte{type::SIGN}) 
+        {
+            gt_packet(*event.peer, false, {
+                "OnDialogRequest",
+                std::format("set_default_color|`o\n"
+                "add_popup_name|SignEdit|\n"
+                "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
+                "add_textbox|What would you like to write on this sign?``|left|\n"
+                "add_text_input|sign_text||{}|128|\n"
+                "embed_data|tilex|{}\n"
+                "embed_data|tiley|{}\n"
+                "end_dialog|sign_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
             });
         }
         return; // @note wrench passes state_visuals() else blocks glitchs to wrench visuals...

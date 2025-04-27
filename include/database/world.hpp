@@ -5,8 +5,8 @@ class block
 {
     public:
     short fg{0}, bg{0};
-    std::array<int, 2> hits{0, 0}; /* fg, bg */
-    const char* title{""}; // @note sign/door title
+    std::string label{""}; // @note sign/door label
+    std::array<int, 2> hits{0, 0}; // @note fg, bg
 };
 
 /* uid, id, count, pos*/
@@ -25,45 +25,14 @@ class ifloat
 class world 
 {
 public:
-    world& read(std::string name)
-    {
-        std::ifstream file(std::format("worlds\\{}.json", name));
-        if (file.is_open()) 
-        {
-            nlohmann::json j;
-            try 
-            {
-                file >> j;
-            } 
-            catch (const nlohmann::json::parse_error& e) 
-            {
-                printf("%s", e.what());
-                return *this;
-            }
-            this->name = name;
-            if (j.contains("owner")) owner = j["owner"].get<int>();
-            for (const auto& i : j["bs"]) blocks.emplace_back(block{i["f"], i["b"]});
-            for (const auto& i : j["fs"]) ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2>{i["p"][0], i["p"][1]}});
-        }
-        return *this;
-    }
+    world& read(std::string name);
     std::string name{};
     int owner{ 00 }; // @note owner of world using peer's user id.
     std::array<int, 6> admin{}; // @note admins (by user id). excluding owner. (6 is a experimental amount, if increase update me if any issue occur -leeendl)
     short visitors{0}; // -> stack object
     std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
     std::vector<ifloat> ifloats{}; /* (i)tem floating */
-    ~world() 
-    {
-        if (not this->name.empty())
-        {
-            nlohmann::json j;
-            j["owner"] = owner;
-            for (const auto& [fg, bg, hits, title] : blocks) j["bs"].push_back({{"f", fg}, {"b", bg}});
-            for (const auto& [uid, id, count, pos] : ifloats) j["fs"].push_back({{"u", uid}, {"i", id}, {"c", count}, {"p", pos}});
-            std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
-        }
-    }
+    ~world();
 };
 extern std::unordered_map<std::string, world> worlds;
 

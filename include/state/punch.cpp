@@ -50,6 +50,7 @@ void punch(ENetEvent event, state state)
     {
         if (items[b.fg].type == std::byte{type::DOOR}) 
         {
+            printf("punch x: %d, punch y: %d", state.punch[0], state.punch[1]);
             gt_packet(*event.peer, false, {
                 "OnDialogRequest",
                 std::format("set_default_color|`o\n"
@@ -62,9 +63,9 @@ void punch(ENetEvent event, state state)
                 "add_text_input|door_id|ID||11|\n"
                 "add_smalltext|Set a unique `2ID`` to target this door as a Destination from another!|left|\n"
                 "add_checkbox|checkbox_locked|Is open to public|1\n"
-                "embed_data|tilex|5\n"
-                "embed_data|tiley|23\n"
-                "end_dialog|door_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.title).c_str()
+                "embed_data|tilex|{}\n"
+                "embed_data|tiley|{}\n"
+                "end_dialog|door_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
             });
         }
         return; // @note wrench passes state_visuals() else blocks glitchs to wrench visuals...

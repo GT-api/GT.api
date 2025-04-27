@@ -4,6 +4,41 @@
 #include "network/packet.hpp"
 #include "world.hpp"
 
+world& world::read(std::string name)
+{
+    std::ifstream file(std::format("worlds\\{}.json", name));
+    if (file.is_open()) 
+    {
+        nlohmann::json j;
+        try 
+        {
+            file >> j;
+        } 
+        catch (const nlohmann::json::parse_error& e) 
+        {
+            printf("%s", e.what());
+            return *this;
+        }
+        this->name = name;
+        if (j.contains("owner")) this->owner = j["owner"].get<int>();
+        for (const auto& i : j["bs"]) this->blocks.emplace_back(block{i["f"], i["b"], i["l"]});
+        for (const auto& i : j["fs"]) this->ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2>{i["p"][0], i["p"][1]}});
+    }
+    return *this;
+}
+
+world::~world() 
+{
+    if (not this->name.empty())
+    {
+        nlohmann::json j;
+        j["owner"] = this->owner;
+        for (const auto& [fg, bg, label, hits] : this->blocks) j["bs"].push_back({{"f", fg}, {"b", bg}, {"l", label}});
+        for (const auto& [uid, id, count, pos] : this->ifloats) j["fs"].push_back({{"u", uid}, {"i", id}, {"c", count}, {"p", pos}});
+        std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
+    }
+}
+
 std::unordered_map<std::string, world> worlds;
 
 void send_data(ENetPeer& peer, const std::vector<std::byte>& data)

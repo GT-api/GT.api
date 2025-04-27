@@ -59,7 +59,7 @@ void join_request(ENetEvent event, const std::string& header)
             *reinterpret_cast<unsigned short*>(&data[76 + len]) = static_cast<unsigned short>(w->blocks.size());
             int pos = 85 + len;
             short i = 0;
-            for (const auto& [fg, bg, hits, title] : w->blocks)
+            for (const auto& [fg, bg, label, hits] : w->blocks)
             {
                 *reinterpret_cast<short*>(&data[pos]) = fg; pos += 2;
                 *reinterpret_cast<short*>(&data[pos]) = bg; pos += 2;
@@ -99,17 +99,14 @@ void join_request(ENetEvent event, const std::string& header)
                     }
                     case std::byte{ type::DOOR }: case std::byte{ type::SIGN }:
                     {
-                        short len{ static_cast<short>(std::strlen(title)) };
+                        short len{ static_cast<short>(label.length()) };
                         data.resize(data.size() + 4 + len);
                         data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
                         *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
-                        if (title not_eq nullptr and len > 0) 
-                        {
-                            *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
+                        if (not label.empty())
                             for (short ii = 0; ii < len; ++ii)
-                                data[pos] = static_cast<std::byte>(title[ii]), pos += sizeof(std::byte);
-                        }
-                        else data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
+                                data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
+                        data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
                         break;
                     }
                     default:

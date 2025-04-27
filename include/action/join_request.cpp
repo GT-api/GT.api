@@ -61,10 +61,10 @@ void join_request(ENetEvent event, const std::string& header)
             short i = 0;
             for (const auto& [fg, bg, label, hits] : w->blocks)
             {
-                *reinterpret_cast<short*>(&data[pos]) = fg; pos += 2;
-                *reinterpret_cast<short*>(&data[pos]) = bg; pos += 2;
-                pos += 2; // @todo
-                pos += 2; // @todo (water = 00 04)
+                *reinterpret_cast<short*>(&data[pos]) = fg; pos += sizeof(short);
+                *reinterpret_cast<short*>(&data[pos]) = bg; pos += sizeof(short);
+                pos += sizeof(short); // @todo
+                pos += sizeof(short); // @todo (water = 00 04)
                 switch (items[fg].type)
                 {
                     case std::byte{ type::FOREGROUND }: 
@@ -73,6 +73,7 @@ void join_request(ENetEvent event, const std::string& header)
 
                     case std::byte{ type::LOCK }: 
                     {
+                        data[pos - 2] = std::byte{ 01 };
                         size_t admins = std::ranges::count_if(w->admin, std::identity{});
                         data.resize(data.size() + 14 + ((admins) * 4));
                         data[pos] = std::byte{ 03 }; pos += sizeof(std::byte);
@@ -86,6 +87,7 @@ void join_request(ENetEvent event, const std::string& header)
                     }
                     case std::byte{ type::MAIN_DOOR }: 
                     {
+                        data[pos - 2] = std::byte{ 01 };
                         _peer[event.peer]->pos.front() = (i % x) * 32;
                         _peer[event.peer]->pos.back() = (i / x) * 32;
                         _peer[event.peer]->rest_pos = _peer[event.peer]->pos; // @note static repsawn position
@@ -99,6 +101,7 @@ void join_request(ENetEvent event, const std::string& header)
                     }
                     case std::byte{ type::DOOR }:
                     {
+                        data[pos - 2] = std::byte{ 01 };
                         short len{ static_cast<short>(label.length()) };
                         data.resize(data.size() + 4 + len);
                         data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
@@ -111,6 +114,7 @@ void join_request(ENetEvent event, const std::string& header)
                     }
                     case std::byte{ type::SIGN }:
                     {
+                        data[pos - 2] = std::byte{ 0x19 };
                         short len{ static_cast<short>(label.length()) };
                         data.resize(data.size() + 7 + len);
                         data[pos] = std::byte{ 02 }; pos += sizeof(std::byte);

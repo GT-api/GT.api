@@ -25,7 +25,6 @@ void cache_items()
         
         shift_pos(im_data, pos, im.id); pos += 2; // @note downsize im.id to 2 bit rather then a 4 bit
         pos += 1;
-
         shift_pos(im_data, pos, im.cat);
         shift_pos(im_data, pos, im.type);
         pos += 1;
@@ -40,14 +39,15 @@ void cache_items()
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;
 
-        pos += 14;
+        pos += 13;
+        shift_pos(im_data, pos, im.collision);
         {
             std::byte raw_hits{};
             shift_pos(im_data, pos, raw_hits);
             im.hits = std::to_integer<short>(raw_hits);
             if (im.hits not_eq 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
         }
-        pos += sizeof(int);
+        shift_pos(im_data, pos, im.hit_reset);
         {
             if (im.type == std::byte {type::CLOTHING}) 
             {
@@ -58,7 +58,8 @@ void cache_items()
             else pos += 1; // @note assign nothing
             if (im.type == std::byte{type::AURA}) im.cloth_type = clothing::ances;
         }
-        pos += 3;
+        shift_pos(im_data, pos, im.rarity);
+        pos += 1;
 
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;

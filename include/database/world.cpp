@@ -12,7 +12,7 @@ world& world::read(std::string name)
         nlohmann::json j;
         file >> j;
         this->name = name;
-        if (j.contains("owner")) this->owner = j["owner"].get<int>();
+        this->owner = j.contains("owner") ? j["owner"].get<int>() : 00;
         for (const auto& i : j["bs"]) this->blocks.emplace_back(block{i["f"], i["b"], i.contains("l") ? i["l"].get<std::string>() : ""});
         for (const auto& i : j["fs"]) this->ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2>{i["p"][0], i["p"][1]}});
     }
@@ -24,7 +24,7 @@ world::~world()
     if (!this->name.empty()) 
     {
         nlohmann::json j;
-        j["owner"] = this->owner;
+        if (this->owner not_eq 00) j["owner"] = this->owner;
         for (const auto& [fg, bg, label, hits] : this->blocks) 
         {
             nlohmann::json list = {{"f", fg}, {"b", bg}};

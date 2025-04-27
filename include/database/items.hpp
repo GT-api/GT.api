@@ -146,6 +146,22 @@ enum type : unsigned char {
     FRIEND_ENTRANCE = 0x8e,
 };
 
+enum collision : unsigned char {
+    NO = 00, // @note no collision
+    YES = 01, // @note collision
+    PLATFORM = 02, // @note once jumping ontop it becomes collision e.g. platforms
+    PUBLIC = 03, // @note public or accessed for no collision e.g. entrance/gateway
+    TOOGLEABLE = 04, // @note a block that is collision and non-collision (toggleable)
+    X = 05, // @note once pass through (x axis) it becomes collision e.g. one-way block
+    VIP_ACCESS = 06, // @note VIP entrance
+    Y = 07, // @note once pass through (y axis) it becomes collision e.g. waterfall
+    ADVENTURE_ITEM = 0x08, // @note requires adventure item
+    ACTIVATE = 0x09, // @note activate the item e.g. angry adventure gorilla
+    SAME_TEAM = 0x0a, // @note balloon warz team entrance
+    GUILD = 0x0b, // @note guild entrance
+    STEP_ON = 0x0c // @note no collision if stepped on
+};
+
 #include <string>
 #include <cstddef>
 
@@ -153,10 +169,13 @@ class item
 {
     public:
     unsigned short id{}; /* item identity */
-    std::string raw_name{}; /* the exact name of the item including uppercases */
-    short hits{}; // @todo make it unsigned.
     std::byte cat{};
     std::byte type{};
+    std::string raw_name{}; /* the exact name of the item including uppercases */
+    std::byte collision{};
+    short hits{}; // @todo make it unsigned.
+    int hit_reset{}; // @note in seconds
+    short rarity{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
 }; 
 #include <map>

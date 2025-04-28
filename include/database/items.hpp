@@ -149,7 +149,7 @@ enum type : unsigned char {
 enum collision : unsigned char {
     NO = 00, // @note no collision
     YES = 01, // @note collision
-    PLATFORM = 02, // @note once jumping ontop it becomes collision e.g. platforms
+    STAND_ON = 02, // @note once jumping ontop it becomes collision e.g. platforms
     PUBLIC = 03, // @note public or accessed for no collision e.g. entrance/gateway
     TOOGLEABLE = 04, // @note a block that is collision and non-collision (toggleable)
     X = 05, // @note once pass through (x axis) it becomes collision e.g. one-way block

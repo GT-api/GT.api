@@ -186,7 +186,7 @@ void join_request(ENetEvent event, const std::string& header)
     }
     catch (const std::exception& exc)
     {
-        if (not std::string{exc.what()}.empty()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
+        if (exc.what() and *exc.what()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
         gt_packet(*event.peer, false, { "OnFailedToEnterWorld" });
     }
 }

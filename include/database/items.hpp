@@ -146,8 +146,10 @@ enum type : unsigned char {
     FRIEND_ENTRANCE = 0x8e,
 };
 
-namespace collision 
-{
+#include <string>
+#include <cstddef>
+
+namespace collision {
     const std::byte
         no_collision{ 00 },
         full{ 01 },
@@ -163,9 +165,6 @@ namespace collision
         guild{ 0x0b }, // @note guild entrance
         step_on{ 0x0c };
 }
-
-#include <string>
-#include <cstddef>
 
 class item 
 {

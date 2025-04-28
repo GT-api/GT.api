@@ -145,7 +145,7 @@ void join_request(ENetEvent event, const std::string& header)
             *reinterpret_cast<int*>(&compress[8]) = uid;
             *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(count);
             send_data(*event.peer, compress);
-        }
+        } // @note delete compress
         if (std::find(_peer[event.peer]->recent_worlds.begin(), _peer[event.peer]->recent_worlds.end(), w->name) == _peer[event.peer]->recent_worlds.end()) 
         {
             std::ranges::rotate(_peer[event.peer]->recent_worlds, _peer[event.peer]->recent_worlds.begin() + 1);
@@ -169,14 +169,17 @@ void join_request(ENetEvent event, const std::string& header)
                     std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
                     _peer[&p]->netid, _peer[&p]->user_id, static_cast<int>(_peer[&p]->pos.front()), static_cast<int>(_peer[&p]->pos.back()), _peer[&p]->ltoken[0], "jp").c_str()
                 });
+                std::string enter_message{ std::format("`5<`w{}`` entered, `w{}`` others here>``", _peer[event.peer]->ltoken[0], w->visitors) };
                 gt_packet(p, false, {
                     "OnConsoleMessage", 
-                    std::format("`5<`w{}`` entered, `w{}`` others here>``", _peer[event.peer]->ltoken[0], w->visitors).c_str()
+                    enter_message.c_str()
                 });
                 gt_packet(p, false, {
                     "OnTalkBubble", 
-                    _peer[event.peer]->netid, std::format("`5<`w{}`` entered, `w{}`` others here>``", _peer[event.peer]->ltoken[0], w->visitors).c_str()});
-            }
+                    _peer[event.peer]->netid, 
+                    enter_message.c_str()
+                });
+            } // @note delete enter_message
         });
         gt_packet(*event.peer, false, {
             "OnConsoleMessage", 

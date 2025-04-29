@@ -47,7 +47,7 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
     if (size < 14) return;
     auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
     if (packet == nullptr or packet->dataLength < (size + 4)) return;
-    *reinterpret_cast<std::array<enet_uint8, 4>*>(packet->data) = { 04 };
+    packet->data[0] = { 04 };
     memcpy(packet->data + 4, data.data(), size); // @note for safety reasons I will not reinterpret the values.
     if (size >= 13 + sizeof(std::size_t)) 
     {

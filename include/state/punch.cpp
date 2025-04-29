@@ -88,11 +88,39 @@ void punch(ENetEvent event, state state)
             {
                 // @note checks if world is owned by someone already.
                 if (worlds[_peer[event.peer]->recent_worlds.back()].owner == 00)
-                {
                     worlds[_peer[event.peer]->recent_worlds.back()].owner = _peer[event.peer]->user_id;
                     // @todo update visuals...
-                }
                 else throw std::runtime_error("Only one `$World Lock`` can be placed in a world, you'd have to remove the other one first.");
+            }
+            if (items[state.id].collision == collision::full)
+            {
+                // @visual O<-|
+                if (
+                    _peer[event.peer]->facing_left and
+                    state.punch.front() == std::lround(state.pos.front() / 32) and 
+                    state.punch.back() == std::lround(state.pos.back() / 32)
+                ) return;
+
+                // @visual OO<-|
+                if (
+                    _peer[event.peer]->facing_left and
+                    state.punch.front() == std::lround(state.pos.front() / 32) + 1 and 
+                    state.punch.back() == std::lround(state.pos.back() / 32) + 1
+                ) return;
+
+                // @visual |->00
+                if (
+                    not _peer[event.peer]->facing_left and
+                    state.punch.front() == std::lround(state.pos.front() / 32) + 1 and 
+                    state.punch.back() == std::lround(state.pos.back() / 32) + 1
+                ) return;
+
+                // @visual |->0
+                if (
+                    not _peer[event.peer]->facing_left and
+                    state.punch.front() == std::lround(state.pos.front() / 32) and 
+                    state.punch.back() == std::lround(state.pos.back() / 32)
+                ) return;
             }
             (items[state.id].type == std::byte{ type::BACKGROUND }) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
             _peer[event.peer]->emplace(slot{

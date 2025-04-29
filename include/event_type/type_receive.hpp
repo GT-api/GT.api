@@ -35,12 +35,6 @@ void type_receive(ENetEvent event)
                 i->second(event, std::move(state));
             break;
         }
-        case 7:
-        {
-            printf("pass 7");
-            std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
-            printf("%s\n", header.c_str());
-        }
     }
     enet_packet_destroy(event.packet);
 }

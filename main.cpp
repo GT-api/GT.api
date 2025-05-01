@@ -4,6 +4,7 @@
 
     Project has open arms for contribution!
 */
+#include "include\pch.hpp"
 #include "include\database\items.hpp" // @note items.dat reading
 #include "include\network\enet.hpp" // @note ENet supporting AF_INET6
 #include "include\network\compress.hpp" // @note isalzman's compressor
@@ -11,8 +12,6 @@
 #include "include\network\packet.hpp" // @note back-end packet dealing (using ENet & basic C++ concepts)
 #include "include\database\world.hpp" // @note everything related to a world
 
-#include "include\on\on"
-#include "include\commands\commands"
 #include "include\tools\string_view.hpp" // @note read '|' in strings & check if string uses standard char(s)
 #include "include\action\actions"
 #include "include\state\states"

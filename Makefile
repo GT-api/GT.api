@@ -13,9 +13,15 @@ SOURCES := main.cpp \
 	include/state/movement.cpp \
 	include/state/equip.cpp \
 	include/action/logging_in.cpp \
+	include/action/enter_game.cpp \
 	include/action/dialog_return.cpp \
 	include/action/join_request.cpp \
-	include/on/EmoticonDataChanged.cpp
+	include/action/quit_to_exit.cpp \
+	include/action/input.cpp \
+	include/on/EmoticonDataChanged.cpp \
+	include/on/Action.cpp \
+	include/on/RequestWorldSelectMenu.cpp \
+	include/commands/warp.cpp
 	
 OBJECTS := $(SOURCES:.cpp=.o)
 DEPS := $(OBJECTS:.o=.d)

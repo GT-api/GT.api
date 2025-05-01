@@ -23,5 +23,5 @@ std::unordered_map<std::string, std::function<void(ENetEvent, const std::string&
     {"action|dialog_return", std::bind(&dialog_return, std::placeholders::_1, std::placeholders::_2)},
     {"action|quit_to_exit", std::bind(&quit_to_exit, std::placeholders::_1, std::placeholders::_2)},
     {"action|quit", std::bind(&quit, std::placeholders::_1, std::placeholders::_2)},
-    {"action|join_request", std::bind(&join_request, std::placeholders::_1, std::placeholders::_2)}
+    {"action|join_request", std::bind(&join_request, std::placeholders::_1, std::placeholders::_2, "")}
 };

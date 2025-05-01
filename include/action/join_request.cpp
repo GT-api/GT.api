@@ -15,14 +15,14 @@ constexpr std::array<std::byte, 4> EXIT{
     std::byte{ 0x54 }
 };
 
-void join_request(ENetEvent event, const std::string& header) 
+void join_request(ENetEvent event, const std::string& header, const std::string_view world_name = "") 
 {
     try 
     {
         if (not create_rt(event, 2, 900)) throw std::runtime_error("");
-        std::string big_name{readch(std::string{header}, '|')[3]};
+        std::string big_name{world_name.empty() ? readch(std::string{header}, '|')[3] : world_name};
         if (not alpha(big_name) or big_name.empty()) throw std::runtime_error("Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
-        std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); });
+        std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); }); // @note start -> START
         auto w = std::make_unique<world>(world().read(big_name));
         if (w->name.empty()) 
         {
@@ -157,8 +157,8 @@ void join_request(ENetEvent event, const std::string& header)
 
         gt_packet(*event.peer, false, {
             "OnSpawn", 
-            std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
-            _peer[event.peer]->netid, _peer[event.peer]->user_id, static_cast<int>(_peer[event.peer]->pos[0]), static_cast<int>(_peer[event.peer]->pos[1]), _peer[event.peer]->ltoken[0], "jp").c_str()
+            std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|us\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
+            _peer[event.peer]->netid, _peer[event.peer]->user_id, static_cast<int>(_peer[event.peer]->pos[0]), static_cast<int>(_peer[event.peer]->pos[1]), _peer[event.peer]->ltoken[0]).c_str()
         });
         peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
         {
@@ -166,8 +166,8 @@ void join_request(ENetEvent event, const std::string& header)
             {
                 gt_packet(p, false, {
                     "OnSpawn", 
-                    std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|{}\ncountry|{}\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
-                    _peer[&p]->netid, _peer[&p]->user_id, static_cast<int>(_peer[&p]->pos.front()), static_cast<int>(_peer[&p]->pos.back()), _peer[&p]->ltoken[0], "jp").c_str()
+                    std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|us\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
+                    _peer[&p]->netid, _peer[&p]->user_id, static_cast<int>(_peer[&p]->pos.front()), static_cast<int>(_peer[&p]->pos.back()), _peer[&p]->ltoken[0]).c_str()
                 });
                 std::string enter_message{ std::format("`5<`w{}`` entered, `w{}`` others here>``", _peer[event.peer]->ltoken[0], w->visitors) };
                 gt_packet(p, false, {
@@ -176,7 +176,7 @@ void join_request(ENetEvent event, const std::string& header)
                 });
                 gt_packet(p, false, {
                     "OnTalkBubble", 
-                    _peer[event.peer]->netid, 
+                    1u, 
                     enter_message.c_str()
                 });
             } // @note delete enter_message

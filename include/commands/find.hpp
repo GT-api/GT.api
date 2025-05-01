@@ -1,5 +1,5 @@
 
-void find(ENetEvent& event, const std::string& text)
+inline void find(ENetEvent& event, const std::string_view text)
 {
     gt_packet(*event.peer, false, {
         "OnDialogRequest", 

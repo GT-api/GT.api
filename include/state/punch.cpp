@@ -108,14 +108,14 @@ void punch(ENetEvent event, state state)
                     state.punch.back() == std::lround(state.pos.back() / 32) + 1
                 ) return;
 
-                // @visual |->00
+                // @visual |->OO
                 if (
                     not _peer[event.peer]->facing_left and
                     state.punch.front() == std::lround(state.pos.front() / 32) + 1 and 
                     state.punch.back() == std::lround(state.pos.back() / 32) + 1
                 ) return;
 
-                // @visual |->0
+                // @visual |->O
                 if (
                     not _peer[event.peer]->facing_left and
                     state.punch.front() == std::lround(state.pos.front() / 32) and 

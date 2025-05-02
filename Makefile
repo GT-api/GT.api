@@ -8,6 +8,7 @@ SOURCES := main.cpp \
 	include/network/packet.cpp \
 	include/network/compress.cpp \
 	include/network/enet_impl.cpp \
+	include/event_type/type_receive.cpp \
 	include/state/punch.cpp \
 	include/state/pickup.cpp \
 	include/state/movement.cpp \
@@ -17,7 +18,11 @@ SOURCES := main.cpp \
 	include/action/dialog_return.cpp \
 	include/action/join_request.cpp \
 	include/action/quit_to_exit.cpp \
+	include/action/quit.cpp \
 	include/action/input.cpp \
+	include/action/drop.cpp \
+	include/action/respawn.cpp \
+	include/action/friends.cpp \
 	include/on/EmoticonDataChanged.cpp \
 	include/on/Action.cpp \
 	include/on/RequestWorldSelectMenu.cpp \

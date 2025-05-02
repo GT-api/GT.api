@@ -1,3 +1,5 @@
+#pragma once
+
 #include "logging_in.hpp"
 #include "refresh_item_data.hpp"
 #include "enter_game.hpp"
@@ -10,7 +12,9 @@
 #include "quit.hpp"
 #include "join_request.hpp"
 
-std::unordered_map<std::string, std::function<void(ENetEvent, const std::string&)>> action_pool
+#include "pch.hpp" // @todo
+
+inline std::unordered_map<std::string, std::function<void(ENetEvent, const std::string&)>> action_pool
 {
     {"protocol", std::bind(&logging_in, std::placeholders::_1, std::placeholders::_2)},
     {"action|refresh_item_data", std::bind(&refresh_item_data, std::placeholders::_1, std::placeholders::_2)}, 

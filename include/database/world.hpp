@@ -19,7 +19,6 @@ class ifloat
     std::array<float, 2> pos;
 };
 
-#include <fstream> // @note i/o fstream for reading/writing files
 #include "nlohmann\json.hpp" // @note nlohmann::json for writing/reading JSON format
 
 class world 

@@ -6,15 +6,9 @@
 */
 #include "include\pch.hpp"
 #include "include\database\items.hpp" // @note items.dat reading
-#include "include\network\enet.hpp" // @note ENet supporting AF_INET6
 #include "include\network\compress.hpp" // @note isalzman's compressor
 #include "include\database\peer.hpp" // @note everything relating to the peer
-#include "include\network\packet.hpp" // @note back-end packet dealing (using ENet & basic C++ concepts)
-#include "include\database\world.hpp" // @note everything related to a world
 
-#include "include\tools\string_view.hpp" // @note read '|' in strings & check if string uses standard char(s)
-#include "include\action\actions"
-#include "include\state\states"
 #include "include\event_type\event_type"
 
 int main()
@@ -59,9 +53,9 @@ int main()
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
             if (const auto i = event_pool.find(event.type); i not_eq event_pool.end())
-                threads.emplace_back([=] { 
+                threads.emplace_back([=] {
                     srand(time(nullptr) ^ std::hash<std::thread::id>{}(std::this_thread::get_id()));
-                    i->second(event); 
+                    i->second(event);
                 }).detach();
     return 0;
 }

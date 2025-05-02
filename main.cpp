@@ -4,11 +4,11 @@
 
     Project has open arms for contribution!
 */
-#include "include\pch.hpp"
-#include "include\database\items.hpp" // @note items.dat reading
-#include "include\network\compress.hpp" // @note isalzman's compressor
-#include "include\database\peer.hpp" // @note everything relating to the peer
-#include "include\event_type\event_type"
+#include "include/pch.hpp"
+#include "include/database/items.hpp" // @note items.dat reading
+#include "include/network/compress.hpp" // @note isalzman's compressor
+#include "include/database/peer.hpp" // @note everything relating to the peer
+#include "include/event_type/event_type"
 
 #include <fstream>
 #include <future>

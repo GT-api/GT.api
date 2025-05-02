@@ -1,6 +1,6 @@
 #pragma once
 
-#include "network\enet.hpp" // @note ENet supporting AF_INET6
+#include "network/enet.hpp" // @note ENet supporting AF_INET6
 
 /* id, count */
 class slot {

@@ -3,14 +3,14 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}\\**",
-                "${workspaceFolder}\\include\\**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/include/**"
             ],
             "defines": [
                 "DEBUG_TIME",
                 "ENET_IMPLEMENTATION" // @note for visual aid
             ],
-            "compilerPath": "c:\\msys64\\ucrt64\\bin\\g++.exe",
+            "compilerPath": "c:/msys64/ucrt64/bin/g++.exe",
             "compilerArgs": [
                 "-std=c++23",
                 "-g",

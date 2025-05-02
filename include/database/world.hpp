@@ -19,7 +19,7 @@ class ifloat
     std::array<float, 2> pos;
 };
 
-#include "nlohmann\json.hpp" // @note nlohmann::json for writing/reading JSON format
+#include "nlohmann/json.hpp" // @note nlohmann::json for writing/reading JSON format
 
 class world 
 {

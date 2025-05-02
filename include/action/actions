@@ -12,7 +12,7 @@
 #include "quit.hpp"
 #include "join_request.hpp"
 
-#include "pch.hpp" // @todo
+#include <functional>
 
 inline std::unordered_map<std::string, std::function<void(ENetEvent, const std::string&)>> action_pool
 {

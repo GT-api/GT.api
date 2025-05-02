@@ -1,3 +1,5 @@
+#pragma once
+
 #include "enet.hpp"
 
 int

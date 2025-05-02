@@ -1,6 +1,10 @@
+#pragma once
+
 #include "type_connect.hpp"
 #include "type_disconnect.hpp"
 #include "type_receive.hpp"
+
+#include <functional>
 
 std::unordered_map<ENetEventType, std::function<void(ENetEvent)>> event_pool
 {

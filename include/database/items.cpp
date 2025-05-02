@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "items.hpp"
 
-std::map<unsigned short, item> items;
+std::unordered_map<unsigned short, item> items;
 std::vector<std::byte> im_data(60, std::byte{ 00 });
 
 template<typename T>

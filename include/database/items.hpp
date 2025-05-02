@@ -178,9 +178,9 @@ class item
     int hit_reset{}; // @note in seconds
     short rarity{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
-}; 
-#include <map>
-extern std::map<unsigned short, item> items;
+};
+#include <unordered_map>
+extern std::unordered_map<unsigned short, item> items;
 
 #include <vector>
 extern std::vector<std::byte> im_data;

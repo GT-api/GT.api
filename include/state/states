@@ -5,7 +5,7 @@
 #include "equip.hpp"
 #include "pickup.hpp"
 
-#include "pch.hpp" // @todo
+#include <functional>
 
 inline std::unordered_map<int, std::function<void(ENetEvent, state)>> state_pool
 {

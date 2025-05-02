@@ -7,6 +7,7 @@
 #include "join_request.hpp"
 
 #include "tools/string_view.hpp"
+#include "tools/randomizer.hpp"
 
 constexpr std::array<std::byte, 4> EXIT{
     std::byte{ 0x45 },
@@ -26,7 +27,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         auto w = std::make_unique<world>(world().read(big_name));
         if (w->name.empty()) 
         {
-            const unsigned main_door = rand() % (100U * 60U / 100U - 4U) + 2U;
+            const unsigned main_door = randomizer(2, 100 * 60 / 100 - 4);
             
             std::vector<block> blocks(100 * 60, block{0, 0});
             std::ranges::transform(blocks, blocks.begin(), [&](auto& b) 
@@ -34,8 +35,8 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
                 auto i = &b - &blocks[0];
                 if (i >= 3700) 
                     b.bg = 14, // cave background
-                    b.fg = (i >= 3800 and i < 5000 /* (above) lava level */ and rand() % 39 < 1) ? 10 : // rock
-                        (i > 5000 and i < 5400 /* (above) bedrock level */ and rand() % 8 < 3) ? 4 : // lava
+                    b.fg = (i >= 3800 and i < 5000 /* (above) lava level */ and !randomizer(0, 38)) ? 10 : // rock
+                        (i > 5000 and i < 5400 /* (above) bedrock level */ and randomizer(0, 8) < 3) ? 4 : // lava
                         (i >= 5400) ? 8 : 2;
                 if (i == 3600 + main_door) b.fg = 6; // main door
                 if (i == 3700 + main_door) b.fg = 8; // bedrock (below main door)

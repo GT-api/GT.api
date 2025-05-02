@@ -4,6 +4,8 @@
 #include "network/packet.hpp"
 #include "punch.hpp"
 
+#include "tools/randomizer.hpp"
+
 void punch(ENetEvent event, state state) 
 {
     try
@@ -20,13 +22,13 @@ void punch(ENetEvent event, state state)
             if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) b.fg = 0;
             else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
             else return;
-            if (rand() % 7 == 0)
+            if (!randomizer(0, 8))
             {
                 drop_visuals(event, 
                     {112, 1/* @todo get real gt gem amount for each item. */},
                     {
-                        static_cast<float>(state.punch[0]) + (0.08f + (static_cast<float>(rand()) / RAND_MAX) * (0.6f - 0.08f)), 
-                        static_cast<float>(state.punch[1]) + (0.08f + (static_cast<float>(rand()) / RAND_MAX) * (0.6f - 0.08f))
+                        static_cast<float>(state.punch[0]) + randomizer(0.06f, 0.08f), 
+                        static_cast<float>(state.punch[1]) + randomizer(0.06f, 0.08f)
                     }
                 );
             }

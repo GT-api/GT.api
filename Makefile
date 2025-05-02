@@ -26,7 +26,8 @@ SOURCES := main.cpp \
 	include/on/EmoticonDataChanged.cpp \
 	include/on/Action.cpp \
 	include/on/RequestWorldSelectMenu.cpp \
-	include/commands/warp.cpp
+	include/commands/warp.cpp \
+	include/tools/randomizer.cpp
 	
 OBJECTS := $(SOURCES:.cpp=.o)
 DEPS := $(OBJECTS:.o=.d)

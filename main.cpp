@@ -52,12 +52,10 @@ int main()
     cache_items();
 
     ENetEvent event{};
+    std::vector<std::thread> threads{};
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
             if (const auto i = event_pool.find(event.type); i not_eq event_pool.end())
-                threads.emplace_back([=] {
-                    srand(time(nullptr) ^ std::hash<std::thread::id>{}(std::this_thread::get_id()));
-                    i->second(event);
-                }).detach();
+                threads.emplace_back([=] { i->second(event); }).detach();
     return 0;
 }

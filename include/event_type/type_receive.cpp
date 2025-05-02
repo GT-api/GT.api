@@ -7,8 +7,6 @@
 
 #include "tools/string_view.hpp"
 
-std::vector<std::thread> threads{};
-
 void type_receive(ENetEvent event) 
 {
     switch (std::span{event.packet->data, event.packet->dataLength}[0]) 

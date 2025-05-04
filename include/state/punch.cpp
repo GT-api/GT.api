@@ -12,27 +12,31 @@ void punch(ENetEvent event, state state)
     {
         if (not create_rt(event, 0, 120)) return;
         short block1D = state.punch[1] * 100 + state.punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
-        block& b = worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D];
+        world &world = worlds[_peer[event.peer]->recent_worlds.back()];
+        block &b = world.blocks[block1D];
         if (state.id == 18) // @note punching a block
         {
             if (b.bg == 0 and b.fg == 0) return;
             if (items[b.fg].type == std::byte{ type::STRONG }) throw std::runtime_error("It's too strong to break.");
             if (items[b.fg].type == std::byte{ type::MAIN_DOOR }) throw std::runtime_error("(stand over and punch to use)");
-            block_punched(event, state, block1D); // TODO- referance it?
-            if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) b.fg = 0;
-            else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) b.bg = 0;
+            block_punched(event, state, b);
+            short id{};
+            if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) id = b.fg, b.fg = 0;
+            else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) id = b.bg, b.bg = 0;
             else return;
-            if (!randomizer(0, 8))
-            {
+            std::array<short, 2ULL> im{};
+            if (not randomizer(0, 7)) im = {112, 1}; // @todo get real growtopia gem drop amount. | 本物のジェムドロップ量を調べたい
+            if (not randomizer(0, 11)) im = {id, 1};
+            if (not randomizer(0, 9)) im = {++id, 1};
+            if (not im.empty())
                 drop_visuals(event, 
-                    {112, 1/* @todo get real gt gem amount for each item. */},
+                    im,
                     {
-                        static_cast<float>(state.punch[0]) + randomizer(0.06f, 0.08f), 
-                        static_cast<float>(state.punch[1]) + randomizer(0.06f, 0.08f)
+                        static_cast<float>(state.punch[0]) + randomizer(0.05f, 0.09f), 
+                        static_cast<float>(state.punch[1]) + randomizer(0.05f, 0.09f)
                     }
                 );
-            }
-        }
+        } // @note delete im, id | 解放する: im，id
         else if (items[state.id].cloth_type not_eq clothing::none) return;
         else if (state.id == 32) 
         {
@@ -89,40 +93,24 @@ void punch(ENetEvent event, state state)
             if (items[state.id].type == std::byte{ type::LOCK }) 
             {
                 // @note checks if world is owned by someone already.
-                if (worlds[_peer[event.peer]->recent_worlds.back()].owner == 00)
-                    worlds[_peer[event.peer]->recent_worlds.back()].owner = _peer[event.peer]->user_id;
+                if (world.owner == 00)
+                    world.owner = _peer[event.peer]->user_id;
                     // @todo update visuals...
                 else throw std::runtime_error("Only one `$World Lock`` can be placed in a world, you'd have to remove the other one first.");
             }
             if (items[state.id].collision == collision::full)
             {
-                // @visual O<-|
-                if (
-                    _peer[event.peer]->facing_left and
-                    state.punch.front() == std::lround(state.pos.front() / 32) and 
-                    state.punch.back() == std::lround(state.pos.back() / 32)
-                ) return;
+                // 이
+                bool x = state.punch.front() == std::lround(state.pos.front() / 32);
+                // 으
+                bool y = state.punch.back() == std::lround(state.pos.back() / 32);
 
-                // @visual OO<-|
-                if (
-                    _peer[event.peer]->facing_left and
-                    state.punch.front() == std::lround(state.pos.front() / 32) + 1 and 
-                    state.punch.back() == std::lround(state.pos.back() / 32) + 1
-                ) return;
+                bool x_nabor = state.punch.front() == std::lround(state.pos.front() / 32) + 1;
+                bool y_nabor = state.punch.back() == std::lround(state.pos.back() / 32) + 1;
 
-                // @visual |->OO
-                if (
-                    not _peer[event.peer]->facing_left and
-                    state.punch.front() == std::lround(state.pos.front() / 32) + 1 and 
-                    state.punch.back() == std::lround(state.pos.back() / 32) + 1
-                ) return;
-
-                // @visual |->O
-                if (
-                    not _peer[event.peer]->facing_left and
-                    state.punch.front() == std::lround(state.pos.front() / 32) and 
-                    state.punch.back() == std::lround(state.pos.back() / 32)
-                ) return;
+                bool collision = (x and y) or (x_nabor and y_nabor);
+                if ((_peer[event.peer]->facing_left and collision) or 
+                    (not _peer[event.peer]->facing_left and collision)) return;
             }
             (items[state.id].type == std::byte{ type::BACKGROUND }) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
             _peer[event.peer]->emplace(slot{

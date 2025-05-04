@@ -39,7 +39,7 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data);
 
 void state_visuals(ENetEvent& event, state s);
 
-void block_punched(ENetEvent& event, state s, const int block1D);
+void block_punched(ENetEvent& event, state s, block& b);
 
 void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::array<float, 2>& pos);
 

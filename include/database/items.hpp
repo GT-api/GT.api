@@ -172,12 +172,22 @@ class item
     unsigned short id{}; /* item identity */
     std::byte cat{};
     std::byte type{};
+    std::byte mt{};
     std::string raw_name{}; /* the exact name of the item including uppercases */
     std::byte collision{};
     short hits{}; // @todo make it unsigned.
     int hit_reset{}; // @note in seconds
-    short rarity{};
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
+    short rarity{};
+    short mod{};
+    short mod1{};
+
+    int mod2{}; // @note version 12 | Haunted Jack O Latern {3}
+    int mod3{}; // @note version 13 | items that emit light(?)
+    int mod4{}; // @note version 14 | Royal Clam Cruiser {11306}, Royal Mystic Bow {11440}, Anubis Pharaoh Mask {12294}
+    int mod5{}; // @note version 17 | Buster Brush {1815}
+    int mod6{}; // @note version 18 | no clue...
+    short mod7{}; // @note version 21 | 2025 transformation items
 };
 #include <unordered_map>
 extern std::unordered_map<unsigned short, item> items;

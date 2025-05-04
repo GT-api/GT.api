@@ -73,11 +73,9 @@ void state_visuals(ENetEvent& event, state s)
     });
 }
 
-void block_punched(ENetEvent& event, state s, const int block1D) 
+void block_punched(ENetEvent& event, state s, block& b)
 {
-    worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D].fg == 0 ?
-    worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D].hits[1]++ :
-    worlds[_peer[event.peer]->recent_worlds.back()].blocks[block1D].hits[0]++;
+    (b.fg == 0) ? ++b.hits[1] : ++b.hits[0];
     s.type = 8; /* change packet type from 3 to 8. */
     s.id = 6; /* hit phase visuals */
 	state_visuals(event, s);

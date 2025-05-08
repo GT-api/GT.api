@@ -65,13 +65,13 @@ void inventory_visuals(ENetEvent &event)
     std::vector<std::byte> data(66 + (size * sizeof(int)) + sizeof(int), std::byte( 00 ));
     data[0] = std::byte{ 04 };
     data[4] = std::byte{ 0x9 };
-    *reinterpret_cast<int*>(&data[8]) = -1; // @note ff ff ff ff
+    *reinterpret_cast<int*>(&data[8]) = _peer[event.peer]->netid;
     data[16] = std::byte{ 0x08 };
-    *reinterpret_cast<unsigned long*>(&data[58]) = std::byteswap(static_cast<unsigned long>(_peer[event.peer]->slot_size));
-    *reinterpret_cast<unsigned long*>(&data[62]) = std::byteswap(static_cast<unsigned long>(size));
-    for (std::size_t i = 0; i < size; ++i)
-        *reinterpret_cast<int*>(&data[(i * sizeof(int)) + 66]) = 
-            (static_cast<int>(_peer[event.peer]->slots.at(i).id) bitor (static_cast<int>(_peer[event.peer]->slots.at(i).count) << 16) bitand 0x00FFFFFF);
+    *reinterpret_cast<int*>(&data[58]) = std::byteswap<int>(_peer[event.peer]->slot_size);
+    *reinterpret_cast<int*>(&data[62]) = std::byteswap<int>(size);
+    int* slot_ptr = reinterpret_cast<int*>(data.data() + 66);
+    for (const auto& slot : _peer[event.peer]->slots)
+        *slot_ptr++ = (static_cast<int>(slot.id) bitor (static_cast<int>(slot.count) << 16)) bitand 0x00FFFFFF;
             
 	enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

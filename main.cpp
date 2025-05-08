@@ -23,7 +23,7 @@ int main()
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
         printf("ENet initialize success! (v%d.%d.%d)\n", ENET_VERSION_MAJOR, ENET_VERSION_MINOR, ENET_VERSION_PATCH);
-    } // @note 解放する: callbacks
+    } // @note delete callbacks | 解放する: callbacks
     server = enet_host_create({
         .host = in6addr_any, 
         .port = 17091
@@ -48,7 +48,7 @@ int main()
         file
             .seekg(0, std::ios::beg) // @note start from beginning of items.dat | 先頭から開始する
             .read(reinterpret_cast<char*>(&im_data[60]), size);
-    } // @note delete file, size and closes file | ファイルを閉じ、size を解放する
+    } // @note delete file, size and closes file | ファイルを閉じ、sizeを解放する
     cache_items();
 
     ENetEvent event{};

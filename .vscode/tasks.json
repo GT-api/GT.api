@@ -4,8 +4,11 @@
         {
             "label": "Build GT.api",
             "type": "shell",
-            "command": "make",
-            "args": ["-j4"],
+            "command": "bash",
+            "args": [
+                "-c",
+                "export PATH=\"$PATH:/c/msys64/ucrt64/bin:/c/msys64/usr/bin\" && make -j4"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true

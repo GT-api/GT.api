@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build GT.api",
+            "label": "Build Gurotopia",
             "type": "shell",
             "command": "make",
             "args": ["-j4"],
@@ -12,7 +12,7 @@
             }
         },
         {
-            "label": "Clean GT.api",
+            "label": "Clean Gurotopia",
             "type": "shell",
             "command": "make",
             "args": ["clean"]

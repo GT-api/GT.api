@@ -12,14 +12,15 @@
 void input(ENetEvent event, const std::string& header)
 {
     if (not create_rt(event, 1, 400)) return;
+
     std::string text{readch(std::string{header}, '|')[4]};
     {
-        auto not_isspace = [](char c){ return not std::isspace(static_cast<unsigned char>(c)); };
-        std::string::iterator start = std::ranges::find_if(text, not_isspace);
-        std::string::iterator end = std::ranges::find_if(text.rbegin(), text.rend(), not_isspace).base();
-        if (text.empty() or start >= end) return;
-        text = std::string{start, end};
-    }
+        if (text.empty()) return;
+
+        auto start = std::ranges::find_if(text, [](unsigned char c) { return !std::isspace(c); });
+        auto end = std::ranges::find_if(text.rbegin(), text.rend(), [](unsigned char c) { return !std::isspace(c); }).base();
+        if (start < end) text.assign(start, end);
+    } // @note delete start, end | 解放する: start, end
     _peer[event.peer]->messages.push_back(std::chrono::steady_clock::now());
     if (_peer[event.peer]->messages.size() > 5) _peer[event.peer]->messages.pop_front();
     if (_peer[event.peer]->messages.size() == 5 and std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - _peer[event.peer]->messages.front()).count() < 6)
@@ -32,18 +33,11 @@ void input(ENetEvent event, const std::string& header)
     {
         action(*event.peer, "log", std::format("msg| `6{}``", text).c_str());
 
-        std::string_view text_view{ text.substr(1) };
-        std::size_t spacing = text.find(' ');
-        if (spacing not_eq std::string::npos) 
-            text_view = text.substr(1, spacing - 1);
-    
-        if (cmd_pool.contains(text_view))
-            (static_cast<void>(std::async(std::launch::async, 
-                cmd_pool[text_view], 
-                std::ref(event), 
-                std::move(text.substr(1))
-            )));
-        else action(*event.peer, "log", "msg|`4Unknown command.``  Enter `$/?`` for a list of valid commands.");
+        std::string_view text_view = text.substr(1, text.find(' ') - 1); // @note e.g. /warp {} -> warp. this excludes the arguement and slash.
+        if (auto it = cmd_pool.find(text_view); it not_eq cmd_pool.end()) 
+            std::async(std::launch::async, it->second, std::ref(event), std::move(text.substr(1)));
+        else 
+            action(*event.peer, "log", "msg|`4Unknown command.`` Enter `$/?`` for a list of valid commands.");
     }
     else if (text.back() == ' ' and text.length() > 1) text.pop_back(); // @note trim back spaces. "test "
     else if (text.front() == ' ' and text.length() > 1) text = text.substr(1, text.length() - 1); // @note trim front spacing. " test"

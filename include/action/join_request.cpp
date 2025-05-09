@@ -22,7 +22,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
     {
         if (not create_rt(event, 2, 900)) throw std::runtime_error("");
         std::string big_name{world_name.empty() ? readch(std::string{header}, '|')[3] : world_name};
-        if (not alpha(big_name) or big_name.empty()) throw std::runtime_error("Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
+        if (not alpha(big_name) || big_name.empty()) throw std::runtime_error("Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
         std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); }); // @note start -> START
         auto w = std::make_unique<world>(world().read(big_name));
         if (w->name.empty()) 
@@ -35,8 +35,8 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
                 auto i = &b - &blocks[0];
                 if (i >= 3700) 
                     b.bg = 14, // cave background
-                    b.fg = (i >= 3800 and i < 5000 /* (above) lava level */ and !randomizer(0, 38)) ? 10 : // rock
-                        (i > 5000 and i < 5400 /* (above) bedrock level */ and randomizer(0, 8) < 3) ? 4 : // lava
+                    b.fg = (i >= 3800 && i < 5000 /* (above) lava level */ && !randomizer(0, 38)) ? 10 : // rock
+                        (i > 5000 && i < 5400 /* (above) bedrock level */ && randomizer(0, 8) < 3) ? 4 : // lava
                         (i >= 5400) ? 8 : 2;
                 if (i == 3600 + main_door) b.fg = 6; // main door
                 if (i == 3700 + main_door) b.fg = 8; // bedrock (below main door)
@@ -163,7 +163,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         });
         peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
         {
-            if (not _peer[&p]->recent_worlds.empty() and not _peer[event.peer]->recent_worlds.empty() and _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back() and _peer[&p]->user_id not_eq _peer[event.peer]->user_id)
+            if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back() && _peer[&p]->user_id != _peer[event.peer]->user_id)
             {
                 gt_packet(p, false, {
                     "OnSpawn", 
@@ -190,7 +190,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
     }
     catch (const std::exception& exc)
     {
-        if (exc.what() and *exc.what()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
+        if (exc.what() && *exc.what()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
         gt_packet(*event.peer, false, { "OnFailedToEnterWorld" });
     }
 }

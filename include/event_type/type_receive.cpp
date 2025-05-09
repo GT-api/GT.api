@@ -18,7 +18,7 @@ void type_receive(ENetEvent event)
             std::ranges::replace(header, '\n', '|');
             std::vector<std::string> pipes = readch(header, '|');
             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};
-            if (auto i = action_pool.find(action); i not_eq action_pool.end())
+            if (const auto i = action_pool.find(action); i != action_pool.end())
                 i->second(event, header);
             break;
         }
@@ -32,12 +32,12 @@ void type_receive(ENetEvent event)
                     if ((size + 4) >= 60)
                         for (std::size_t i = 0; i < size; ++i)
                             packet[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
-                    if (std::to_integer<unsigned char>(packet[12]) bitand 0x8 and 
+                    if (std::to_integer<unsigned char>(packet[12]) & 0x8 and 
                         size < static_cast<std::size_t>(*reinterpret_cast<int*>(&packet[52])) + 56) break;
                 } // @note deletes size
                 state = get_state(packet);
             } // @note deletes packet
-            if (auto i = state_pool.find(state.type); i not_eq state_pool.end())
+            if (const auto i = state_pool.find(state.type); i != state_pool.end())
                 i->second(event, std::move(state));
             break;
         }

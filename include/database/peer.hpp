@@ -38,7 +38,7 @@ public:
     */
     int emplace(slot s) 
     {
-        if (auto it = std::find_if(slots.begin(), slots.end(), [&](const auto& found) { return found.id == s.id; }); it not_eq slots.end()) 
+        if (auto it = std::find_if(slots.begin(), slots.end(), [&](const auto& found) { return found.id == s.id; }); it != slots.end()) 
         {
             int excess = std::max(0, (it->count + s.count) - 200);
             it->count = std::min(it->count + s.count, 200);

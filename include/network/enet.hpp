@@ -1251,7 +1251,7 @@ extern "C" {
         if (version < ENET_VERSION_CREATE(1, 3, 0))
             return -1;
 
-        if (inits->malloc not_eq __null or inits->free not_eq __null) 
+        if (inits->malloc != __null or inits->free != __null) 
         {
             if (inits->malloc == __null or inits->free == __null) 
                 return -1;
@@ -1260,10 +1260,10 @@ extern "C" {
             callbacks.free   = inits->free;
         }
 
-        if (inits->no_memory not_eq __null)
+        if (inits->no_memory != __null)
             callbacks.no_memory = inits->no_memory;
 
-        if (inits->packet_create not_eq __null or inits->packet_destroy not_eq __null) 
+        if (inits->packet_create != __null or inits->packet_destroy != __null) 
         {
             if (inits->packet_create == __null or inits->packet_destroy == __null)
                 return -1;
@@ -1494,7 +1494,7 @@ extern "C" {
             uint32_t crc = reflect_crc(byte, 8) << 24;
 
             for (int offset = 0; offset < 8; ++offset) 
-                crc = (crc bitand 0x80000000) ? (crc << 1) ^ 0x04C11DB7 : crc << 1;
+                crc = (crc & 0x80000000) ? (crc << 1) ^ 0x04C11DB7 : crc << 1;
 
             crcTable[byte] = reflect_crc(crc, 32);
         }
@@ -1516,14 +1516,14 @@ extern "C" {
             _mm_prefetch(reinterpret_cast<const char*>(data), _MM_HINT_T0);
 
             while (data + 4 <= dataEnd) {
-                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
-                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
-                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
-                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
             }
 
             while (data < dataEnd) 
-                crc = (crc >> 8) ^ crcTable[(crc bitand 0xFF) ^ *data++];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
 
             ++buffers;
         }
@@ -3274,7 +3274,7 @@ extern "C" {
     {
         enet_uint32 waitCondition;
 
-        if (event not_eq __null) 
+        if (event != __null) 
         {
             event->type   = ENET_EVENT_TYPE_NONE;
             event->peer   = __null;
@@ -3353,7 +3353,7 @@ extern "C" {
                     break;
             }
 
-            if (event not_eq __null) 
+            if (event != __null) 
             {
                 switch (enet_protocol_dispatch_incoming_commands(host, event)) 
                 {
@@ -3383,13 +3383,13 @@ extern "C" {
                     return 0;
 
                 waitCondition = ENET_SOCKET_WAIT_RECEIVE bitor ENET_SOCKET_WAIT_INTERRUPT;
-                if (enet_socket_wait(host->socket, &waitCondition, ENET_TIME_DIFFERENCE(timeout, host->serviceTime)) not_eq 0)
+                if (enet_socket_wait(host->socket, &waitCondition, ENET_TIME_DIFFERENCE(timeout, host->serviceTime)) != 0)
                     return -1;
             } 
-            while (waitCondition bitand ENET_SOCKET_WAIT_INTERRUPT);
+            while (waitCondition & ENET_SOCKET_WAIT_INTERRUPT);
 
             host->serviceTime = enet_time_get();
-        } while (waitCondition bitand ENET_SOCKET_WAIT_RECEIVE);
+        } while (waitCondition & ENET_SOCKET_WAIT_RECEIVE);
         return 0;
     } /* enet_host_service */
 
@@ -3576,11 +3576,11 @@ extern "C" {
         ENetProtocol command;
         size_t fragmentLength;
 
-        if (peer->state not_eq ENET_PEER_STATE_CONNECTED or channelID >= peer->channelCount or packet->dataLength > peer->host->maximumPacketSize)
+        if (peer->state != ENET_PEER_STATE_CONNECTED or channelID >= peer->channelCount or packet->dataLength > peer->host->maximumPacketSize)
             return -1;
 
         fragmentLength = peer->mtu - sizeof(ENetProtocolHeader) - sizeof(ENetProtocolSendFragment);
-        if (peer->host->checksum not_eq __null) 
+        if (peer->host->checksum != __null) 
             fragmentLength -= sizeof(enet_uint32);
 
         if (packet->dataLength > fragmentLength) 
@@ -3594,7 +3594,7 @@ extern "C" {
             if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT)
                 return -1;
 
-            if ((packet->flags bitand (ENET_PACKET_FLAG_RELIABLE bitor ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT)) ==
+            if ((packet->flags & (ENET_PACKET_FLAG_RELIABLE bitor ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT)) ==
                 ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT and channel->outgoingUnreliableSequenceNumber < 0xFFFF)
             {
                 commandNumber       = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT;
@@ -3654,12 +3654,12 @@ extern "C" {
 
         command.header.channelID = channelID;
 
-        if ((packet->flags bitand (ENET_PACKET_FLAG_RELIABLE bitor ENET_PACKET_FLAG_UNSEQUENCED)) == ENET_PACKET_FLAG_UNSEQUENCED) 
+        if ((packet->flags & (ENET_PACKET_FLAG_RELIABLE bitor ENET_PACKET_FLAG_UNSEQUENCED)) == ENET_PACKET_FLAG_UNSEQUENCED) 
         {
             command.header.command = static_cast<enet_uint32>(ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED) bitor static_cast<enet_uint32>(ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED);
             command.sendUnsequenced.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
         }
-        else if (packet->flags bitand ENET_PACKET_FLAG_RELIABLE or channel->outgoingUnreliableSequenceNumber >= 0xFFFF) 
+        else if (packet->flags & ENET_PACKET_FLAG_RELIABLE or channel->outgoingUnreliableSequenceNumber >= 0xFFFF) 
         {
             command.header.command = static_cast<enet_uint32>(ENET_PROTOCOL_COMMAND_SEND_RELIABLE) bitor static_cast<enet_uint32>(ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE);
             command.sendReliable.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
@@ -4458,11 +4458,11 @@ extern "C" {
         memset(host->peers, 0, peerCount * sizeof(ENetPeer));
 
         host->socket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
-        if (host->socket not_eq ENET_SOCKET___null) 
+        if (host->socket != ENET_SOCKET___null) 
             enet_socket_set_option (host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
 
-        if (host->socket == ENET_SOCKET___null or (&address not_eq __null and enet_socket_bind(host->socket, &address) < 0)) {
-            if (host->socket not_eq ENET_SOCKET___null) 
+        if (host->socket == ENET_SOCKET___null or (&address != __null and enet_socket_bind(host->socket, &address) < 0)) {
+            if (host->socket != ENET_SOCKET___null) 
                 enet_socket_destroy(host->socket);
 
             enet_free(host->peers);
@@ -4477,7 +4477,7 @@ extern "C" {
         enet_socket_set_option(host->socket, ENET_SOCKOPT_SNDBUF, ENET_HOST_SEND_BUFFER_SIZE);
         enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
 
-        if (&address not_eq __null && enet_socket_get_address(host->socket, &host->address) < 0)
+        if (&address != __null && enet_socket_get_address(host->socket, &host->address) < 0)
             host->address = address;
 
         if (not channelLimit or channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT)
@@ -5707,7 +5707,7 @@ extern "C" {
 
         if (WSAStartup(versionRequested, &wsaData)) return -1;
 
-        if (LOBYTE(wsaData.wVersion) not_eq 1 or HIBYTE(wsaData.wVersion) not_eq 1) 
+        if (LOBYTE(wsaData.wVersion) != 1 or HIBYTE(wsaData.wVersion) != 1) 
         {
             WSACleanup();
             return -1;

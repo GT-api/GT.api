@@ -12,7 +12,7 @@ void pickup(ENetEvent event, state state)
                std::abs(i.pos[1] - _peer[event.peer]->pos[1]) <= 0.6f;
     });
 
-    if (it not_eq ifloats.end()) 
+    if (it != ifloats.end()) 
     {
         short excess = _peer[event.peer]->emplace(slot{it->id, static_cast<short>(it->count)});
         it->count -= (it->count - excess);

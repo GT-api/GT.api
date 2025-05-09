@@ -71,7 +71,7 @@ void inventory_visuals(ENetEvent &event)
     *reinterpret_cast<int*>(&data[62]) = std::byteswap<int>(size);
     int* slot_ptr = reinterpret_cast<int*>(data.data() + 66);
     for (const auto& slot : _peer[event.peer]->slots)
-        *slot_ptr++ = (static_cast<int>(slot.id) bitor (static_cast<int>(slot.count) << 16)) bitand 0x00FFFFFF;
+        *slot_ptr++ = (static_cast<int>(slot.id) | (static_cast<int>(slot.count) << 16)) & 0x00FFFFFF;
             
 	enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
 }

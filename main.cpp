@@ -33,7 +33,7 @@ int main()
     server->checksum = enet_crc32;
     enet_host_compress_with_range_coder(server);
     {
-        std::ifstream file("items.dat", std::ios::binary bitor std::ios::ate);
+        std::ifstream file("items.dat", std::ios::binary | std::ios::ate);
         if (not file.is_open()) {
             printf("failed to open items.dat");
             getchar();
@@ -55,7 +55,7 @@ int main()
     std::vector<std::thread> threads{};
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
-            if (const auto i = event_pool.find(event.type); i not_eq event_pool.end())
+            if (const auto i = event_pool.find(event.type); i != event_pool.end())
                 threads.emplace_back([=] { i->second(event); }).detach();
     return 0;
 }

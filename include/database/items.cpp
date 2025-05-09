@@ -45,7 +45,7 @@ void cache_items()
             std::byte raw_hits{};
             shift_pos(im_data, pos, raw_hits);
             im.hits = std::to_integer<short>(raw_hits);
-            if (im.hits not_eq 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
+            if (im.hits != 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
         }
         shift_pos(im_data, pos, im.hit_reset);
         {

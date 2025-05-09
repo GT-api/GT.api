@@ -26,7 +26,7 @@ world::~world()
     if (!this->name.empty()) 
     {
         nlohmann::json j;
-        if (this->owner not_eq 00) j["owner"] = this->owner;
+        if (this->owner != 00) j["owner"] = this->owner;
         for (const auto& [fg, bg, label, hits] : this->blocks) 
         {
             nlohmann::json list = {{"f", fg}, {"b", bg}};
@@ -48,15 +48,15 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
     std::size_t size = data.size();
     if (size < 14) return;
     auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
-    if (packet == nullptr or packet->dataLength < (size + 4)) return;
+    if (packet == nullptr || packet->dataLength < (size + 4)) return;
     packet->data[0] = { 04 };
     memcpy(packet->data + 4, data.data(), size); // @note for safety reasons I will not reinterpret the values.
     if (size >= 13 + sizeof(std::size_t)) 
     {
         std::size_t resize_forecast = *std::bit_cast<std::size_t*>(data.data() + 13); // @note we just wanna see if we can resize safely
-        if (std::to_integer<unsigned char>(data[12]) bitand 0x8) // @note data[12] = peer_state in state class.
+        if (std::to_integer<unsigned char>(data[12]) & 0x8) // @note data[12] = peer_state in state class.
         {
-            if (resize_forecast <= 512 and packet->dataLength + resize_forecast <= 512)
+            if (resize_forecast <= 512 && packet->dataLength + resize_forecast <= 512)
                 enet_packet_resize(packet, packet->dataLength + resize_forecast);
         }
     }
@@ -68,7 +68,7 @@ void state_visuals(ENetEvent& event, state s)
     s.netid = _peer[event.peer]->netid;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (not _peer[&p]->recent_worlds.empty() and not _peer[event.peer]->recent_worlds.empty() and _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
             send_data(p, compress_state(s));
     });
 }
@@ -95,7 +95,7 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::a
     *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (not _peer[&p]->recent_worlds.empty() and not _peer[event.peer]->recent_worlds.empty() and _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
             send_data(p, compress);
     });
 }

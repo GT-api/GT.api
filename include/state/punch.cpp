@@ -16,13 +16,13 @@ void punch(ENetEvent event, state state)
         block &b = world.blocks[block1D];
         if (state.id == 18) // @note punching a block
         {
-            if (b.bg == 0 and b.fg == 0) return;
+            if (b.bg == 0 && b.fg == 0) return;
             if (items[b.fg].type == std::byte{ type::STRONG }) throw std::runtime_error("It's too strong to break.");
             if (items[b.fg].type == std::byte{ type::MAIN_DOOR }) throw std::runtime_error("(stand over and punch to use)");
             block_punched(event, state, b);
             short id{};
-            if (b.fg not_eq 0 and b.hits[0] >= items[b.fg].hits) id = b.fg, b.fg = 0;
-            else if (b.bg not_eq 0 and b.hits[1] >= items[b.bg].hits) id = b.bg, b.bg = 0;
+            if (b.fg != 0 && b.hits[0] >= items[b.fg].hits) id = b.fg, b.fg = 0;
+            else if (b.bg != 0 && b.hits[1] >= items[b.bg].hits) id = b.bg, b.bg = 0;
             else return;
             std::array<short, 2ULL> im{};
             if (not randomizer(0, 7)) im = {112, 1}; // @todo get real growtopia gem drop amount. | 本物のジェムドロップ量を調べたい
@@ -37,7 +37,7 @@ void punch(ENetEvent event, state state)
                     }
                 );
         } // @note delete im, id | 解放する: im，id
-        else if (items[state.id].cloth_type not_eq clothing::none) return;
+        else if (items[state.id].cloth_type != clothing::none) return;
         else if (state.id == 32) 
         {
             if (items[b.fg].type == std::byte{ type::DOOR }) 
@@ -108,9 +108,9 @@ void punch(ENetEvent event, state state)
                 bool x_nabor = state.punch.front() == std::lround(state.pos.front() / 32) + 1;
                 bool y_nabor = state.punch.back() == std::lround(state.pos.back() / 32) + 1;
 
-                bool collision = (x and y) or (x_nabor and y_nabor);
-                if ((_peer[event.peer]->facing_left and collision) or 
-                    (not _peer[event.peer]->facing_left and collision)) return;
+                bool collision = (x && y) || (x_nabor && y_nabor);
+                if ((_peer[event.peer]->facing_left && collision) || 
+                    (not _peer[event.peer]->facing_left && collision)) return;
             }
             (items[state.id].type == std::byte{ type::BACKGROUND }) ? b.bg = state.id : b.fg = state.id; // @note this helps prevent foregrounds to act as backgrounds.
             _peer[event.peer]->emplace(slot{
@@ -122,7 +122,7 @@ void punch(ENetEvent event, state state)
     }
     catch (const std::exception& exc)
     {
-        if (exc.what() and *exc.what()) 
+        if (exc.what() && *exc.what()) 
             gt_packet(*event.peer, false, {
                 "OnTalkBubble", 
                 1u,

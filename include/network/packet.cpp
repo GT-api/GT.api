@@ -29,7 +29,7 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
                 data[size + 6 + i] = static_cast<std::byte>(str[i]); /* e.g. 'a' -> 0x61. 'z' = 0x7A */ // be educated: https://en.cppreference.com/w/cpp/language/ascii
             size += 2 + str.length() + sizeof(int);
         }
-        else if (param.type() == typeid(int) or param.type() == typeid(unsigned)) 
+        else if (param.type() == typeid(int) || param.type() == typeid(unsigned)) 
         {
             bool is_signed = (param.type() == typeid(int));
             int value = is_signed ? std::any_cast<int>(param) : static_cast<int>(std::any_cast<unsigned>(param));
@@ -67,7 +67,7 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
     }
 
     ENetPacket* packet = enet_packet_create(data.data(), size, ENET_PACKET_FLAG_RELIABLE);
-    if (packet not_eq nullptr and packet->dataLength > 61)
+    if (packet != nullptr && packet->dataLength > 61)
         enet_peer_send(&p, 0, packet);
 }
 

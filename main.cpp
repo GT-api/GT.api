@@ -34,7 +34,8 @@ int main()
     enet_host_compress_with_range_coder(server);
     {
         std::ifstream file("items.dat", std::ios::binary | std::ios::ate);
-        if (not file.is_open()) {
+        if (!file.is_open())
+        {
             printf("failed to open items.dat");
             getchar();
         }

@@ -9,11 +9,9 @@
 </div>
 
 ***
-### ![checklist](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/checklist.svg) Requirements
-
 1. __Download:__
-  - **Visual Studio Code**:  **https://code.visualstudio.com/**
-  - **MSYS2**:  **https://www.msys2.org/**
+   - **Visual Studio Code**:  **https://code.visualstudio.com/**
+   - **MSYS2**:  **https://www.msys2.org/**
 
 2. __Installing MSYS packages__:
    - Locate MSYS folder (`C:\msys64`)

@@ -11,16 +11,24 @@
 ***
 ### ![checklist](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/checklist.svg) Requirements
 
-- [VSC](https://code.visualstudio.com/)
-  - (optional) install C++ extension in VSC
-- [MSYS2](https://www.msys2.org/) (Follow the intructions)
-  - after installing **MSYS2**:
-    - Press <img src="https://www.servis-repas.cz/user/categories/orig/windows-11-icon.png" width="20" height="20"></img> and type 'cmd' and input: `C:\msys64\ucrt64.exe`
-    - input inside the popup console: `pacman -S --needed mingw-w64-ucrt-x86_64-gcc make && pacman -Syu`
-### ![build](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/build.svg) Building 
-- Open VSC in `gurotopia-main` folder, then press `Ctrl + Shift + B` to start compiling.
+1. __Download:__
+  - **Visual Studio Code**:  **https://code.visualstudio.com/**
+  - **MSYS2**:  **https://www.msys2.org/**
 
+2. __Installing MSYS packages__:
+   - Locate MSYS folder (`C:\msys64`)
+   - Open **ucrt64.exe** and paste **`pacman -Syu`** into the terminal
+   - Now, re-open **ucrt64.exe** and paste **`pacman -S --needed mingw-w64-ucrt-x86_64-gcc make`** into the terminal
+
+3. __Compile__:
+   - After downloading *Gurotopia*, open it in Visual Studio Code, typically compiling is taken place in VSC terminal manually, however some projects including mine has a build shortcut (**Ctrl + Shift + B**), and let it compile...
+
+4. __Debugging or Running__:
+   - after compile press **F5** key- this will run and debug, however debugging is unnecessary if you wish to host a GTPS, please press **Ctrl + F5** instead.
+   - *(optional)* how to stop the server? press **Shift + F5**, or simply close VSC.
+   - *(optional)* how to restart the server? press **Ctrl + Shift + F5**.
 ***
+
 > [!NOTE]
 > Make sure 'hosts' file via `C:/Windows/System32/drivers/etc/` is set to:
 > ```

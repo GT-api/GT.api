@@ -12,6 +12,7 @@
 1. __Download:__
    - **Visual Studio Code**:  **https://code.visualstudio.com/**
    - **MSYS2**:  **https://www.msys2.org/**
+   - **C/C++ extension for VSC**: https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
 
 2. __Installing MSYS packages__:
    - Locate MSYS folder (`C:\msys64`)

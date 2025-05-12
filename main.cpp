@@ -53,6 +53,6 @@ int main()
     while(true)
         while (enet_host_service(server, &event, 1) > 0)
             if (const auto i = event_pool.find(event.type); i != event_pool.end())
-                threads.emplace_back([=] { i->second(event); }).join();
+                threads.emplace_back([=] { i->second(event); }).detach(); // @todo
     return 0;
 }

@@ -25,7 +25,7 @@ public:
     int user_id{}; // @note unqiue user id.
     std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
     std::array<float, 10> clothing{}; // @note peer's clothing
-    unsigned skin_color{ -1429995521 };
+    signed skin_color{ -1429995521 };
 
     std::array<float, 2> pos{}; // @note position {x, y}
     std::array<float, 2> rest_pos{}; // @note respawn position {x, y}

@@ -68,7 +68,7 @@ void state_visuals(ENetEvent& event, state s)
     s.netid = _peer[event.peer]->netid;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
             send_data(p, compress_state(s));
     });
 }
@@ -95,7 +95,7 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::a
     *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
             send_data(p, compress);
     });
 }

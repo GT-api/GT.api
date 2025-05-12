@@ -8,8 +8,8 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
     std::vector<std::byte> data(61, std::byte{ 00 });
     data[0] = std::byte{ 04 };
     data[4] = std::byte{ 01 };
-    if (not netid) *reinterpret_cast<int*>(&data[8]) = -1;
-    else data[8] = static_cast<std::byte>(_peer[&p]->netid);
+    if (not netid) *reinterpret_cast<signed*>(&data[8]) = -1;
+    else *reinterpret_cast<signed*>(&data[8]) = _peer[&p]->netid;
     data[16] = std::byte{ 0x08 };
     data[24] = std::byte{ 00 }; // @todo delay
     std::size_t size = data.size();

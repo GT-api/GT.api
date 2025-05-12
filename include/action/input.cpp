@@ -44,7 +44,7 @@ void input(ENetEvent event, const std::string& header)
     else if (text.empty()) return; // @note ignore empty messages.
     else peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back())
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back())
             gt_packet(p, false, {
                 "OnTalkBubble", 
                 1u, 

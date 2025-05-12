@@ -159,11 +159,12 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         gt_packet(*event.peer, false, {
             "OnSpawn", 
             std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|us\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
-            _peer[event.peer]->netid, _peer[event.peer]->user_id, static_cast<int>(_peer[event.peer]->pos[0]), static_cast<int>(_peer[event.peer]->pos[1]), _peer[event.peer]->ltoken[0]).c_str()
+            _peer[event.peer]->netid, _peer[event.peer]->user_id, static_cast<int>(_peer[event.peer]->pos.front()), static_cast<int>(_peer[event.peer]->pos.back()), _peer[event.peer]->ltoken[0]).c_str()
         });
         peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
         {
-            if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back() && _peer[&p]->user_id != _peer[event.peer]->user_id)
+            if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()  && 
+                /* @todo */_peer[&p]->user_id != _peer[event.peer]->user_id)
             {
                 gt_packet(p, false, {
                     "OnSpawn", 
@@ -190,7 +191,6 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
     }
     catch (const std::exception& exc)
     {
-        printf("caught a problem in join_request.cpp (error: %s)", exc.what());
         if (exc.what() && *exc.what()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
         gt_packet(*event.peer, false, { "OnFailedToEnterWorld" });
     }

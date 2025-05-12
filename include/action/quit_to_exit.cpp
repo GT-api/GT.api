@@ -10,7 +10,7 @@ void quit_to_exit(ENetEvent event, const std::string& header, bool skip_selectio
     --worlds[_peer[event.peer]->recent_worlds.back()].visitors;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (not _peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back() && _peer[&p]->user_id != _peer[event.peer]->user_id) 
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
         {
             gt_packet(p, false, {
                 "OnConsoleMessage", 

@@ -24,7 +24,7 @@ void input(ENetEvent event, const std::string& header)
     _peer[event.peer]->messages.push_back(std::chrono::steady_clock::now());
     if (_peer[event.peer]->messages.size() > 5) _peer[event.peer]->messages.pop_front();
     if (_peer[event.peer]->messages.size() == 5 && std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - _peer[event.peer]->messages.front()).count() < 6)
-        gt_packet(*event.peer, false, {
+        gt_packet(*event.peer, false, 0, {
             "OnConsoleMessage", 
             "`6>>`4Spam detected! ``Please wait a bit before typing anything else.  "  
             "Please note, any form of bot/macro/auto-paste will get all your accounts banned, so don't do it!"
@@ -45,12 +45,12 @@ void input(ENetEvent event, const std::string& header)
     else peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back())
-            gt_packet(p, false, {
+            gt_packet(p, false, 0, {
                 "OnTalkBubble", 
                 1u, 
                 std::format("CP:0_PL:0_OID:_player_chat={}", text).c_str()
             }),
-            gt_packet(p, false, {
+            gt_packet(p, false, 0, {
                 "OnConsoleMessage", 
                 std::format("CP:0_PL:0_OID:_CT:[W]_ `6<`w{}``>`` `$`${}````", _peer[event.peer]->ltoken[0], text).c_str()
             });

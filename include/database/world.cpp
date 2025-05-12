@@ -102,7 +102,7 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::a
 
 void clothing_visuals(ENetEvent &event) 
 {
-    gt_packet(*event.peer, true, {
+    gt_packet(*event.peer, true, 0, {
         "OnSetClothing", 
         std::vector<float>{_peer[event.peer]->clothing[hair], _peer[event.peer]->clothing[shirt], _peer[event.peer]->clothing[legs]}, 
         std::vector<float>{_peer[event.peer]->clothing[feet], _peer[event.peer]->clothing[face], _peer[event.peer]->clothing[hand]}, 

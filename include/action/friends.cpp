@@ -4,7 +4,7 @@
 
 void friends(ENetEvent event, const std::string& header) 
 {
-    gt_packet(*event.peer, false, {
+    gt_packet(*event.peer, false, 0, {
         "OnDialogRequest", 
         "set_default_color|`o\n"
         "add_label_with_icon|big| `wSocial Portal`` |left|1366|\n"

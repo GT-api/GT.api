@@ -27,7 +27,7 @@ void logging_in(ENetEvent event, const std::string& header)
                 _peer[event.peer]->ltoken[1] = strdup(decoded.substr(pos).c_str());
             }
         }
-        gt_packet(*event.peer, false, {
+        gt_packet(*event.peer, false, 0, {
             "OnSuperMainStartAcceptLogonHrdxs47254722215a",
             0u,
             "ubistatic-a.akamaihd.net",

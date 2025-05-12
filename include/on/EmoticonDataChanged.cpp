@@ -24,7 +24,7 @@ void EmoticonDataChanged(ENetEvent& event)
     EmoticonData.str().reserve(emoticon.size() * 23/* emoticon data + ()||1/0& */);
     for (const auto& [key, value] : emoticon) 
         EmoticonData << "(" << key << ")|" << value << "|1&"; // @todo add requirements for unlocking emoticons
-    gt_packet(*event.peer, false, {
+    gt_packet(*event.peer, false, 0, {
         "OnEmoticonDataChanged", 
         0, 
         EmoticonData.str().c_str()

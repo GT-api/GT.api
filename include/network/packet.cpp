@@ -3,7 +3,7 @@
 #include "database/world.hpp"
 #include "packet.hpp"
 
-void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params) 
+void gt_packet(ENetPeer& p, bool netid, unsigned delay, const std::vector<std::any>& params) 
 {
     std::vector<std::byte> data(61, std::byte{ 00 });
     data[0] = std::byte{ 04 };
@@ -11,7 +11,7 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
     if (not netid) *reinterpret_cast<signed*>(&data[8]) = -1;
     else *reinterpret_cast<signed*>(&data[8]) = _peer[&p]->netid;
     data[16] = std::byte{ 0x08 };
-    data[24] = std::byte{ 00 }; // @todo delay
+    *reinterpret_cast<unsigned*>(&data[24]) = delay;
     std::size_t size = data.size();
     std::byte index{};
     for (const auto& param : params) 

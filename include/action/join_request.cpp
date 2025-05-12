@@ -156,7 +156,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         EmoticonDataChanged(event);
         _peer[event.peer]->netid = ++w->visitors;
 
-        gt_packet(*event.peer, false, {
+        gt_packet(*event.peer, false, 0, {
             "OnSpawn", 
             std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|us\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\ntype|local\n",
             _peer[event.peer]->netid, _peer[event.peer]->user_id, static_cast<int>(_peer[event.peer]->pos.front()), static_cast<int>(_peer[event.peer]->pos.back()), _peer[event.peer]->ltoken[0]).c_str()
@@ -166,24 +166,24 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
             if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()  && 
                 /* @todo */_peer[&p]->user_id != _peer[event.peer]->user_id)
             {
-                gt_packet(p, false, {
+                gt_packet(p, false, 0, {
                     "OnSpawn", 
                     std::format("spawn|avatar\nnetID|{}\nuserID|{}\ncolrect|0|0|20|30\nposXY|{}|{}\nname|`w{}``\ncountry|us\ninvis|0\nmstate|0\nsmstate|0\nonlineID|\n",
                     _peer[&p]->netid, _peer[&p]->user_id, static_cast<int>(_peer[&p]->pos.front()), static_cast<int>(_peer[&p]->pos.back()), _peer[&p]->ltoken[0]).c_str()
                 });
                 std::string enter_message{ std::format("`5<`w{}`` entered, `w{}`` others here>``", _peer[event.peer]->ltoken[0], w->visitors) };
-                gt_packet(p, false, {
+                gt_packet(p, false, 0, {
                     "OnConsoleMessage", 
                     enter_message.c_str()
                 });
-                gt_packet(p, false, {
+                gt_packet(p, false, 0, {
                     "OnTalkBubble", 
                     1u, 
                     enter_message.c_str()
                 });
             } // @note delete enter_message
         });
-        gt_packet(*event.peer, false, {
+        gt_packet(*event.peer, false, 0, {
             "OnConsoleMessage", 
             std::format("World `w{}`` entered.  There are `w{}`` other people here, `w{}`` online.", w->name, w->visitors - 1, peers().size()).c_str()});
         inventory_visuals(event);
@@ -191,7 +191,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
     }
     catch (const std::exception& exc)
     {
-        if (exc.what() && *exc.what()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
-        gt_packet(*event.peer, false, { "OnFailedToEnterWorld" });
+        if (exc.what() && *exc.what()) gt_packet(*event.peer, false, 0, { "OnConsoleMessage", exc.what() });
+        gt_packet(*event.peer, false, 0, { "OnFailedToEnterWorld" });
     }
 }

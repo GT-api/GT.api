@@ -12,11 +12,11 @@ void quit_to_exit(ENetEvent event, const std::string& header, bool skip_selectio
     {
         if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
         {
-            gt_packet(p, false, {
+            gt_packet(p, false, 0, {
                 "OnConsoleMessage", 
                 std::format("`5<`w{}`` left, `w{}`` others here>``", _peer[event.peer]->ltoken[0], worlds[_peer[event.peer]->recent_worlds.back()].visitors).c_str()
             });
-            gt_packet(p, true, {
+            gt_packet(p, true, 0, {
                 "OnRemove", 
                 std::format("netID|{}\npId|\n", _peer[event.peer]->netid).c_str()
             });

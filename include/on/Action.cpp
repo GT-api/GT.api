@@ -9,7 +9,7 @@ void Action(ENetEvent& event, const std::string_view text)
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back())
-            gt_packet(p, true, {
+            gt_packet(p, true, 0, {
                 "OnAction", 
                 formatted_action.c_str()
             });

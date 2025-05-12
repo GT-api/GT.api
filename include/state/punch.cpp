@@ -42,7 +42,7 @@ void punch(ENetEvent event, state state)
         {
             if (items[b.fg].type == std::byte{ type::DOOR }) 
             {
-                gt_packet(*event.peer, false, {
+                gt_packet(*event.peer, false, 0, {
                     "OnDialogRequest",
                     std::format("set_default_color|`o\n"
                     "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
@@ -61,7 +61,7 @@ void punch(ENetEvent event, state state)
             }
             else if (items[b.fg].type == std::byte{ type::SIGN }) 
             {
-                gt_packet(*event.peer, false, {
+                gt_packet(*event.peer, false, 0, {
                     "OnDialogRequest",
                     std::format("set_default_color|`o\n"
                     "add_popup_name|SignEdit|\n"
@@ -75,7 +75,7 @@ void punch(ENetEvent event, state state)
             }
             else if (items[b.fg].type == std::byte{ type::ENTRANCE }) 
             {
-                gt_packet(*event.peer, false, {
+                gt_packet(*event.peer, false, 0, {
                     "OnDialogRequest",
                     std::format("set_default_color|`o\n"
                     "set_default_color|`o"
@@ -123,7 +123,7 @@ void punch(ENetEvent event, state state)
     catch (const std::exception& exc)
     {
         if (exc.what() && *exc.what()) 
-            gt_packet(*event.peer, false, {
+            gt_packet(*event.peer, false, 0, {
                 "OnTalkBubble", 
                 1u,
                 exc.what()

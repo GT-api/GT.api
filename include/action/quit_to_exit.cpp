@@ -28,5 +28,5 @@ void quit_to_exit(ENetEvent event, const std::string& header, bool skip_selectio
     _peer[event.peer]->post_enter.unlock();
     _peer[event.peer]->lobby = true;
     _peer[event.peer]->netid = -1; // this will fix any packets being sent outside of world
-    OnRequestWorldSelectMenu(event);
+    if (!skip_selection) OnRequestWorldSelectMenu(event);
 }

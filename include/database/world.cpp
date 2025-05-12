@@ -107,7 +107,7 @@ void clothing_visuals(ENetEvent &event)
         std::vector<float>{_peer[event.peer]->clothing[hair], _peer[event.peer]->clothing[shirt], _peer[event.peer]->clothing[legs]}, 
         std::vector<float>{_peer[event.peer]->clothing[feet], _peer[event.peer]->clothing[face], _peer[event.peer]->clothing[hand]}, 
         std::vector<float>{_peer[event.peer]->clothing[back], _peer[event.peer]->clothing[head], _peer[event.peer]->clothing[charm]}, 
-        -1429995521,
+        _peer[event.peer]->skin_color,
         std::vector<float>{_peer[event.peer]->clothing[ances], 0.0f, 0.0f}
     });
 }

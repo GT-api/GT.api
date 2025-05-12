@@ -21,10 +21,11 @@ public:
     std::once_flag welcome_message{}; // @note makes sure "welcome back {}." message is triggered once
     std::mutex post_enter{}; // @note locked if peer is in a world. usage: post_enter.is_lock(). if true the peer is already in a world.
 
-    signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
+    signed netid{ -1 }; /* peer's netid is world identity. this will be useful for many packet sending */
     int user_id{}; // @note unqiue user id.
     std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
     std::array<float, 10> clothing{}; // @note peer's clothing
+    unsigned skin_color{ -1429995521 };
 
     std::array<float, 2> pos{}; // @note position {x, y}
     std::array<float, 2> rest_pos{}; // @note respawn position {x, y}

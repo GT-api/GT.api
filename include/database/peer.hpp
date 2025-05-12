@@ -16,10 +16,10 @@ public:
 
 class peer {
 public:
-    std::once_flag logging_in{};
-    std::once_flag entered_game{};
-    std::once_flag welcome_message{};
-    std::mutex post_enter{};
+    std::once_flag logging_in{}; // @note makes sure "connecting to server..." is triggered once (e.g. OnSuperMain)
+    std::once_flag entered_game{}; // @note makes sure action|enter_game is triggered once.
+    std::once_flag welcome_message{}; // @note makes sure "welcome back {}." message is triggered once
+    std::mutex post_enter{}; // @note locked if peer is in a world. usage: post_enter.is_lock(). if true the peer is already in a world.
 
     signed netid{-1}; /* peer's netid is world identity. this will be useful for many packet sending */
     int user_id{}; // @note unqiue user id.
@@ -49,7 +49,6 @@ public:
     }
 
     std::array<std::string, 5> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
-    bool lobby{true}; // @note checks if peer is in EXIT or 'lobby'
     
     std::array<std::chrono::steady_clock::time_point, 3> rate_limit{}; // @note rate limit objects
     std::deque<std::chrono::steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming

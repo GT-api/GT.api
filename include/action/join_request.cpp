@@ -152,7 +152,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
             std::ranges::rotate(_peer[event.peer]->recent_worlds, _peer[event.peer]->recent_worlds.begin() + 1);
             _peer[event.peer]->recent_worlds.back() = w->name;
         }
-        _peer[event.peer]->lobby = false;
+        _peer[event.peer]->post_enter.unlock();
         EmoticonDataChanged(event);
         _peer[event.peer]->netid = ++w->visitors;
 

@@ -2,10 +2,10 @@
 #include "database/peer.hpp"
 #include "database/world.hpp"
 #include "network/packet.hpp"
+#include "commands/commands.hpp"
 #include "input.hpp"
 
 #include "tools/string_view.hpp"
-#include "commands/commands"
 
 #include <future>
 

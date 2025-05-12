@@ -47,7 +47,7 @@ void send_data(ENetPeer& peer, const std::vector<std::byte>& data)
 {
     std::size_t size = data.size();
     if (size < 14) return;
-    auto packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
+    ENetPacket *packet = enet_packet_create(nullptr, size + 5, ENET_PACKET_FLAG_RELIABLE);
     if (packet == nullptr || packet->dataLength < (size + 4)) return;
     packet->data[0] = { 04 };
     memcpy(packet->data + 4, data.data(), size); // @note for safety reasons I will not reinterpret the values.
@@ -107,7 +107,7 @@ void clothing_visuals(ENetEvent &event)
         std::vector<float>{_peer[event.peer]->clothing[hair], _peer[event.peer]->clothing[shirt], _peer[event.peer]->clothing[legs]}, 
         std::vector<float>{_peer[event.peer]->clothing[feet], _peer[event.peer]->clothing[face], _peer[event.peer]->clothing[hand]}, 
         std::vector<float>{_peer[event.peer]->clothing[back], _peer[event.peer]->clothing[head], _peer[event.peer]->clothing[charm]}, 
-        (int)-1429995521,
+        -1429995521,
         std::vector<float>{_peer[event.peer]->clothing[ances], 0.0f, 0.0f}
     });
 }

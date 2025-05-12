@@ -13,6 +13,6 @@ void warp(ENetEvent& event, const std::string_view text)
     action(*event.peer, "log", std::format("msg| `6/warp {}``", world_name));
     gt_packet(*event.peer, false, { "OnSetFreezeState", 1 });
     action(*event.peer, "log", std::format("msg|Magically warping to world `5{}``...", world_name));
-    quit_to_exit(event, "");
+    quit_to_exit(event, "", true);
     join_request(event, "", world_name);
 }

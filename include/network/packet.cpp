@@ -47,7 +47,7 @@ void gt_packet(ENetPeer& p, bool netid, const std::vector<std::any>& params)
         }
         else if (param.type() == typeid(std::vector<float>)) 
         {
-            const auto& vec = std::any_cast<const std::vector<float>&>(param);
+            const std::vector<float>& vec = std::any_cast<const std::vector<float>&>(param);
             data.resize(size + 2 + (sizeof(float) * vec.size()) + 2);
             data[size] = index;
             data[size + 1] = 

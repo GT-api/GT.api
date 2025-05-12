@@ -4,7 +4,7 @@
 
 void OnRequestWorldSelectMenu(ENetEvent event) 
 {
-    auto section = [](const auto& range, const auto& color) 
+    auto section = [](const auto& range, const char* color) 
     {
         std::string result;
         for (const auto& name : range)

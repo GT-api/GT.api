@@ -4,7 +4,7 @@
 #include "on/RequestWorldSelectMenu.hpp"
 #include "quit_to_exit.hpp"
 
-void quit_to_exit(ENetEvent event, const std::string& header) 
+void quit_to_exit(ENetEvent event, const std::string& header, bool skip_selection = false) 
 {
     if (_peer[event.peer]->lobby == true) return;
     --worlds[_peer[event.peer]->recent_worlds.back()].visitors;

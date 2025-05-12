@@ -24,15 +24,15 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         std::string big_name{world_name.empty() ? readch(std::string{header}, '|')[3] : world_name};
         if (not alpha(big_name) || big_name.empty()) throw std::runtime_error("Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
         std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); }); // @note start -> START
-        auto w = std::make_unique<world>(world().read(big_name));
+        std::unique_ptr<world> w = std::make_unique<world>(std::move(world().read(big_name)));
         if (w->name.empty()) 
         {
             const unsigned main_door = randomizer(2, 100 * 60 / 100 - 4);
             
             std::vector<block> blocks(100 * 60, block{0, 0});
-            std::ranges::transform(blocks, blocks.begin(), [&](auto& b) 
+            std::ranges::transform(blocks, blocks.begin(), [&](block& b) 
             {
-                auto i = &b - &blocks[0];
+                long long i = &b - &blocks[0];
                 if (i >= 3700) 
                     b.bg = 14, // cave background
                     b.fg = (i >= 3800 && i < 5000 /* (above) lava level */ && !randomizer(0, 38)) ? 10 : // rock
@@ -190,6 +190,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
     }
     catch (const std::exception& exc)
     {
+        printf("caught a problem in join_request.cpp (error: %s)", exc.what());
         if (exc.what() && *exc.what()) gt_packet(*event.peer, false, { "OnConsoleMessage", exc.what() });
         gt_packet(*event.peer, false, { "OnFailedToEnterWorld" });
     }

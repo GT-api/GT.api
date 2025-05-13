@@ -54,18 +54,16 @@ void cache_items()
             shift_pos(im_data, pos, raw_hits);
             im.hits = std::to_integer<short>(raw_hits);
             if (im.hits != 0) im.hits /= 6; // @note unknown reason behind why break hit is muliplied by 6 then having to divide by 6
-        }
+        } // @note delete raw_hits
         shift_pos(im_data, pos, im.hit_reset);
+        if (im.type == std::byte {type::CLOTHING}) 
         {
-            if (im.type == std::byte {type::CLOTHING}) 
-            {
-                std::byte cloth_type{};
-                shift_pos(im_data, pos, cloth_type);
-                im.cloth_type = std::to_integer<unsigned short>(cloth_type);
-            }
-            else pos += 1; // @note assign nothing
-            if (im.type == std::byte{type::AURA}) im.cloth_type = clothing::ances;
+            std::byte cloth_type{};
+            shift_pos(im_data, pos, cloth_type);
+            im.cloth_type = std::to_integer<unsigned short>(cloth_type);
         }
+        else pos += 1; // @note assign nothing
+        if (im.type == std::byte{type::AURA}) im.cloth_type = clothing::ances;
         shift_pos(im_data, pos, im.rarity);
         pos += 1;
 
@@ -75,7 +73,8 @@ void cache_items()
             im.audio_directory += std::to_integer<char>(im_data[pos]), 
             ++pos;
 
-        data_modify(im_data, pos, 0); // @todo only for IOS
+        if (im.audio_directory.ends_with(".mp3"))
+            data_modify(im_data, pos, 0); // @todo make it only for IOS
         shift_pos(im_data, pos, im.audioHash);
 
         pos += 4;

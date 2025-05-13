@@ -21,7 +21,7 @@ ENetHost* server;
 std::vector<ENetPeer> peers(_ENetPeerState state, std::function<void(ENetPeer&)> fun) {
     std::vector<ENetPeer> peers{};
     for (ENetPeer& peer : std::ranges::subrange(server->peers, server->peers + server->peerCount)) 
-        if (peer.state == ENET_PEER_STATE_CONNECTED)
+        if (peer.state == state)
             fun(peer), peers.emplace_back(peer);
     return peers;
 }

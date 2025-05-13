@@ -26,7 +26,7 @@ void EmoticonDataChanged(ENetEvent& event)
         EmoticonData << "(" << key << ")|" << value << "|1&"; // @todo add requirements for unlocking emoticons
     gt_packet(*event.peer, false, 0, {
         "OnEmoticonDataChanged", 
-        0, 
+        201560520, 
         EmoticonData.str().c_str()
     });
 }

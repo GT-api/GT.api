@@ -61,3 +61,17 @@ inline/* todo */ std::string base64Decode(std::string_view encoded)
     }
     return decoded;
 }
+
+/* FNV1A Hashing */
+inline std::size_t fnv1a(const std::string& value) noexcept {
+    constexpr std::size_t FNV_OFFSET = 14695981039346656037ULL;
+    constexpr std::size_t FNV_PRIME = 1099511628211ULL;
+
+    std::size_t hash = FNV_OFFSET;
+    for (unsigned char c : value) { // Use unsigned char to avoid sign extension issues
+        hash ^= c;
+        hash *= FNV_PRIME;
+    }
+    return hash;
+}
+

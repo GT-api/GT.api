@@ -10,10 +10,10 @@
 #include "tools/randomizer.hpp"
 
 constexpr std::array<std::byte, 4> EXIT{
-    std::byte{ 0x45 },
-    std::byte{ 0x58 },
-    std::byte{ 0x49 },
-    std::byte{ 0x54 }
+    std::byte{ 0x45 }, // @note 'E'
+    std::byte{ 0x58 }, // @note 'X'
+    std::byte{ 0x49 }, // @note 'I'
+    std::byte{ 0x54 }  // @note 'T'
 };
 
 void join_request(ENetEvent event, const std::string& header, const std::string_view world_name = "") 
@@ -25,23 +25,26 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         if (not alpha(big_name) || big_name.empty()) throw std::runtime_error("Sorry, spaces and special characters are not allowed in world or door names.  Try again.");
         std::ranges::transform(big_name, big_name.begin(), [](char c) { return std::toupper(c); }); // @note start -> START
         std::unique_ptr<world> w = std::make_unique<world>(std::move(world().read(big_name)));
-        if (w->name.empty()) 
+        if (w->name.empty())
         {
             const unsigned main_door = randomizer(2, 100 * 60 / 100 - 4);
-            
+
             std::vector<block> blocks(100 * 60, block{0, 0});
-            std::ranges::transform(blocks, blocks.begin(), [&](block& b) 
+            block *base_ptr = blocks.data();
+            std::ranges::for_each(blocks, [&](block& b)
             {
-                long long i = &b - &blocks[0];
-                if (i >= 3700) 
-                    b.bg = 14, // cave background
-                    b.fg = (i >= 3800 && i < 5000 /* (above) lava level */ && !randomizer(0, 38)) ? 10 : // rock
-                        (i > 5000 && i < 5400 /* (above) bedrock level */ && randomizer(0, 8) < 3) ? 4 : // lava
-                        (i >= 5400) ? 8 : 2;
+                long long i = &b - base_ptr;
+                if (i >= 3700)
+                {
+                    b.bg = 14; // cave background
+                    if (i >= 3800 && i < 5000 /* (above) lava level */ && !randomizer(0, 38)) b.fg = 10/* rock */;
+                    else if (i > 5000 && i < 5400 /* (above) bedrock level */ && randomizer(0, 8) < 3) b.fg = 4/* lava */;
+                    else b.fg = (i >= 5400) ? 8 : 2/* dirt */;
+                }
                 if (i == 3600 + main_door) b.fg = 6; // main door
-                if (i == 3700 + main_door) b.fg = 8; // bedrock (below main door)
-                return b;
+                else if (i == 3700 + main_door) b.fg = 8; // bedrock (below main door)
             });
+
             w->blocks = std::move(blocks);
             w->name = big_name; // init
         }

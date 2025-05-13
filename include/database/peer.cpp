@@ -18,12 +18,18 @@ bool create_rt(ENetEvent& event, std::size_t pos, int64_t length)
 
 ENetHost* server;
 
-std::vector<ENetPeer> peers(_ENetPeerState state, std::function<void(ENetPeer&)> fun) {
-    std::vector<ENetPeer> peers{};
-    for (ENetPeer& peer : std::ranges::subrange(server->peers, server->peers + server->peerCount)) 
-        if (peer.state == state)
-            fun(peer), peers.emplace_back(peer);
-    return peers;
+std::vector<ENetPeer*> peers(_ENetPeerState state, std::function<void(ENetPeer&)> fun)
+{
+    std::vector<ENetPeer*> _peers{};
+    _peers.reserve(server->peerCount);
+    for (ENetPeer& peer : std::span(server->peers, server->peerCount))
+        if (peer.state == state) 
+        {
+            fun(peer);
+            _peers.push_back(&peer);
+        }
+
+    return _peers;
 }
 
 state get_state(const std::vector<std::byte>& packet) 

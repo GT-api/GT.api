@@ -65,7 +65,7 @@ bool create_rt(ENetEvent& event, std::size_t pos, int64_t length);
 #include <bits/std_function.h> // @note std::function<>
 extern ENetHost* server;
 
-std::vector<ENetPeer> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){});
+std::vector<ENetPeer*> peers(_ENetPeerState state = ENET_PEER_STATE_CONNECTED, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){});
 
 class state {
     public:

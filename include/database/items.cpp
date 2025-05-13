@@ -12,6 +12,14 @@ void shift_pos(std::vector<std::byte>& data, int& pos, T& value)
     pos += sizeof(T);
 }
 
+/* have not tested modifying string values... */
+template<typename T>
+void data_modify(std::vector<std::byte>& data, int& pos, const T& value) 
+{
+    for (std::size_t i = 0; i < sizeof(T); ++i) 
+        data[pos + i] = reinterpret_cast<const std::byte*>(&value)[i];
+}
+
 void cache_items()
 {
     int pos{60}, count{};
@@ -33,7 +41,7 @@ void cache_items()
         pos += sizeof(short);
         im.raw_name.resize(len);
         for (short i = 0; i < len; ++i) 
-            im.raw_name[i] = static_cast<char>(im_data[pos] ^ std::byte(token[(i + im.id) % token.length()])), 
+            im.raw_name[i] = std::to_integer<char>(im_data[pos] ^ std::byte(token[(i + im.id) % token.length()])), 
             ++pos;
 
         len = *(reinterpret_cast<short*>(&im_data[pos]));
@@ -62,9 +70,15 @@ void cache_items()
         pos += 1;
 
         len = *(reinterpret_cast<short*>(&im_data[pos]));
-        pos += sizeof(short) + len;
+        pos += sizeof(short);
+        for (short i = 0; i < len; ++i) 
+            im.audio_directory += std::to_integer<char>(im_data[pos]), 
+            ++pos;
 
-        pos += 8;
+        data_modify(im_data, pos, 0); // @todo only for IOS
+        shift_pos(im_data, pos, im.audioHash);
+
+        pos += 4;
 
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;

@@ -179,6 +179,8 @@ class item
     int hit_reset{}; // @note in seconds
     unsigned short cloth_type{clothing::none}; /* use clothing:: if you are unsure of the order */
     short rarity{};
+    std::string audio_directory{}; // @note ../../audio.mp3
+    int audioHash{};
     short mod{};
     short mod1{};
 

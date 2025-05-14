@@ -1,13 +1,16 @@
 /*
     @copyright gurotopia (c) 25-6-2024
-    @author leeendl | English & Japanese Comments, 英語と日本語のコメント
+    @author @leeendl | English Comments
 
-    Project has open arms for contribution! | このプロジェクトは貢献を歓迎します！
+    Project has open arms for contribution!
+
+    looking for:
+    - Indonesian translator
 */
 #include "include/pch.hpp"
-#include "include/database/items.hpp" // @note items.dat reading | items.datのバイトを処理する
-#include "include/network/compress.hpp" // @note isalzman's compressor | ENetの圧縮
-#include "include/database/peer.hpp" // @note peer class | peerクラス
+#include "include/database/items.hpp" // @note items.dat reading
+#include "include/network/compress.hpp" // @note isalzman's compressor
+#include "include/database/peer.hpp" // @note peer class
 #include "include/event_type/event_type"
 
 #include <fstream>
@@ -23,7 +26,7 @@ int main()
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
         printf("ENet initialize success! (v%d.%d.%d)\n", ENET_VERSION_MAJOR, ENET_VERSION_MINOR, ENET_VERSION_PATCH);
-    } // @note delete callbacks | 解放する: callbacks
+    } // @note delete callbacks
     server = enet_host_create({
         .host = in6addr_any, 
         .port = 17091
@@ -42,9 +45,9 @@ int main()
         im_data[16] = std::byte{ 0x08 };
         *reinterpret_cast<std::streampos*>(&im_data[56]) = size;
         file
-            .seekg(0, std::ios::beg) // @note start from beginning of items.dat | 先頭から開始する
+            .seekg(0, std::ios::beg) // @note start from beginning of items.dat
             .read(reinterpret_cast<char*>(&im_data[60]), size);
-    } // @note delete file, size and closes file | ファイルを閉じ、sizeを解放する
+    } // @note delete file, size and closes file
     cache_items();
 
     ENetEvent event{};

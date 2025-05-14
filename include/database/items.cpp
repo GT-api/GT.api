@@ -105,7 +105,7 @@ void cache_items()
         len = *(reinterpret_cast<short*>(&im_data[pos]));
         pos += sizeof(short) + len;
 
-        pos += sizeof(std::array<std::byte, 80>);
+        pos += sizeof(std::array<std::byte, 80ull>);
         if (version >= 11)
         {
             pos += *(reinterpret_cast<short*>(&im_data[pos]));
@@ -114,7 +114,7 @@ void cache_items()
         if (version >= 12)
         {
             shift_pos(im_data, pos, im.mod2);
-            pos += sizeof(std::array<std::byte, 9>);
+            pos += sizeof(std::array<std::byte, 9ull>);
         }
         if (version >= 13)
             shift_pos(im_data, pos, im.mod3);
@@ -122,7 +122,7 @@ void cache_items()
             shift_pos(im_data, pos, im.mod4);
         if (version >= 15)
         {
-            pos += sizeof(std::array<std::byte, 25>);
+            pos += sizeof(std::array<std::byte, 25ull>);
             pos += *(reinterpret_cast<short*>(&im_data[pos]));
             pos += sizeof(short);
         }
@@ -136,7 +136,7 @@ void cache_items()
         if (version >= 18)
             shift_pos(im_data, pos, im.mod6);
         if (version >= 19)
-            pos += sizeof(std::array<std::byte, 9>);
+            pos += sizeof(std::array<std::byte, 9ull>);
         if (version == 21)
             shift_pos(im_data, pos, im.mod7);
         

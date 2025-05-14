@@ -99,6 +99,7 @@
     #include <mmsystem.h>
 
     #include <intrin.h>
+    #include <emmintrin.h>
 
     #if defined(_WIN32) && defined(_MSC_VER)
     #if _MSC_VER < 1900
@@ -1502,33 +1503,47 @@ extern "C" {
         initializedCRC32 = true;
     }
 
-    enet_uint32 enet_crc32(const ENetBuffer* buffers, size_t bufferCount) 
-    {
+    enet_uint32 enet_crc32(const ENetBuffer* buffers, size_t bufferCount) {
         enet_uint32 crc = 0xFFFFFFFF;
 
-        if (not initializedCRC32) initialize_crc32();
+        if (!initializedCRC32) initialize_crc32();
 
         while (bufferCount-- > 0) 
         {
             const enet_uint8* data = static_cast<const enet_uint8*>(buffers->data);
-            const enet_uint8* dataEnd = &data[buffers->dataLength];
+            const enet_uint8* dataEnd = data + buffers->dataLength;
 
             _mm_prefetch(reinterpret_cast<const char*>(data), _MM_HINT_T0);
 
-            while (data + 4 <= dataEnd) {
-                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
-                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
-                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
+            while (data + 8 <= dataEnd) 
+            {
+                enet_uint32 chunk1 = *reinterpret_cast<const enet_uint32*>(data);
+                enet_uint32 chunk2 = *reinterpret_cast<const enet_uint32*>(data + 4);
+                data += 8;
+
+                crc ^= chunk1;
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+
+                crc ^= chunk2;
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+                crc = (crc >> 8) ^ crcTable[(crc & 0xFF)];
+            }
+            while (data < dataEnd) 
+            {
                 crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
             }
 
-            while (data < dataEnd) 
-                crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
-
             ++buffers;
         }
+        
         return ENET_HOST_TO_NET_32(~crc);
     }
+
 
 // =======================================================================//
 // !

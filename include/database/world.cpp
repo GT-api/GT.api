@@ -16,7 +16,7 @@ world& world::read(std::string name)
         this->name = name;
         this->owner = j.contains("owner") ? j["owner"].get<int>() : 00;
         for (const auto& i : j["bs"]) this->blocks.emplace_back(block{i["f"], i["b"], i.contains("l") ? i["l"].get<std::string>() : ""});
-        for (const auto& i : j["fs"]) this->ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2>{i["p"][0], i["p"][1]}});
+        for (const auto& i : j["fs"]) this->ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2ull>{i["p"][0], i["p"][1]}});
     }
     return *this;
 }
@@ -73,7 +73,7 @@ void state_visuals(ENetEvent& event, state s)
     });
 }
 
-void block_punched(ENetEvent& event, state s, block& b)
+void block_punched(ENetEvent& event, state s, block &b)
 {
     (b.fg == 0) ? ++b.hits[1] : ++b.hits[0];
     s.type = 8; /* change packet type from 3 to 8. */
@@ -81,7 +81,7 @@ void block_punched(ENetEvent& event, state s, block& b)
 	state_visuals(event, s);
 }
 
-void drop_visuals(ENetEvent& event, const std::array<short, 2>& im, const std::array<float, 2>& pos) 
+void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std::array<float, 2ull>& pos) 
 {
     std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
     ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
@@ -109,5 +109,44 @@ void clothing_visuals(ENetEvent &event)
         std::vector<float>{_peer[event.peer]->clothing[back], _peer[event.peer]->clothing[head], _peer[event.peer]->clothing[charm]}, 
         _peer[event.peer]->skin_color,
         std::vector<float>{_peer[event.peer]->clothing[ances], 0.0f, 0.0f}
+    });
+}
+
+void tile_update(ENetEvent &event, state s, block &b) 
+{
+    s.type = 5; // @note PACKET_SEND_TILE_UPDATE_DATA
+    s.peer_state = 0x08;
+    std::vector<std::byte> data = compress_state(s);
+
+    int pos = 56;
+    data.resize(pos + 8); // @note {2} {2} 00 00 00 00
+    *reinterpret_cast<short*>(&data[pos]) = b.fg; pos += sizeof(short);
+    *reinterpret_cast<short*>(&data[pos]) = b.bg; pos += sizeof(short);
+    pos += sizeof(short); // @todo
+    pos += sizeof(short); // @todo (water = 00 04)
+
+    switch (items[b.fg].type)
+    {
+        case std::byte{ type::SIGN }:
+        {
+            std::string label = b.label;
+            short len = static_cast<short>(label.length());
+            data.resize(pos + 1 + 2 + len + 4 + 1); // @note 02 {2} {} ff ff ff ff 0
+
+            data[pos] = std::byte{ 02 }; pos += sizeof(std::byte);
+            *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
+            if (not label.empty())
+                for (short ii = 0; ii < len; ++ii)
+                    data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
+            *reinterpret_cast<int*>(&data[pos]) = -1; pos += sizeof(int); // @note ff ff ff ff
+            pos += sizeof(std::byte);
+        }
+    }
+
+    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) {
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() &&
+            _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) {
+            send_data(p, data);
+        }
     });
 }

@@ -23,9 +23,9 @@ inline/* todo */ bool alpha(const std::string& str)
     return true;
 }
 
-constexpr std::array<int, 256> createLookupTable() noexcept 
+constexpr std::array<int, 256ull> createLookupTable() noexcept 
 {
-    std::array<int, 256> table{};
+    std::array<int, 256ull> table{};
     table.fill(-1);
     
     constexpr std::string_view base64_chars = 
@@ -64,14 +64,14 @@ inline/* todo */ std::string base64Decode(std::string_view encoded)
 
 /* FNV1A Hashing */
 inline std::size_t fnv1a(const std::string& value) noexcept {
-    constexpr std::size_t FNV_OFFSET = 14695981039346656037ULL;
-    constexpr std::size_t FNV_PRIME = 1099511628211ULL;
+    constexpr std::size_t FNV_OFFSET = 14695981039346656037ull; // @todo globalize?
+    constexpr std::size_t FNV_PRIME = 1099511628211ull; // @todo globalize?
 
-    std::size_t hash = FNV_OFFSET;
-    for (unsigned char c : value) { // Use unsigned char to avoid sign extension issues
-        hash ^= c;
-        hash *= FNV_PRIME;
+    std::size_t fnv1a = FNV_OFFSET;
+    for (unsigned char c : value) 
+    {
+        fnv1a ^= c;
+        fnv1a *= FNV_PRIME;
     }
-    return hash;
+    return fnv1a;
 }
-

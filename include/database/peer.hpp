@@ -23,12 +23,12 @@ public:
 
     signed netid{ -1 }; /* peer's netid is world identity. this will be useful for many packet sending */
     int user_id{}; // @note unqiue user id.
-    std::array<const char*, 2> ltoken{}; // @note peer's ltoken e.g. [growid, password]
-    std::array<float, 10> clothing{}; // @note peer's clothing
+    std::array<const char*, 2ull> ltoken{}; // @note peer's ltoken e.g. [growid, password]
+    std::array<float, 10ull> clothing{}; // @note peer's clothing
     signed skin_color{ -1429995521 };
 
-    std::array<float, 2> pos{}; // @note position {x, y}
-    std::array<float, 2> rest_pos{}; // @note respawn position {x, y}
+    std::array<float, 2ull> pos{}; // @note position {x, y}
+    std::array<float, 2ull> rest_pos{}; // @note respawn position {x, y}
     bool facing_left{}; // @note peer is directed towards the left direction
 
     short slot_size{16}; /* amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size() */
@@ -49,9 +49,9 @@ public:
         return 0;
     }
 
-    std::array<std::string, 5> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
+    std::array<std::string, 5ull> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
     
-    std::array<std::chrono::steady_clock::time_point, 3> rate_limit{}; // @note rate limit objects
+    std::array<std::chrono::steady_clock::time_point, 3ull> rate_limit{}; // @note rate limit objects
     std::deque<std::chrono::steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming
 };
 extern std::unordered_map<ENetPeer*, std::shared_ptr<peer>> _peer;
@@ -75,9 +75,9 @@ class state {
     int peer_state{};
     // @todo unknown data
     int id{}; // @note peer's active hand, so 18 (fist) = punching, 32 (wrench) interacting, ect...
-    std::array<float, 2> pos{}; // @note position {x, y}
-    std::array<float, 2> speed{}; // @note player movement effect (gravity, speed, ect) {x, y}
-    std::array<int, 2> punch{}; // @note punching/placing position {x, y}
+    std::array<float, 2ull> pos{}; // @note position {x, y}
+    std::array<float, 2ull> speed{}; // @note player movement effect (gravity, speed, ect) {x, y}
+    std::array<int, 2ull> punch{}; // @note punching/placing position {x, y}
 };
 
 state get_state(const std::vector<std::byte>& packet);

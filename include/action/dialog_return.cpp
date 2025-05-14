@@ -33,6 +33,16 @@ void dialog_return(ENetEvent event, const std::string& header)
     }
     else if (dialog_name == "sign_edit" && pipes[6] == "sign_text")
     {
-        worlds[_peer[event.peer]->recent_worlds.back()].blocks[stoi(pipes[4])/* tiley */ * 100 + stoi(pipes[1])/* tilex */].label = pipes[7];
+        int tilex = stoi(pipes[1]);
+        int tiley = stoi(pipes[4]);
+        block& b = worlds[_peer[event.peer]->recent_worlds.back()].blocks[tiley * 100 + tilex];
+        b.label = pipes[7];
+
+        state s{
+            .id = b.fg,
+            .pos = { tilex * 32.0f, tiley * 32.0f },
+            .punch = { tilex, tiley }
+        };
+        tile_update(event, s, b);
     }
 }

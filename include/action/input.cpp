@@ -20,7 +20,7 @@ void input(ENetEvent event, const std::string& header)
         auto start = std::ranges::find_if(text, [](unsigned char c) { return !std::isspace(c); });
         auto end = std::ranges::find_if(text.rbegin(), text.rend(), [](unsigned char c) { return !std::isspace(c); }).base();
         if (start < end) text.assign(start, end);
-    } // @note delete start, end | 解放する: start, end
+    } // @note delete start, end
     _peer[event.peer]->messages.push_back(std::chrono::steady_clock::now());
     if (_peer[event.peer]->messages.size() > 5) _peer[event.peer]->messages.pop_front();
     if (_peer[event.peer]->messages.size() == 5 && std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - _peer[event.peer]->messages.front()).count() < 6)

@@ -1,4 +1,4 @@
-constexpr std::array<enet_uint8, 4> connect_data = { 01 };
+constexpr std::array<enet_uint8, 4ull> connect_data = { 01 };
 
 void type_connect(ENetEvent event) 
 {

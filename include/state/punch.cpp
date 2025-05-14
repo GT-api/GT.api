@@ -10,7 +10,7 @@ void punch(ENetEvent event, state state)
 {
     try
     {
-        if (not create_rt(event, 0, 120)) return;
+        if (not create_rt(event, 0, 160)) return;
         short block1D = state.punch[1] * 100 + state.punch[0]; // 2D (x, y) to 1D ((destY * y + destX)) formula
         world &world = worlds[_peer[event.peer]->recent_worlds.back()];
         block &b = world.blocks[block1D];
@@ -24,8 +24,8 @@ void punch(ENetEvent event, state state)
             if (b.fg != 0 && b.hits[0] >= items[b.fg].hits) id = b.fg, b.fg = 0;
             else if (b.bg != 0 && b.hits[1] >= items[b.bg].hits) id = b.bg, b.bg = 0;
             else return;
-            std::array<short, 2ULL> im{};
-            if (not randomizer(0, 7)) im = {112, 1}; // @todo get real growtopia gem drop amount. | 本物のジェムドロップ量を調べたい
+            std::array<short, 2ull> im{};
+            if (not randomizer(0, 7)) im = {112, 1}; // @todo get real growtopia gem drop amount.
             if (not randomizer(0, 11)) im = {id, 1};
             if (not randomizer(0, 9)) im = {++id, 1};
             if (not im.empty())
@@ -36,7 +36,7 @@ void punch(ENetEvent event, state state)
                         static_cast<float>(state.punch[1]) + randomizer(0.05f, 0.09f)
                     }
                 );
-        } // @note delete im, id | 解放する: im，id
+        } // @note delete im, id
         else if (items[state.id].cloth_type != clothing::none) return;
         else if (state.id == 32) 
         {

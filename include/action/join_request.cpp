@@ -9,7 +9,7 @@
 #include "tools/string_view.hpp"
 #include "tools/randomizer.hpp"
 
-constexpr std::array<std::byte, 4> EXIT{
+constexpr std::array<std::byte, 4ull> EXIT{
     std::byte{ 0x45 }, // @note 'E'
     std::byte{ 0x58 }, // @note 'X'
     std::byte{ 0x49 }, // @note 'I'
@@ -98,7 +98,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
                         data.resize(data.size() + 8);
                         data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
                         *reinterpret_cast<short*>(&data[pos]) = 4; pos += sizeof(short); // @note length of "EXIT"
-                        *reinterpret_cast<std::array<std::byte, 4>*>(&data[pos]) = EXIT; pos += sizeof(std::array<std::byte, 4>);
+                        *reinterpret_cast<std::array<std::byte, 4ull>*>(&data[pos]) = EXIT; pos += sizeof(std::array<std::byte, 4ull>);
                         data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
                         
                         break;

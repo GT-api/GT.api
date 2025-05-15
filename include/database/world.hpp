@@ -45,4 +45,4 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std
 
 void clothing_visuals(ENetEvent &event);
 
-void tile_update(ENetEvent &event, state s, block &b);
+void tile_update(ENetEvent &event, state s, block &b, world& w);

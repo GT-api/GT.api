@@ -75,9 +75,9 @@ class state {
     int peer_state{};
     // @todo unknown data
     int id{}; // @note peer's active hand, so 18 (fist) = punching, 32 (wrench) interacting, ect...
-    std::array<float, 2ull> pos{}; // @note position {x, y}
-    std::array<float, 2ull> speed{}; // @note player movement effect (gravity, speed, ect) {x, y}
-    std::array<int, 2ull> punch{}; // @note punching/placing position {x, y}
+    std::array<float, 2ull> pos{}; // @note position 1D {x, y}
+    std::array<float, 2ull> speed{}; // @note player movement effect (gravity, speed, ect) 1D {x, y}
+    std::array<int, 2ull> punch{}; // @note punching/placing position 2D {x, y}
 };
 
 state get_state(const std::vector<std::byte>& packet);

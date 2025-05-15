@@ -29,13 +29,10 @@ void dialog_return(ENetEvent event, const std::string& header)
     }
     else if (dialog_name == "door_edit" && pipes[6] == "door_name" && pipes[8] == "door_target" && pipes[10] == "door_id")
     {
-        worlds[_peer[event.peer]->recent_worlds.back()].blocks[stoi(pipes[4])/* tiley */ * 100 + stoi(pipes[1])/* tilex */].label = pipes[7];
-    }
-    else if (dialog_name == "sign_edit" && pipes[6] == "sign_text")
-    {
         int tilex = stoi(pipes[1]);
         int tiley = stoi(pipes[4]);
-        block& b = worlds[_peer[event.peer]->recent_worlds.back()].blocks[tiley * 100 + tilex];
+        world& w = worlds[_peer[event.peer]->recent_worlds.back()];
+        block& b = w.blocks[tiley * 100 + tilex];
         b.label = pipes[7];
 
         state s{
@@ -43,6 +40,21 @@ void dialog_return(ENetEvent event, const std::string& header)
             .pos = { tilex * 32.0f, tiley * 32.0f },
             .punch = { tilex, tiley }
         };
-        tile_update(event, s, b);
+        tile_update(event, s, b, w);
+    }
+    else if (dialog_name == "sign_edit" && pipes[6] == "sign_text")
+    {
+        int tilex = stoi(pipes[1]);
+        int tiley = stoi(pipes[4]);
+        world& w = worlds[_peer[event.peer]->recent_worlds.back()];
+        block& b = w.blocks[tiley * 100 + tilex];
+        b.label = pipes[7];
+
+        state s{
+            .id = b.fg,
+            .pos = { tilex * 32.0f, tiley * 32.0f },
+            .punch = { tilex, tiley }
+        };
+        tile_update(event, s, b, w);
     }
 }

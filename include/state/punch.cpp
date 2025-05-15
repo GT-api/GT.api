@@ -38,73 +38,97 @@ void punch(ENetEvent event, state state)
                 );
         } // @note delete im, id
         else if (items[state.id].cloth_type != clothing::none) return;
-        else if (state.id == 32) 
+        else if (state.id == 32)
         {
-            if (items[b.fg].type == std::byte{ type::DOOR }) 
+            switch (items[b.fg].type)
             {
-                gt_packet(*event.peer, false, 0, {
-                    "OnDialogRequest",
-                    std::format("set_default_color|`o\n"
-                    "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
-                    "add_text_input|door_name|Label|{}|100|\n"
-                    "add_popup_name|DoorEdit|\n"
-                    "add_text_input|door_target|Destination||24|\n"
-                    "add_smalltext|Enter a Destination in this format: `2WORLDNAME:ID``|left|\n"
-                    "add_smalltext|Leave `2WORLDNAME`` blank (:ID) to go to the door with `2ID`` in the `2Current World``.|left|\n"
-                    "add_text_input|door_id|ID||11|\n"
-                    "add_smalltext|Set a unique `2ID`` to target this door as a Destination from another!|left|\n"
-                    "add_checkbox|checkbox_locked|Is open to public|1\n"
-                    "embed_data|tilex|{}\n"
-                    "embed_data|tiley|{}\n"
-                    "end_dialog|door_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
-                });
+                case std::byte{ type::DOOR }:
+                        gt_packet(*event.peer, false, 0, {
+                        "OnDialogRequest",
+                        std::format("set_default_color|`o\n"
+                        "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
+                        "add_text_input|door_name|Label|{}|100|\n"
+                        "add_popup_name|DoorEdit|\n"
+                        "add_text_input|door_target|Destination||24|\n"
+                        "add_smalltext|Enter a Destination in this format: `2WORLDNAME:ID``|left|\n"
+                        "add_smalltext|Leave `2WORLDNAME`` blank (:ID) to go to the door with `2ID`` in the `2Current World``.|left|\n"
+                        "add_text_input|door_id|ID||11|\n"
+                        "add_smalltext|Set a unique `2ID`` to target this door as a Destination from another!|left|\n"
+                        "add_checkbox|checkbox_locked|Is open to public|1\n"
+                        "embed_data|tilex|{}\n"
+                        "embed_data|tiley|{}\n"
+                        "end_dialog|door_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
+                    });
+                    break;
+                case std::byte{ type::SIGN }:
+                        gt_packet(*event.peer, false, 0, {
+                        "OnDialogRequest",
+                        std::format("set_default_color|`o\n"
+                        "add_popup_name|SignEdit|\n"
+                        "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
+                        "add_textbox|What would you like to write on this sign?``|left|\n"
+                        "add_text_input|sign_text||{}|128|\n"
+                        "embed_data|tilex|{}\n"
+                        "embed_data|tiley|{}\n"
+                        "end_dialog|sign_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
+                    });
+                    break;
+                case std::byte{ type::ENTRANCE }:
+                    gt_packet(*event.peer, false, 0, {
+                        "OnDialogRequest",
+                        std::format("set_default_color|`o\n"
+                        "set_default_color|`o"
+                        "add_label_with_icon|big|`wEdit {}``|left|{}|"
+                        "add_checkbox|checkbox_public|Is open to public|1"
+                        "embed_data|tilex|{}"
+                        "embed_data|tiley|{}"
+                        "end_dialog|gateway_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, state.punch[0], state.punch[1]).c_str()
+                    });
+                    break;
             }
-            else if (items[b.fg].type == std::byte{ type::SIGN }) 
-            {
-                gt_packet(*event.peer, false, 0, {
-                    "OnDialogRequest",
-                    std::format("set_default_color|`o\n"
-                    "add_popup_name|SignEdit|\n"
-                    "add_label_with_icon|big|`wEdit {}``|left|{}|\n"
-                    "add_textbox|What would you like to write on this sign?``|left|\n"
-                    "add_text_input|sign_text||{}|128|\n"
-                    "embed_data|tilex|{}\n"
-                    "embed_data|tiley|{}\n"
-                    "end_dialog|sign_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, b.label, state.punch[0], state.punch[1]).c_str()
-                });
-            }
-            else if (items[b.fg].type == std::byte{ type::ENTRANCE }) 
-            {
-                gt_packet(*event.peer, false, 0, {
-                    "OnDialogRequest",
-                    std::format("set_default_color|`o\n"
-                    "set_default_color|`o"
-                    "add_label_with_icon|big|`wEdit {}``|left|{}|"
-                    "add_checkbox|checkbox_public|Is open to public|1"
-                    "embed_data|tilex|{}"
-                    "embed_data|tiley|{}"
-                    "end_dialog|gateway_edit|Cancel|OK|", items[b.fg].raw_name, b.fg, state.punch[0], state.punch[1]).c_str()
-                });
-            }
-            return; // @note wrench passes state_visuals() else blocks glitchs to wrench visuals...
+            return; // @note leave early else wrench will act as a block unlike fist which breaks. this is cause of state_visuals()
         }
         else // @note placing a block
         {
-            if (items[state.id].type == std::byte{ type::LOCK }) 
+            if (items[state.id].type == std::byte{ type::LOCK })
             {
                 // @note checks if world is owned by someone already.
                 if (world.owner == 00)
+                {
                     world.owner = _peer[event.peer]->user_id;
-                    // @todo update visuals...
+                    peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
+                    {
+                        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() &&
+                            _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+                        {
+                            const char* placed_message = std::format("`5[```w{}`` has been `$World Locked`` by {}`5]``", world.name, _peer[event.peer]->ltoken[0]).c_str();
+                            gt_packet(p, false, 0, {
+                                "OnTalkBubble", 
+                                _peer[event.peer]->netid,
+                                placed_message,
+                                0u
+                            });
+                            gt_packet(p, false, 0, {
+                                "OnConsoleMessage",
+                                placed_message
+                            });
+                        }
+                    });
+                    gt_packet(*event.peer, true, 0, {
+                       "OnNameChanged",
+                        std::format("`2{}``", _peer[event.peer]->ltoken[0]).c_str()
+                    });
+                }
                 else throw std::runtime_error("Only one `$World Lock`` can be placed in a world, you'd have to remove the other one first.");
             }
             if (items[state.id].collision == collision::full)
             {
-                // 이
+                // 이 (left, right)
                 bool x = state.punch.front() == std::lround(state.pos.front() / 32);
-                // 으
+                // 으 (up, down)
                 bool y = state.punch.back() == std::lround(state.pos.back() / 32);
 
+                // @note because floats are rounded weirdly in Growtopia...
                 bool x_nabor = state.punch.front() == std::lround(state.pos.front() / 32) + 1;
                 bool y_nabor = state.punch.back() == std::lround(state.pos.back() / 32) + 1;
 
@@ -125,7 +149,7 @@ void punch(ENetEvent event, state state)
         if (exc.what() && *exc.what()) 
             gt_packet(*event.peer, false, 0, {
                 "OnTalkBubble", 
-                1u,
+                _peer[event.peer]->netid,
                 exc.what()
             });
     }

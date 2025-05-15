@@ -120,7 +120,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
                     {
                         data[pos - 2] = std::byte{ 0x19 };
                         short len{ static_cast<short>(label.length()) };
-                        data.resize(data.size() + 7 + len);
+                        data.resize(data.size() + 1 + 2 + len + 4); // @note 02 {2} {} ff ff ff ff
                         data[pos] = std::byte{ 02 }; pos += sizeof(std::byte);
                         *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
                         if (not label.empty())
@@ -166,7 +166,8 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         });
         peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
         {
-            if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()  && 
+            if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && 
+                _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()  && 
                 /*skip the evnet.peer*/_peer[&p]->user_id != _peer[event.peer]->user_id)
             {
                 gt_packet(p, false, -1/* ff ff ff ff */, {
@@ -181,7 +182,7 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
                 });
                 gt_packet(p, false, 0, {
                     "OnTalkBubble", 
-                    1u, 
+                    _peer[event.peer]->netid, 
                     enter_message.c_str()
                 });
             } // @note delete enter_message

@@ -1,6 +1,6 @@
 /*
     @copyright gurotopia (c) 25-6-2024
-    @author @leeendl | English Comments
+    @author @leeendl | Lead Contributor, English Comments
 
     Project has open arms for contribution!
 
@@ -22,7 +22,7 @@ int main()
         ENetCallbacks callbacks{
             .malloc = &malloc, 
             .free = &free, 
-            .no_memory = []() { printf("ENet memory overflow"); }
+            .no_memory = []() { printf("ENet memory overflow\n"); }
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
         printf("ENet initialize success! (v%d.%d.%d)\n", ENET_VERSION_MAJOR, ENET_VERSION_MINOR, ENET_VERSION_PATCH);

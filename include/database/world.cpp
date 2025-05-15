@@ -68,8 +68,11 @@ void state_visuals(ENetEvent& event, state s)
     s.netid = _peer[event.peer]->netid;
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && 
+            _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        {
             send_data(p, compress_state(s));
+        }
     });
 }
 
@@ -95,8 +98,11 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std
     *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
-        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && 
+            _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back())
+        {
             send_data(p, compress);
+        }
     });
 }
 
@@ -112,13 +118,13 @@ void clothing_visuals(ENetEvent &event)
     });
 }
 
-void tile_update(ENetEvent &event, state s, block &b) 
+void tile_update(ENetEvent &event, state s, block &b, world& w) 
 {
     s.type = 5; // @note PACKET_SEND_TILE_UPDATE_DATA
     s.peer_state = 0x08;
     std::vector<std::byte> data = compress_state(s);
 
-    int pos = 56;
+    short pos = 56;
     data.resize(pos + 8); // @note {2} {2} 00 00 00 00
     *reinterpret_cast<short*>(&data[pos]) = b.fg; pos += sizeof(short);
     *reinterpret_cast<short*>(&data[pos]) = b.bg; pos += sizeof(short);
@@ -127,25 +133,42 @@ void tile_update(ENetEvent &event, state s, block &b)
 
     switch (items[b.fg].type)
     {
+        case std::byte{ type::DOOR }:
+        {
+            data[pos - 2] = std::byte{ 01 };
+            short len{ static_cast<short>(b.label.length()) };
+            data.resize(pos + 1 + 2 + len + 1); // @note 01 {2} {} 0 0
+
+            data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
+            
+            *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
+            std::span<const char> label{b.label.data(), b.label.size()};
+            for (const char& c : label) data[pos++] = static_cast<std::byte>(c);
+
+            pos += sizeof(std::byte); // @note '\0'
+            break;
+        }
         case std::byte{ type::SIGN }:
         {
-            std::string label = b.label;
-            short len = static_cast<short>(label.length());
-            data.resize(pos + 1 + 2 + len + 4 + 1); // @note 02 {2} {} ff ff ff ff 0
+            data[pos - 2] = std::byte{ 0x19 };
+            short len{ static_cast<short>(b.label.length()) };
+            data.resize(pos + 1 + 2 + len + 4); // @note 02 {2} {} ff ff ff ff
 
             data[pos] = std::byte{ 02 }; pos += sizeof(std::byte);
+
             *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
-            if (not label.empty())
-                for (short ii = 0; ii < len; ++ii)
-                    data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
+            std::span<const char> label{ b.label.data(), b.label.size() };
+            for (const char& c : label) data[pos++] = static_cast<std::byte>(c);
+
             *reinterpret_cast<int*>(&data[pos]) = -1; pos += sizeof(int); // @note ff ff ff ff
-            pos += sizeof(std::byte);
+            break;
         }
     }
 
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) {
         if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() &&
-            _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) {
+            _peer[&p]->recent_worlds.back() == _peer[event.peer]->recent_worlds.back()) 
+        {
             send_data(p, data);
         }
     });

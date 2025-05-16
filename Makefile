@@ -1,6 +1,11 @@
 CXX = g++
 CXXFLAGS = -std=c++23 -g -Iinclude -MMD -MP -DDEBUG_TIME
 
+LIBS :=
+ifeq ($(OS),Windows_NT)
+    LIBS += -lws2_32 -lwinmm
+endif
+
 SOURCES := main.cpp \
 	include/database/items.cpp \
 	include/database/peer.cpp \
@@ -40,7 +45,7 @@ TARGET := main.exe
 all: .make $(PCH) $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $^ -o $@ -lws2_32 -lwinmm
+	$(CXX) $^ -o $@ $(LIBS)
 
 .make :
 	@mkdir -p .make

@@ -99,7 +99,11 @@
     #include <mmsystem.h>
 
     #include <intrin.h>
+    #if defined(_WIN32)
     #include <emmintrin.h>
+    #elif
+    #include <immintrin.h>
+    #endif
 
     #if defined(_WIN32) && defined(_MSC_VER)
     #if _MSC_VER < 1900
@@ -1513,7 +1517,12 @@ extern "C" {
             const enet_uint8* data = static_cast<const enet_uint8*>(buffers->data);
             const enet_uint8* dataEnd = data + buffers->dataLength;
 
-            _mm_prefetch(reinterpret_cast<const char*>(data), _MM_HINT_T0);
+            // @todo properly check if OS supports SSE/2...
+            #if defined(_WIN32)
+                _mm_prefetch(reinterpret_cast<const char*>(data), _MM_HINT_T0);
+            #else
+                __builtin_prefetch(data, 0, 3);
+            #endif
 
             while (data + 8 <= dataEnd) 
             {

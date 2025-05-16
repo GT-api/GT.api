@@ -9,20 +9,20 @@
 </div>
 
 ***
-1. __Download:__
+#### ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/checklist.svg) Download:
    - **Visual Studio Code**:  **https://code.visualstudio.com/**
    - **MSYS2**:  **https://www.msys2.org/**
    - **C/C++ extension for VSC**: https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
 
-2. __Installing MSYS packages__:
+#### ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/archive.svg) Installing MSYS packages:
    - Locate MSYS folder (`C:\msys64`)
    - Open **ucrt64.exe** and paste **`pacman -Syu`** into the terminal
    - Now, re-open **ucrt64.exe** and paste **`pacman -S --needed mingw-w64-ucrt-x86_64-gcc make`** into the terminal
 
-3. __Compile__:
+#### ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/build.svg) Build:
    - After downloading *Gurotopia*, open it in Visual Studio Code, typically compiling is taken place in VSC terminal manually, however some projects including mine has a build shortcut (**Ctrl + Shift + B**), and let it compile...
 
-4. __Debugging or Running__:
+#### ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/debug-alt-small.svg) Debugging or ![](https://github.com/microsoft/vscode-icons/blob/main/icons/dark/run.svg) Running:
    - after compile press **F5** key- this will run and debug, however debugging is unnecessary if you wish to host a GTPS, please press **Ctrl + F5** instead.
    - *(optional)* how to stop the server? press **Shift + F5**, or simply close VSC.
    - *(optional)* how to restart the server? press **Ctrl + Shift + F5**.

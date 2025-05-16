@@ -27,14 +27,14 @@ world::~world()
     {
         nlohmann::json j;
         if (this->owner != 00) j["owner"] = this->owner;
-        for (const auto& [fg, bg, label, hits] : this->blocks) 
+        for (const auto& block : this->blocks) 
         {
-            nlohmann::json list = {{"f", fg}, {"b", bg}};
-            if (not label.empty()) list["l"] = label;
+            nlohmann::json list = {{"f", block.fg}, {"b", block.bg}};
+            if (not block.label.empty()) list["l"] = block.label;
             j["bs"].push_back(list);
         }
-        for (const auto& [uid, id, count, pos] : this->ifloats) 
-            j["fs"].push_back({{"u", uid}, {"i", id}, {"c", count}, {"p", pos}});
+        for (const auto& ifloat : this->ifloats) 
+            j["fs"].push_back({{"u", ifloat.uid}, {"i", ifloat.id}, {"c", ifloat.count}, {"p", ifloat.pos}});
         
         std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
     }

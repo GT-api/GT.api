@@ -63,13 +63,13 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
             *reinterpret_cast<unsigned short*>(&data[76 + len]) = static_cast<unsigned short>(w->blocks.size());
             int pos = 85 + len;
             short i = 0;
-            for (const auto& [fg, bg, label, hits] : w->blocks)
+            for (const auto& block : w->blocks)
             {
-                *reinterpret_cast<short*>(&data[pos]) = fg; pos += sizeof(short);
-                *reinterpret_cast<short*>(&data[pos]) = bg; pos += sizeof(short);
+                *reinterpret_cast<short*>(&data[pos]) = block.fg; pos += sizeof(short);
+                *reinterpret_cast<short*>(&data[pos]) = block.bg; pos += sizeof(short);
                 pos += sizeof(short); // @todo
                 pos += sizeof(short); // @todo (water = 00 04)
-                switch (items[fg].type)
+                switch (items[block.fg].type)
                 {
                     case std::byte{ type::FOREGROUND }: 
                     case std::byte{ type::BACKGROUND }:
@@ -106,27 +106,25 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
                     case std::byte{ type::DOOR }:
                     {
                         data[pos - 2] = std::byte{ 01 };
-                        short len{ static_cast<short>(label.length()) };
-                        data.resize(data.size() + 4 + len);
+                        std::span<const char> label{ block.label.data(), block.label.size() };
+                        short len{ static_cast<short>(label.size()) };
+                        data.resize(data.size() + 4 + len); // @note 01 {2} {} 0 0
                         data[pos] = std::byte{ 01 }; pos += sizeof(std::byte);
                         *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
-                        if (not label.empty())
-                            for (short ii = 0; ii < len; ++ii)
-                                data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
+                        for (const char& c : label) data[pos++] = static_cast<std::byte>(c);
                         data[pos] = std::byte{ 00 }; pos += sizeof(std::byte); // @note '\0'
                         break;
                     }
                     case std::byte{ type::SIGN }:
                     {
                         data[pos - 2] = std::byte{ 0x19 };
-                        short len{ static_cast<short>(label.length()) };
+                        std::span<const char> label{ block.label.data(), block.label.size() };
+                        short len{ static_cast<short>(label.size()) };
                         data.resize(data.size() + 1 + 2 + len + 4); // @note 02 {2} {} ff ff ff ff
                         data[pos] = std::byte{ 02 }; pos += sizeof(std::byte);
                         *reinterpret_cast<short*>(&data[pos]) = len; pos += sizeof(short);
-                        if (not label.empty())
-                            for (short ii = 0; ii < len; ++ii)
-                                data[pos] = static_cast<std::byte>(label[ii]), pos += sizeof(std::byte);
-                        *reinterpret_cast<int*>(&data[pos]) = -1; pos += sizeof(int);
+                        for (const char& c : label) data[pos++] = static_cast<std::byte>(c);
+                        *reinterpret_cast<int*>(&data[pos]) = -1; pos += sizeof(int); // @note ff ff ff ff
                         break;
                     }
                     default:
@@ -138,16 +136,16 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
             enet_peer_send(event.peer, 0, enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE));
         } // @note delete data
 
-        for (const auto& [uid, id, count, position] : w->ifloats)
+        for (const auto& ifloat : w->ifloats)
         {
             std::vector<std::byte> compress = compress_state({
                 .type = 14, 
                 .netid = -1, 
-                .id = id, 
-                .pos = {position[0] * 32, position[1] * 32}
+                .id = ifloat.id, 
+                .pos = {ifloat.pos[0] * 32, ifloat.pos[1] * 32}
             });
-            *reinterpret_cast<int*>(&compress[8]) = uid;
-            *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(count);
+            *reinterpret_cast<int*>(&compress[8]) = ifloat.uid;
+            *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(ifloat.count);
             send_data(*event.peer, compress);
         } // @note delete compress
         if (std::find(_peer[event.peer]->recent_worlds.begin(), _peer[event.peer]->recent_worlds.end(), w->name) == _peer[event.peer]->recent_worlds.end()) 

@@ -20,19 +20,19 @@ int main()
 {
     {
         ENetCallbacks callbacks{
-            .malloc = &malloc, 
-            .free = &free, 
+            .malloc = &malloc,
+            .free = &free,
             .no_memory = []() { printf("\e[1;31mENet memory overflow\e[0m\n"); }
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);
         printf("\e[38;5;247mENet initialize success! (v%d.%d.%d)\e[0m\n", ENET_VERSION_MAJOR, ENET_VERSION_MINOR, ENET_VERSION_PATCH);
     } // @note delete callbacks
     server = enet_host_create({
-        .host = in6addr_any, 
+        .host = in6addr_any,
         .port = 17091
-    }, 
+    },
     ENET_PROTOCOL_MAXIMUM_PEER_ID, 2);
-
+    
     server->checksum = enet_crc32;
     enet_host_compress_with_range_coder(server);
     {

@@ -1471,7 +1471,7 @@ extern "C" {
      */
     void enet_packet_destroy(ENetPacket *packet) 
     {
-        if (not packet) return;
+        if (packet == nullptr) return;
         if (packet->freeCallback)
             packet->freeCallback(packet);
 

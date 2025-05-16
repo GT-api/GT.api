@@ -2,7 +2,7 @@
 #include "items.hpp"
 
 std::unordered_map<unsigned short, item> items;
-std::vector<std::byte> im_data(60, std::byte{ 00 });
+std::vector<std::byte> im_data(60/* state {56} + items.dat size {4}*/, std::byte{ 00 });
 
 template<typename T>
 void shift_pos(std::vector<std::byte>& data, int& pos, T& value) 
@@ -142,5 +142,5 @@ void cache_items()
         
         items.emplace(i, im);
     }
-    printf("cached %d items.\n", count);
+    printf("\e[38;5;247mcached %d items.\e[0m\n", count);
 }

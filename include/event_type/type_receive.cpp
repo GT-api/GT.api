@@ -14,7 +14,7 @@ void type_receive(ENetEvent event)
         case 2: case 3: 
         {
             std::string header{std::span{event.packet->data, event.packet->dataLength}.begin() + 4, std::span{event.packet->data, event.packet->dataLength}.end() - 1};
-            printf("%s\n", header.c_str());
+            printf("\e[38;5;249m%s\e[0m\n", header.c_str());
             std::ranges::replace(header, '\n', '|');
             std::vector<std::string> pipes = readch(header, '|');
             const std::string action{(pipes[0] == "protocol") ? pipes[0] : pipes[0] + "|" + pipes[1]};

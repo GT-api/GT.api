@@ -45,17 +45,16 @@ int main()
         // @note {8}
         im_data[16] = std::byte{ 0x08 }; // @note 08 00 00 00 (state::id)
         *reinterpret_cast<std::streampos*>(&im_data[56]) = size; // @note 4 bits (items.dat size)
-        file
-            .seekg(0, std::ios::beg) // @note start from beginning of items.dat
+        file.seekg(0, std::ios::beg) // @note start from beginning of items.dat
             .read(reinterpret_cast<char*>(&im_data[60]), size); // @note 04 00 00 00 16 00 00 00 {8} 08 00 00 00 {4} {items.dat}
     } // @note delete file, size and closes file
     cache_items();
 
     ENetEvent event{};
-    std::vector<std::thread> threads{};
-    while(true)
+
+    while (true)
         while (enet_host_service(server, &event, 1) > 0)
             if (const auto i = event_pool.find(event.type); i != event_pool.end())
-                threads.emplace_back([=] { i->second(event); }).join(); // @todo
+                i->second(event);
     return 0;
 }

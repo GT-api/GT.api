@@ -14,10 +14,9 @@ void equip(ENetEvent event, state state)
         else
             _peer[event.peer]->clothing[items[state.id].cloth_type] = state.id;
 
-        /* update visuals. */
         clothing_visuals(event);
     }
     else {
-        // @todo
+        // @todo 100 world locks -> 1 diamond lock
     }
 }

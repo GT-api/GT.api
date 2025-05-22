@@ -1,6 +1,6 @@
 #include "action/quit.hpp"
 
-void type_disconnect(ENetEvent event)
+inline void type_disconnect(ENetEvent event)
 {
     quit(event, "");
 }

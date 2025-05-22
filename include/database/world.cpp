@@ -21,20 +21,21 @@ world& world::read(std::string name)
     return *this;
 }
 
-world::~world() 
+world::~world()
 {
-    if (!this->name.empty()) 
+    if (!this->name.empty())
     {
         nlohmann::json j;
         if (this->owner != 00) j["owner"] = this->owner;
-        for (const auto& block : this->blocks) 
+        for (const auto& block : this->blocks)
         {
             nlohmann::json list = {{"f", block.fg}, {"b", block.bg}};
             if (not block.label.empty()) list["l"] = block.label;
             j["bs"].push_back(list);
         }
-        for (const auto& ifloat : this->ifloats) 
-            j["fs"].push_back({{"u", ifloat.uid}, {"i", ifloat.id}, {"c", ifloat.count}, {"p", ifloat.pos}});
+        for (const auto& ifloat : this->ifloats)
+            if (ifloat.id != 0 || ifloat.count != 0) // @todo handle this
+                j["fs"].push_back({{"u", ifloat.uid}, {"i", ifloat.id}, {"c", ifloat.count}, {"p", ifloat.pos}});
         
         std::ofstream(std::format("worlds\\{}.json", this->name)) << j;
     }
@@ -89,8 +90,9 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std
     std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
     ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
     std::vector<std::byte> compress = compress_state({
-        .type = 14, 
+        .type = 0x0e, 
         .netid = -1, 
+        .peer_state = 1,
         .id = it.id, 
         .pos = {it.pos[0] * 32, it.pos[1] * 32}
     });

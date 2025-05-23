@@ -8,11 +8,11 @@
             ],
             "defines": [
                 "DEBUG_TIME",
-                "ENET_IMPLEMENTATION" // @note for visual aid
+                "ENET_IMPLEMENTATION"
             ],
             "compilerPath": "c:/msys64/ucrt64/bin/g++.exe",
             "compilerArgs": [
-                "-std=c++23",
+                "-std=c++26",
                 "-g",
                 "-Iinclude",
                 "-MMD",
@@ -20,7 +20,7 @@
                 "-DDEBUG_TIME"
             ],
             "cStandard": "c23",
-            "cppStandard": "c++23",
+            "cppStandard": "c++26",
             "intelliSenseMode": "windows-gcc-x64"
         }
     ],

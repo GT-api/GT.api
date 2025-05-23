@@ -9,6 +9,7 @@
 */
 #include "include/pch.hpp" // @todo #pragma once
 #include "include/database/items.hpp" // @note items.dat reading
+#include "include/mimalloc/mimalloc.h" // @note https://github.com/microsoft/mimalloc
 #include "include/network/compress.hpp" // @note isalzman's compressor
 #include "include/database/peer.hpp" // @note peer class
 #include "include/event_type/event_type"
@@ -20,8 +21,8 @@ int main()
 {
     {
         ENetCallbacks callbacks{
-            .malloc = &malloc,
-            .free = &free,
+            .malloc = &mi_malloc,
+            .free = &mi_free,
             .no_memory = []() { printf("\e[1;31mENet memory overflow\e[0m\n"); }
         };
         enet_initialize_with_callbacks(ENET_VERSION, &callbacks);

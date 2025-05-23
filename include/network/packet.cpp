@@ -24,22 +24,24 @@ void gt_packet(ENetPeer& p, bool netid, signed delay, const std::vector<std::any
             data[size + 1] = std::byte{ 02 };
             data[size + 2] = static_cast<std::byte>(str.length() & 0xff);
             data[size + 3] = static_cast<std::byte>(( str.length() >> 8 ) & 0xff);
-            /* outcome should be the hex of param's array. e.g. "hello" = 'h' -> 0x68 'e' -> 0x65 'l' -> 0x6C 'l' -> 0x6C 'o' -> 0x6F */
+            const std::byte *_1bit = reinterpret_cast<const std::byte*>(str.data());
             for (size_t i = 0; i < str.length(); ++i)
-                data[size + 6 + i] = static_cast<std::byte>(str[i]); // @note e.g. 'a' -> 0x61. 'z' = 0x7A, hex tabel: https://en.cppreference.com/w/cpp/language/ascii
+                data[size + 6 + i] = _1bit[i]; // @note e.g. 'a' -> 0x61. 'z' = 0x7A, hex tabel: https://en.cppreference.com/w/cpp/language/ascii
+            
             size += 2 + str.length() + sizeof(int);
         }
         else if (param.type() == typeid(int) || param.type() == typeid(unsigned)) 
         {
             bool is_signed = (param.type() == typeid(int));
-            int value = is_signed ? std::any_cast<int>(param) : static_cast<int>(std::any_cast<unsigned>(param));
-            data.resize(size + 2 + sizeof(int) + 2);
+            auto value = is_signed ? std::any_cast<int>(param) : std::any_cast<unsigned>(param);
+            data.resize(size + 2 + sizeof(value) + 2);
             data[size] = index; // @note element counter e.g. "OnSetBux" -> 00, 43562/-43562 -> 01
-            data[size + 1] = (is_signed) ? std::byte{ 0x09 } : std::byte{ 05 }; 
-            /* outcome should be the hex of param value. e.g. 2147483647 -> 0x7FFFFFFF.  */
+            data[size + 1] = (is_signed) ? std::byte{ 0x09 } : std::byte{ 05 };
+            const std::byte *_1bit = reinterpret_cast<const std::byte*>(&value);
             for (std::size_t i = 0; i < sizeof(value); ++i)
-                data[size + 2 + i] = reinterpret_cast<std::byte const*>(&value)[i];
-            size += 2 + sizeof(int);
+                data[size + 2 + i] = _1bit[i];
+
+            size += 2 + sizeof(value);
         }
         else if (param.type() == typeid(std::vector<float>)) 
         {
@@ -51,9 +53,10 @@ void gt_packet(ENetPeer& p, bool netid, signed delay, const std::vector<std::any
                 (vec.size() == 2) ? std::byte{ 03 } :
                 (vec.size() == 3) ? std::byte{ 04 } :
                                     std::byte{ 00 };
-            for (std::size_t i = 0; i < vec.size(); ++i)
-                for (std::size_t ii = 0; ii < sizeof(vec[i]); ++ii)
-                    data[size + 2 + sizeof(float) * i + ii] = reinterpret_cast<std::byte const*>(&vec[i])[ii];
+            const std::byte *_1bit = reinterpret_cast<const std::byte*>(vec.data());
+            for (std::size_t i = 0; i < sizeof(float) * vec.size(); ++i)
+                data[size + 2 + i] = _1bit[i];
+
             size += 2 + (sizeof(float) * vec.size());
         }
         else return; // @note this will never pass unless you include a param that Growtopia does not recognize

@@ -30,10 +30,12 @@ void type_receive(ENetEvent event)
                 std::vector<std::byte> raw_state{event.packet->dataLength - 4};
                 {
                     std::size_t size = raw_state.size();
-                    if ((size + 4) >= 60)
+                    if ((size + 4) >= 60) {
+                        std::byte *_1bit = reinterpret_cast<std::byte*>(event.packet->data) + 4;
                         for (std::size_t i = 0; i < size; ++i)
-                            raw_state[i] = (reinterpret_cast<std::byte*>(event.packet->data) + 4)[i];
-                    if (std::to_integer<unsigned char>(raw_state[12]) & 0x08 and 
+                            raw_state[i] = _1bit[i];
+                    }
+                    if ((raw_state[12] & std::byte{ 0x08 }) != std::byte{false} and 
                         size < static_cast<std::size_t>(*reinterpret_cast<int*>(&raw_state[52])) + 56) break;
                 } // @note deletes size
                 state = get_state(std::move(raw_state));

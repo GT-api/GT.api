@@ -10,6 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2 # updated on Jan 16
       
+      
       - if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0 
         with:
@@ -24,10 +25,9 @@ jobs:
 
         
       - if: matrix.os == 'windows-latest'
-        run: make -j4
+        run: make -j$(nproc)
         shell: msys2 {0}
       
       - if: matrix.os == 'ubuntu-latest'
-        run: make -j4
+        run: make -j$(nproc)
         # assume bash
-  

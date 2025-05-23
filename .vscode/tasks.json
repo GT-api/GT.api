@@ -4,10 +4,10 @@
         {
             "label": "Build Gurotopia",
             "type": "shell",
-            "command": "C:/msys64/usr/bin/bash.exe",
+            "command": "c:/msys64/usr/bin/bash.exe",
             "args": [
                 "-c",
-                "export PATH=\"$PATH:/c/msys64/ucrt64/bin:/c/msys64/usr/bin\" && make -j4"
+                "export PATH=\"$PATH:/c/msys64/ucrt64/bin:/c/msys64/usr/bin\" && make -j$(nproc)"
             ],
             "group": {
                 "kind": "build",
@@ -17,7 +17,7 @@
         {
             "label": "Clean Gurotopia",
             "type": "shell",
-            "command": "C:/msys64/usr/bin/bash.exe",
+            "command": "c:/msys64/usr/bin/bash.exe",
             "args": [
                 "-c",
                 "export PATH=\"$PATH:/c/msys64/ucrt64/bin:/c/msys64/usr/bin\" && make clean"

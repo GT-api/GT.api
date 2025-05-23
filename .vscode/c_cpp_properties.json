@@ -7,20 +7,11 @@
                 "${workspaceFolder}/include/**"
             ],
             "defines": [
-                "DEBUG_TIME",
                 "ENET_IMPLEMENTATION"
             ],
             "compilerPath": "c:/msys64/ucrt64/bin/g++.exe",
-            "compilerArgs": [
-                "-std=c++23",
-                "-g",
-                "-Iinclude",
-                "-MMD",
-                "-MP",
-                "-DDEBUG_TIME"
-            ],
             "cStandard": "c23",
-            "cppStandard": "c++26",
+            "cppStandard": "c++23",
             "intelliSenseMode": "windows-gcc-x64"
         }
     ],

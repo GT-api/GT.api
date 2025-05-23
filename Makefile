@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++26 -g -Iinclude -MMD -MP -DDEBUG_TIME
+CXXFLAGS = -std=c++23 -g -Iinclude -MMD -MP -DDEBUG_TIME
 
 LIBS := -L./include -lmimalloc
 ifeq ($(OS),Windows_NT)

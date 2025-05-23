@@ -12,7 +12,7 @@
             ],
             "compilerPath": "c:/msys64/ucrt64/bin/g++.exe",
             "compilerArgs": [
-                "-std=c++26",
+                "-std=c++23",
                 "-g",
                 "-Iinclude",
                 "-MMD",

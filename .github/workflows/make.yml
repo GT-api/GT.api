@@ -20,7 +20,10 @@ jobs:
             make
             
       - if: matrix.os == 'ubuntu-latest'
-        run: sudo apt update && sudo apt install -y build-essential gcc make
+        run: >-
+          sudo apt update
+          sudo apt install -y build-essential gcc-14 make
+
         
       - if: matrix.os == 'windows-latest'
         run: make -j4

@@ -20,6 +20,7 @@ void pickup(ENetEvent event, state state)
     if (it != ifloats.end()) 
     {
         short excess = _peer[event.peer]->emplace(slot{it->id, static_cast<short>(it->count)});
+        short remember_count = it->count;
         it->count -= (it->count - excess);
         if (it->count == 0) 
         {
@@ -29,7 +30,7 @@ void pickup(ENetEvent event, state state)
             {
                 gt_packet(*event.peer, false, 0, {
                     "OnConsoleMessage",
-                    std::format("Collected `w{} {}``. Rarity: `w{}``", it->count, items[it->id].raw_name, items[it->id].rarity).c_str()
+                    std::format("Collected `w{} {}``. Rarity: `w{}``", remember_count, items[it->id].raw_name, items[it->id].rarity).c_str()
                 });
                 inventory_visuals(event);
             }

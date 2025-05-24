@@ -13,6 +13,7 @@ void dialog_return(ENetEvent event, const std::string& header)
     else return; // if button has no name.
     if (dialog_name == "drop_item" && pipes[0] == "itemID" && pipes[3] == "count")
     {
+        if (pipes[1].empty() || pipes[4].empty()) return; // @note stoi() must have a set value.
         const short id = stoi(pipes[1]); // @note comfirm they have the item without extra iteration.
         const short count = stoi(pipes[4]);
         _peer[event.peer]->emplace(slot{id, static_cast<short>(count * -1)}); // @note take away
@@ -24,11 +25,13 @@ void dialog_return(ENetEvent event, const std::string& header)
     }
     else if (dialog_name == "find" && pipes[0] == "buttonClicked" && pipes[1].starts_with("searchableItemListButton"))
     {
+        if (readch(pipes[1], '_')[1].empty()) return; // @note stoi() must have a set value.
         _peer[event.peer]->emplace(slot{static_cast<short>(stoi(readch(pipes[1], '_')[1])), 200});
         inventory_visuals(event);
     }
     else if (dialog_name == "door_edit" && pipes[6] == "door_name" && pipes[8] == "door_target" && pipes[10] == "door_id")
     {
+        if (pipes[1].empty() || pipes[4].empty()) return; // @note stoi() must have a set value.
         int tilex = stoi(pipes[1]);
         int tiley = stoi(pipes[4]);
         world& w = worlds[_peer[event.peer]->recent_worlds.back()];
@@ -44,6 +47,7 @@ void dialog_return(ENetEvent event, const std::string& header)
     }
     else if (dialog_name == "sign_edit" && pipes[6] == "sign_text")
     {
+        if (pipes[1].empty() || pipes[4].empty()) return; // @note stoi() must have a set value.
         int tilex = stoi(pipes[1]);
         int tiley = stoi(pipes[4]);
         world& w = worlds[_peer[event.peer]->recent_worlds.back()];

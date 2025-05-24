@@ -22,6 +22,12 @@ void enter_game(ENetEvent event, const std::string& header)
             4226000383u,
             "4226000383|4226000383|80543231|80543231|1554912511|1554912511"
         }); 
+        gt_packet(*event.peer, false, 0, {
+           "OnSetBux",
+            _peer[event.peer]->gems,
+            1,
+            1
+        });
         gt_packet(*event.peer, false, 0, {"SetHasGrowID", 1, _peer[event.peer]->ltoken[0], ""}); 
     });
 }

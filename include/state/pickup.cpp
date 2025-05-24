@@ -19,9 +19,13 @@ void pickup(ENetEvent event, state state)
 
     if (it != ifloats.end()) 
     {
-        short excess = _peer[event.peer]->emplace(slot{it->id, static_cast<short>(it->count)});
         short remember_count = it->count;
-        it->count -= (it->count - excess);
+        if (it->id != 112)
+        {
+            short excess = _peer[event.peer]->emplace(slot{it->id, remember_count});
+            it->count -= (it->count - excess);
+        }
+        else it->count = 0; // @todo if gem amount is maxed out, do not take any.
         if (it->count == 0) 
         {
             drop_visuals(event, {it->id, it->count}, it->pos, state.id/*@todo*/);
@@ -36,7 +40,13 @@ void pickup(ENetEvent event, state state)
             }
             else 
             {
-                // @todo add gem system
+                _peer[event.peer]->gems += remember_count;
+                gt_packet(*event.peer, false, 0, {
+                    "OnSetBux",
+                    _peer[event.peer]->gems,
+                    1,
+                    1
+                });
             }
         }
     }

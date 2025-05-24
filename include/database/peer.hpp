@@ -48,6 +48,7 @@ public:
         else slots.emplace_back(std::move(s)); // @note no such item in inventory, so we create a new entry.
         return 0;
     }
+    signed gems{0};
 
     std::array<std::string, 5ull> recent_worlds{}; // @note recent worlds, a list of 5 worlds, once it reaches 6 it'll be replaced by the oldest
     

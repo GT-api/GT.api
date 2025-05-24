@@ -20,13 +20,13 @@ std::unordered_map<std::string_view, std::string_view> emoticon =
 
 void EmoticonDataChanged(ENetEvent& event)
 {
-    std::ostringstream EmoticonData;
-    EmoticonData.str().reserve(emoticon.size() * 23/* emoticon data + ()||1/0& */);
-    for (const auto& [key, value] : emoticon) 
-        EmoticonData << "(" << key << ")|" << value << "|1&"; // @todo add requirements for unlocking emoticons
+    std::string EmoticonData;
+    EmoticonData.reserve(emoticon.size() * 23/* emoticon data + ()||1/0& */);
+    for (const auto &[key, value] : emoticon) 
+        EmoticonData += std::format("({})|{}|1&", key, value); // @todo add requirements for unlocking emoticons
     gt_packet(*event.peer, false, 0, {
         "OnEmoticonDataChanged", 
         201560520, 
-        EmoticonData.str().c_str()
+        EmoticonData.c_str()
     });
 }

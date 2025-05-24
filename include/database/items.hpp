@@ -147,7 +147,6 @@ enum type : unsigned char {
 };
 
 #include <string>
-#include <cstddef>
 
 namespace collision {
     const std::byte

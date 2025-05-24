@@ -14,9 +14,6 @@
 #include "include/database/peer.hpp" // @note peer class
 #include "include/event_type/event_type"
 
-#include <fstream>
-#include <future>
-
 int main()
 {
     {
@@ -54,7 +51,7 @@ int main()
     ENetEvent event{};
 
     while (true)
-        while (enet_host_service(server, &event, 1) > 0)
+        while (enet_host_service(server, &event, 50/*ms*/) > 0)
             if (const auto i = event_pool.find(event.type); i != event_pool.end())
                 i->second(event);
     return 0;

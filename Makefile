@@ -16,6 +16,7 @@ SOURCES := main.cpp \
 	include/network/compress.cpp \
 	include/network/enet_impl.cpp \
 	include/event_type/type_receive.cpp \
+	include/event_type/type_disconnect_timeout.cpp \
 	include/state/punch.cpp \
 	include/state/pickup.cpp \
 	include/state/movement.cpp \

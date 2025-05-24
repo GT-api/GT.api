@@ -30,6 +30,7 @@ public:
     std::array<int, 6ull> admin{}; // @note admins (by user id). excluding owner. (6 is a experimental amount, if increase update me if any issue occur -leeendl)
     short visitors{0}; // -> stack object
     std::vector<block> blocks; /* all blocks, size of 1D meaning (6000) instead of (100, 60) */
+    std::size_t ifloat_uid{0};
     std::vector<ifloat> ifloats{}; /* (i)tem floating */
     ~world();
 };

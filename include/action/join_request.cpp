@@ -139,12 +139,12 @@ void join_request(ENetEvent event, const std::string& header, const std::string_
         for (const auto& ifloat : w->ifloats)
         {
             std::vector<std::byte> compress = compress_state({
-                .type = 14, 
-                .netid = -1, 
+                .type = 0x0e, 
+                .netid = -1,
+                .peer_state = static_cast<int>(ifloat.uid),
                 .id = ifloat.id, 
                 .pos = {ifloat.pos[0] * 32, ifloat.pos[1] * 32}
             });
-            *reinterpret_cast<int*>(&compress[8]) = ifloat.uid;
             *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(ifloat.count);
             send_data(*event.peer, compress);
         } // @note delete compress

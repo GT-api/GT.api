@@ -13,6 +13,7 @@ world& world::read(std::string name)
         file >> j;
         this->name = name;
         this->owner = j.contains("owner") ? j["owner"].get<int>() : 00;
+        this->ifloat_uid = j.contains("fs_uid") ? j["fs_uid"].get<std::size_t>() : 0;
         for (const auto& i : j["bs"]) this->blocks.emplace_back(block{i["f"], i["b"], i.contains("l") ? i["l"].get<std::string>() : ""});
         for (const auto& i : j["fs"]) this->ifloats.emplace_back(ifloat{i["u"], i["i"], i["c"], std::array<float, 2ull>{i["p"][0], i["p"][1]}});
     }
@@ -31,6 +32,7 @@ world::~world()
             if (not block.label.empty()) list["l"] = block.label;
             j["bs"].push_back(list);
         }
+        if (this->owner != 0) j["fs_uid"] = this->ifloat_uid;
         for (const auto& ifloat : this->ifloats)
             if (ifloat.id != 0 || ifloat.count != 0) // @todo handle this
                 j["fs"].push_back({{"u", ifloat.uid}, {"i", ifloat.id}, {"c", ifloat.count}, {"p", ifloat.pos}});
@@ -96,8 +98,10 @@ void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std
     }
     else
     {
-        std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
-        ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
+        world& world = worlds[_peer[event.peer]->recent_worlds.back()];
+        std::size_t uid = world.ifloat_uid++;
+        std::vector<ifloat>& ifloats{world.ifloats};
+        ifloat it = ifloats.emplace_back(ifloat{uid, im[0], im[1], pos}); // @note a iterator ahead of time
         s.netid = -1;
         s.peer_state = static_cast<int>(it.uid);
         s.id = it.id;

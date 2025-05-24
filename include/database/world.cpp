@@ -85,17 +85,30 @@ void block_punched(ENetEvent& event, state s, block &b)
 
 void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std::array<float, 2ull>& pos) 
 {
-    std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
-    ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
-    std::vector<std::byte> compress = compress_state({
-        .type = 0x0e, 
-        .netid = -1, 
-        .peer_state = 1,
-        .id = it.id, 
-        .pos = {it.pos[0] * 32, it.pos[1] * 32}
-    });
-    *reinterpret_cast<int*>(&compress[8]) = it.uid;
-    *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
+    std::vector<std::byte> compress{};
+    if (im[1] == 0 || im[0] == 0)
+    {
+        compress = compress_state({
+            .type = 0x0e, 
+            .netid = 1, // @todo either peer's netid or floating netid
+            .peer_state = -1,
+            .id = 1, 
+            .pos = {0, 0}
+        });
+    }
+    else
+    {
+        std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
+        ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
+        compress = compress_state({
+            .type = 0x0e, 
+            .netid = -1, 
+            .peer_state = static_cast<int>(it.uid),
+            .id = it.id, 
+            .pos = {it.pos[0] * 32, it.pos[1] * 32}
+        });
+        *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
+    }
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && 

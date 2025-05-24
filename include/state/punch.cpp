@@ -26,14 +26,14 @@ void punch(ENetEvent event, state state)
             else return;
             std::array<short, 2ull> im{};
             if (not randomizer(0, 7)) im = {112, 1}; // @todo get real growtopia gem drop amount.
-            if (not randomizer(0, 11)) im = {id, 1};
+            if (not randomizer(0, 13)) im = {id, 1};
             if (not randomizer(0, 9)) im = {++id, 1};
             if (not im.empty())
                 drop_visuals(event, 
                     im,
                     {
-                        static_cast<float>(state.punch[0]) + randomizer(0.05f, 0.09f), 
-                        static_cast<float>(state.punch[1]) + randomizer(0.05f, 0.09f)
+                        static_cast<float>(state.punch[0]) + randomizer(0.05f, 0.1f), 
+                        static_cast<float>(state.punch[1]) + randomizer(0.05f, 0.1f)
                     }
                 );
         } // @note delete im, id
@@ -92,7 +92,6 @@ void punch(ENetEvent event, state state)
         {
             if (items[state.id].type == std::byte{ type::LOCK })
             {
-                // @note checks if world is owned by someone already.
                 if (world.owner == 00)
                 {
                     world.owner = _peer[event.peer]->user_id;

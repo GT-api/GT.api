@@ -7,10 +7,13 @@
 void pickup(ENetEvent event, state state) 
 {
     std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
+    int x = std::lround(_peer[event.peer]->pos[0]);
+    int y = std::lround(_peer[event.peer]->pos[1]);
     auto it = std::find_if(ifloats.begin(), ifloats.end(), [&](const ifloat& i) 
     {
-        return std::abs(i.pos[0] - _peer[event.peer]->pos[0]) <= 0.6f &&
-               std::abs(i.pos[1] - _peer[event.peer]->pos[1]) <= 0.6f;
+        int ix = std::lround(i.pos[0]);
+        int iy = std::lround(i.pos[1]);
+        return (std::abs(ix - x) <= 1) && (std::abs(iy - y) <= 1);
     });
 
     if (it != ifloats.end()) 
@@ -23,7 +26,9 @@ void pickup(ENetEvent event, state state)
         it->count -= (it->count - excess);
         if (it->count == 0) 
         {
+            drop_visuals(event, {it->id, it->count}, it->pos);
             ifloats.erase(it);
+            inventory_visuals(event);
         }
     }
 }

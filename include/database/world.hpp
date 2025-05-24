@@ -41,7 +41,7 @@ void state_visuals(ENetEvent& event, state s);
 
 void block_punched(ENetEvent& event, state s, block& b);
 
-void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std::array<float, 2ull>& pos);
+void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std::array<float, 2ull>& pos, signed uid = 0);
 
 void clothing_visuals(ENetEvent &event);
 

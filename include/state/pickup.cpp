@@ -6,6 +6,7 @@
 
 void pickup(ENetEvent event, state state) 
 {
+    printf("%d", state.id);
     std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
     int x = std::lround(_peer[event.peer]->pos[0]);
     int y = std::lround(_peer[event.peer]->pos[1]);
@@ -18,17 +19,24 @@ void pickup(ENetEvent event, state state)
 
     if (it != ifloats.end()) 
     {
-        gt_packet(*event.peer, false, 0, {
-            "OnConsoleMessage",
-            std::format("Collected `w{} {}``. Rarity: `w{}``", it->count, items[it->id].raw_name, items[it->id].rarity).c_str()
-        });
         short excess = _peer[event.peer]->emplace(slot{it->id, static_cast<short>(it->count)});
         it->count -= (it->count - excess);
         if (it->count == 0) 
         {
-            drop_visuals(event, {it->id, it->count}, it->pos);
+            drop_visuals(event, {it->id, it->count}, it->pos, state.id/*@todo*/);
             ifloats.erase(it);
-            inventory_visuals(event);
+            if (it->id != 112)
+            {
+                gt_packet(*event.peer, false, 0, {
+                    "OnConsoleMessage",
+                    std::format("Collected `w{} {}``. Rarity: `w{}``", it->count, items[it->id].raw_name, items[it->id].rarity).c_str()
+                });
+                inventory_visuals(event);
+            }
+            else 
+            {
+                // @todo add gem system
+            }
         }
     }
 }

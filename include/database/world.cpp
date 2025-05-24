@@ -83,32 +83,28 @@ void block_punched(ENetEvent& event, state s, block &b)
 	state_visuals(event, s);
 }
 
-void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std::array<float, 2ull>& pos) 
+void drop_visuals(ENetEvent& event, const std::array<short, 2ull>& im, const std::array<float, 2ull>& pos, signed uid) 
 {
     std::vector<std::byte> compress{};
+    state s{.type = 0x0e}; // @note PACKET_ITEM_CHANGE_OBJECT
     if (im[1] == 0 || im[0] == 0)
     {
-        compress = compress_state({
-            .type = 0x0e, 
-            .netid = 1, // @todo either peer's netid or floating netid
-            .peer_state = -1,
-            .id = 1, 
-            .pos = {0, 0}
-        });
+        s.netid = _peer[event.peer]->netid;
+        s.peer_state = -1;
+        s.id = uid;
+        s.pos = {0.0f, 0.0f};
     }
     else
     {
         std::vector<ifloat>& ifloats{worlds[_peer[event.peer]->recent_worlds.back()].ifloats};
         ifloat it = ifloats.emplace_back(ifloat{ifloats.size() + 1, im[0], im[1], pos}); // @note a iterator ahead of time
-        compress = compress_state({
-            .type = 0x0e, 
-            .netid = -1, 
-            .peer_state = static_cast<int>(it.uid),
-            .id = it.id, 
-            .pos = {it.pos[0] * 32, it.pos[1] * 32}
-        });
-        *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(it.count);
+        s.netid = -1;
+        s.peer_state = static_cast<int>(it.uid);
+        s.id = it.id;
+        s.pos = {it.pos[0] * 32, it.pos[1] * 32};
     }
+    compress = compress_state(s);
+    *reinterpret_cast<float*>(&compress[16]) = static_cast<float>(im[1]);
     peers(ENET_PEER_STATE_CONNECTED, [&](ENetPeer& p) 
     {
         if (!_peer[&p]->recent_worlds.empty() && !_peer[event.peer]->recent_worlds.empty() && 
@@ -133,7 +129,7 @@ void clothing_visuals(ENetEvent &event)
 
 void tile_update(ENetEvent &event, state s, block &b, world& w) 
 {
-    s.type = 5; // @note PACKET_SEND_TILE_UPDATE_DATA
+    s.type = 05; // @note PACKET_SEND_TILE_UPDATE_DATA
     s.peer_state = 0x08;
     std::vector<std::byte> data = compress_state(s);
 
